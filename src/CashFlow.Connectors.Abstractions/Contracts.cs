@@ -21,6 +21,9 @@ public enum ConnectorCapabilities
 public sealed record ConnectionContext(Guid ConnectionId, string UserId, IReadOnlyDictionary<string, string> Secrets, string? SyncCursor)
 {
     public string Secret(string key) => Secrets.TryGetValue(key, out var v) ? v : throw new InvalidOperationException($"Secret '{key}' is missing");
+
+    /// <summary>Коннектор вызывает, если провайдер ротировал секреты (например, одноразовый refresh_token). Инфраструктура сохраняет.</summary>
+    public Func<IReadOnlyDictionary<string, string>, CancellationToken, Task>? OnSecretsRotated { get; init; }
 }
 
 public sealed record ExternalAccount(

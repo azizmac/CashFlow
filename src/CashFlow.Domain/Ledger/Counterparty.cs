@@ -123,6 +123,6 @@ public sealed record CounterpartyRaw(
     string? BankName = null,
     string? Phone = null)
 {
-    public static readonly CounterpartyRaw Empty = new(null);
+    public static readonly CounterpartyRaw Empty = new(Name: null);
     public bool IsEmpty => string.IsNullOrWhiteSpace(Name) && Inn is null && Account is null && Phone is null;
 }

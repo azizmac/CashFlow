@@ -40,7 +40,17 @@ public sealed class ConnectionSyncService
         try
         {
             var secrets = await _secrets.GetAsync(connection.UserId, connection.CredentialRef, ct);
-            var ctx = new ConnectionContext(connection.Id, connection.UserId, secrets, connection.SyncCursor);
+            var ctx = new ConnectionContext(connection.Id, connection.UserId, secrets, connection.SyncCursor)
+            {
+                OnSecretsRotated = async (updated, token) =>
+                {
+                    var oldRef = connection.CredentialRef!;
+                    var newRef = await _secrets.PutAsync(connection.UserId, updated, token);
+                    connection.AttachCredential(newRef);
+                    await _uow.SaveChangesAsync(token);
+                    await _secrets.DeleteAsync(connection.UserId, oldRef, token);
+                },
+            };
 
             var from = connection.SyncCursor is { } cur && DateOnly.TryParse(cur, out var d) ? d.AddDays(-3) : DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-initialDays);
             var range = new DateRange(from, DateOnly.FromDateTime(DateTime.UtcNow));
