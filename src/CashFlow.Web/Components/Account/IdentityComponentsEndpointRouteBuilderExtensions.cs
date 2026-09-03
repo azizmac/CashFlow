@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using CashFlow.Web.Components.Account.Pages;
 using CashFlow.Web.Components.Account.Pages.Manage;
-using CashFlow.Web.Data;
+using CashFlow.Infrastructure.Persistence;
 
 namespace Microsoft.AspNetCore.Routing;
 

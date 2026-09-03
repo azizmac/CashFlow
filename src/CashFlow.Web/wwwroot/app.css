@@ -1,38 +1,45 @@
-h1:focus {
-    outline: none;
-}
-
-.valid.modified:not([type=checkbox]) {
-    outline: 1px solid #26b050;
-}
-
-.invalid {
-    outline: 1px solid #e50000;
-}
-
-.validation-message {
-    color: #e50000;
-}
-
-.blazor-error-boundary {
-    background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNDkiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIG92ZXJmbG93PSJoaWRkZW4iPjxkZWZzPjxjbGlwUGF0aCBpZD0iY2xpcDAiPjxyZWN0IHg9IjIzNSIgeT0iNTEiIHdpZHRoPSI1NiIgaGVpZ2h0PSI0OSIvPjwvY2xpcFBhdGg+PC9kZWZzPjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMCkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yMzUgLTUxKSI+PHBhdGggZD0iTTI2My41MDYgNTFDMjY0LjcxNyA1MSAyNjUuODEzIDUxLjQ4MzcgMjY2LjYwNiA1Mi4yNjU4TDI2Ny4wNTIgNTIuNzk4NyAyNjcuNTM5IDUzLjYyODMgMjkwLjE4NSA5Mi4xODMxIDI5MC41NDUgOTIuNzk1IDI5MC42NTYgOTIuOTk2QzI5MC44NzcgOTMuNTEzIDI5MSA5NC4wODE1IDI5MSA5NC42NzgyIDI5MSA5Ny4wNjUxIDI4OS4wMzggOTkgMjg2LjYxNyA5OUwyNDAuMzgzIDk5QzIzNy45NjMgOTkgMjM2IDk3LjA2NTEgMjM2IDk0LjY3ODIgMjM2IDk0LjM3OTkgMjM2LjAzMSA5NC4wODg2IDIzNi4wODkgOTMuODA3MkwyMzYuMzM4IDkzLjAxNjIgMjM2Ljg1OCA5Mi4xMzE0IDI1OS40NzMgNTMuNjI5NCAyNTkuOTYxIDUyLjc5ODUgMjYwLjQwNyA1Mi4yNjU4QzI2MS4yIDUxLjQ4MzcgMjYyLjI5NiA1MSAyNjMuNTA2IDUxWk0yNjMuNTg2IDY2LjAxODNDMjYwLjczNyA2Ni4wMTgzIDI1OS4zMTMgNjcuMTI0NSAyNTkuMzEzIDY5LjMzNyAyNTkuMzEzIDY5LjYxMDIgMjU5LjMzMiA2OS44NjA4IDI1OS4zNzEgNzAuMDg4N0wyNjEuNzk1IDg0LjAxNjEgMjY1LjM4IDg0LjAxNjEgMjY3LjgyMSA2OS43NDc1QzI2Ny44NiA2OS43MzA5IDI2Ny44NzkgNjkuNTg3NyAyNjcuODc5IDY5LjMxNzkgMjY3Ljg3OSA2Ny4xMTgyIDI2Ni40NDggNjYuMDE4MyAyNjMuNTg2IDY2LjAxODNaTTI2My41NzYgODYuMDU0N0MyNjEuMDQ5IDg2LjA1NDcgMjU5Ljc4NiA4Ny4zMDA1IDI1OS43ODYgODkuNzkyMSAyNTkuNzg2IDkyLjI4MzcgMjYxLjA0OSA5My41Mjk1IDI2My41NzYgOTMuNTI5NSAyNjYuMTE2IDkzLjUyOTUgMjY3LjM4NyA5Mi4yODM3IDI2Ny4zODcgODkuNzkyMSAyNjcuMzg3IDg3LjMwMDUgMjY2LjExNiA4Ni4wNTQ3IDI2My41NzYgODYuMDU0N1oiIGZpbGw9IiNGRkU1MDAiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjwvZz48L3N2Zz4=) no-repeat 1rem/1.8rem, #b32121;
-    padding: 1rem 1rem 1rem 3.7rem;
-    color: white;
-}
-
-    .blazor-error-boundary::after {
-        content: "An error has occurred."
-    }
-
-.darker-border-checkbox.form-check-input {
-    border-color: #929292;
-}
-
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-    color: var(--bs-secondary-color);
-    text-align: end;
-}
-
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-    text-align: start;
-}
+:root { --bg:#f6f7f9; --side:#111827; --card:#fff; --text:#111827; --muted:#6b7280; --accent:#2563eb; --pos:#15803d; --neg:#b91c1c; --border:#e5e7eb; }
+* { box-sizing: border-box; }
+html, body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size:14px; color:var(--text); background:var(--bg); }
+a { color: var(--accent); text-decoration: none; }
+.shell { display:flex; min-height:100vh; }
+.side { width:220px; background:var(--side); color:#e5e7eb; padding:16px 12px; display:flex; flex-direction:column; gap:16px; position:sticky; top:0; height:100vh; }
+.brand { font-weight:700; font-size:16px; padding:4px 8px; }
+.side nav { display:flex; flex-direction:column; gap:2px; }
+.side nav a { color:#d1d5db; padding:8px 10px; border-radius:6px; }
+.side nav a:hover { background:#1f2937; }
+.side nav a.active { background:#2563eb; color:#fff; }
+.side .user { margin-top:auto; font-size:12px; color:#9ca3af; padding:0 8px; display:flex; flex-direction:column; gap:4px; }
+.side .foot { font-size:11px; color:#6b7280; padding:0 8px; }
+button.link { background:none; border:none; color:#93c5fd; cursor:pointer; padding:0; font:inherit; }
+.main { flex:1; padding:24px 32px; max-width:1400px; }
+h1 { font-size:22px; margin:0 0 16px; }
+h2 { font-size:16px; margin:24px 0 8px; }
+.cards { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:12px; }
+.card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+.card .label { color:var(--muted); font-size:12px; }
+.card .value { font-size:22px; font-weight:600; margin-top:4px; }
+.pos { color:var(--pos); } .neg { color:var(--neg); } .muted { color:var(--muted); }
+table { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+th, td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--border); vertical-align:top; }
+th { font-size:12px; color:var(--muted); font-weight:600; background:#fafafa; }
+tr:last-child td { border-bottom:none; }
+td.num, th.num { text-align:right; white-space:nowrap; font-variant-numeric: tabular-nums; }
+.toolbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
+input, select, button, textarea { font:inherit; padding:6px 10px; border:1px solid #d1d5db; border-radius:6px; background:#fff; }
+button.primary { background:var(--accent); color:#fff; border-color:var(--accent); cursor:pointer; }
+button.small { padding:2px 8px; font-size:12px; }
+.pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; background:#eef2ff; color:#3730a3; }
+.pill.warn { background:#fef3c7; color:#92400e; }
+.pill.ok { background:#dcfce7; color:#166534; }
+.pill.err { background:#fee2e2; color:#991b1b; }
+.bar { height:8px; background:#e5e7eb; border-radius:4px; overflow:hidden; }
+.bar > div { height:100%; background:var(--accent); }
+.form { display:grid; gap:10px; max-width:560px; }
+.form label { display:grid; gap:4px; font-size:13px; color:var(--muted); }
+.alert { padding:10px 12px; border-radius:8px; margin:8px 0; }
+.alert.ok { background:#dcfce7; color:#166534; } .alert.err { background:#fee2e2; color:#991b1b; } .alert.info { background:#e0f2fe; color:#075985; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media (max-width: 900px) { .grid2 { grid-template-columns:1fr; } .shell { flex-direction:column; } .side { width:auto; height:auto; position:static; } }
+#blazor-error-ui { display:none; position:fixed; bottom:0; left:0; right:0; background:#fee2e2; padding:8px 16px; }
+#blazor-error-ui .dismiss { float:right; cursor:pointer; }

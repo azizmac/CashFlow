@@ -50,6 +50,13 @@ public sealed class CashFlowDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<CreditCard> CreditCards => Set<CreditCard>();
     public DbSet<SecretEntry> Secrets => Set<SecretEntry>();
 
+    protected override void ConfigureConventions(ModelConfigurationBuilder cb)
+    {
+        // Npgsql принимает только UTC для timestamptz — нормализуем все DateTimeOffset при записи.
+        cb.Properties<DateTimeOffset>().HaveConversion<UtcDateTimeOffsetConverter>();
+        cb.Properties<DateTimeOffset?>().HaveConversion<NullableUtcDateTimeOffsetConverter>();
+    }
+
     protected override void OnModelCreating(ModelBuilder b)
     {
         base.OnModelCreating(b);
@@ -250,4 +257,14 @@ public sealed class CashFlowDbContext : IdentityDbContext<ApplicationUser>
         m.Property(x => x.Amount).HasColumnName(prefix + "Amount").HasPrecision(20, 4);
         m.Property(x => x.Currency).HasColumnName(prefix + "Currency").HasConversion(currency).HasMaxLength(3);
     }
+}
+
+public sealed class UtcDateTimeOffsetConverter : ValueConverter<DateTimeOffset, DateTimeOffset>
+{
+    public UtcDateTimeOffsetConverter() : base(v => v.ToUniversalTime(), v => v) { }
+}
+
+public sealed class NullableUtcDateTimeOffsetConverter : ValueConverter<DateTimeOffset?, DateTimeOffset?>
+{
+    public NullableUtcDateTimeOffsetConverter() : base(v => v.HasValue ? v.Value.ToUniversalTime() : v, v => v) { }
 }

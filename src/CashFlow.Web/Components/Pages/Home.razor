@@ -1,7 +1,109 @@
-﻿@page "/"
+@page "/"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject CurrentUser Me
+@inject LedgerQueries Q
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Обзор — CashFlow</PageTitle>
+<h1>Обзор</h1>
 
-<h1>Hello, world!</h1>
+@if (profiles is null) { <p class="muted">Загрузка…</p> return; }
 
-Welcome to your new app.
+<div class="toolbar">
+    <select @bind="profileId" @bind:after="Reload">
+        <option value="">Все профили (сводно)</option>
+        @foreach (var p in profiles) { <option value="@p.Id">@p.Name</option> }
+    </select>
+    <select @bind="months" @bind:after="Reload">
+        <option value="1">Текущий месяц</option>
+        <option value="3">3 месяца</option>
+        <option value="6">6 месяцев</option>
+        <option value="12">12 месяцев</option>
+    </select>
+    <span class="muted">@from.ToString("dd.MM.yyyy") — @to.ToString("dd.MM.yyyy")</span>
+</div>
+
+<div class="cards">
+    <div class="card"><div class="label">Доходы</div><div class="value pos">+@income.ToString("N0") ₽</div></div>
+    <div class="card"><div class="label">Расходы</div><div class="value neg">−@expense.ToString("N0") ₽</div></div>
+    <div class="card"><div class="label">Сальдо</div><div class="value @((income-expense)>=0?"pos":"neg")">@((income - expense).ToString("N0")) ₽</div></div>
+    <div class="card"><div class="label">Чистые активы (по остаткам)</div><div class="value">@netWorth.ToString("N0") ₽</div></div>
+</div>
+
+@if (income == 0 && expense == 0)
+{
+    <div class="alert info">Данных пока нет. <a href="/import">Загрузите выписку</a> или <a href="/connections">подключите API</a>.</div>
+}
+
+<div class="grid2">
+    <div>
+        <h2>Куда уходят деньги</h2>
+        <table>
+            <thead><tr><th>Категория</th><th class="num">Сумма</th><th class="num">Опер.</th><th style="width:30%"></th></tr></thead>
+            <tbody>
+            @foreach (var c in byCat.Take(15))
+            {
+                <tr>
+                    <td>@(c.Category is null ? "Без категории" : $"{c.Category.Icon} {c.Category.Name}")
+                        @if (c.Category is null) { <a class="small" href="/transactions?uncategorized=1"> → разобрать</a> }
+                    </td>
+                    <td class="num">@c.Total.ToString("N0")</td>
+                    <td class="num muted">@c.Count</td>
+                    <td><div class="bar"><div style="width:@(expense > 0 ? (int)(c.Total / expense * 100) : 0)%"></div></div></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <div>
+        <h2>Кому уходят деньги</h2>
+        <table>
+            <thead><tr><th>Контрагент</th><th class="num">Сумма</th><th class="num">Опер.</th></tr></thead>
+            <tbody>
+            @foreach (var c in byCp)
+            {
+                <tr>
+                    <td><a href="/transactions?cp=@c.Counterparty.Id">@c.Counterparty.DisplayName</a> <span class="pill">@Kind(c.Counterparty.Kind)</span></td>
+                    <td class="num">@c.Total.ToString("N0")</td>
+                    <td class="num muted">@c.Count</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    List<FinancialProfile>? profiles;
+    string? profileId;
+    int months = 1;
+    DateOnly from, to;
+    decimal income, expense, netWorth;
+    List<CategoryTotal> byCat = [];
+    List<CounterpartyTotal> byCp = [];
+    string uid = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        uid = await Me.IdAsync();
+        profiles = await Me.ProfilesAsync();
+        await Reload();
+    }
+
+    Task Reload()
+    {
+        var today = DateOnly.FromDateTime(DateTime.Now);
+        to = today;
+        from = months == 1 ? new DateOnly(today.Year, today.Month, 1) : today.AddMonths(-months);
+        Guid? pid = Guid.TryParse(profileId, out var g) ? g : null;
+        (income, expense, byCat, byCp) = Q.Summary(uid, pid, from, to);
+        netWorth = Q.NetWorth(uid, pid);
+        return Task.CompletedTask;
+    }
+
+    static string Kind(CounterpartyKind k) => k switch
+    {
+        CounterpartyKind.Person => "человек", CounterpartyKind.Company => "компания", CounterpartyKind.SoleProprietor => "ИП",
+        CounterpartyKind.Bank => "банк", CounterpartyKind.Government => "гос.", CounterpartyKind.Merchant => "магазин", CounterpartyKind.Self => "я", _ => "?"
+    };
+}

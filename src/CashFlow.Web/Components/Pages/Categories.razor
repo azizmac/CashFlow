@@ -1,0 +1,75 @@
+@page "/categories"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject CurrentUser Me
+@inject LedgerQueries Q
+@inject CashFlow.Application.IUnitOfWork Uow
+
+<PageTitle>Категории — CashFlow</PageTitle>
+<h1>Категории и правила</h1>
+
+<div class="grid2">
+    <div>
+        <h2>Категории</h2>
+        <table>
+            <thead><tr><th>Категория</th><th>Тип</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var c in categories)
+            {
+                <tr><td>@c.Icon @c.Name @(c.IsSystem ? "" : "·") </td><td class="muted">@Kind(c.Kind)</td><td>@if (!c.IsSystem) { <button class="small" @onclick="() => Remove(c)">удалить</button> }</td></tr>
+            }
+            </tbody>
+        </table>
+        <h2>Своя категория</h2>
+        <div class="form">
+            <label>Название <input @bind="newName" /></label>
+            <label>Иконка <input @bind="newIcon" maxlength="2" style="width:60px" /></label>
+            <label>Тип <select @bind="newKind"><option value="@CategoryKind.Expense">Расход</option><option value="@CategoryKind.Income">Доход</option></select></label>
+            <button class="primary" @onclick="Add" disabled="@string.IsNullOrWhiteSpace(newName)">Добавить</button>
+        </div>
+    </div>
+    <div>
+        <h2>Мои правила</h2>
+        <p class="muted">Правила применяются к новым операциям по убыванию приоритета. Выученные — создаются автоматически после 2+ одинаковых ручных исправлений.</p>
+        <table>
+            <thead><tr><th>Поле</th><th>Условие</th><th>Шаблон</th><th>Категория</th><th class="num">Срабат.</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var r in rules)
+            {
+                <tr>
+                    <td class="muted">@r.Field</td><td class="muted">@r.Match</td><td><code>@r.Pattern</code></td>
+                    <td>@(categories.FirstOrDefault(c => c.Id == r.CategoryId)?.Name)</td>
+                    <td class="num">@r.HitCount</td>
+                    <td><span class="pill">@r.Origin</span> <button class="small" @onclick="() => RemoveRule(r)">×</button></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        <h2>Новое правило</h2>
+        <div class="form">
+            <label>Поле <select @bind="rField"><option value="@RuleField.Description">Описание</option><option value="@RuleField.CounterpartyName">Имя контрагента</option><option value="@RuleField.CounterpartyInn">ИНН контрагента</option><option value="@RuleField.Mcc">MCC</option></select></label>
+            <label>Условие <select @bind="rMatch"><option value="@RuleMatch.Contains">содержит</option><option value="@RuleMatch.Equals">равно</option><option value="@RuleMatch.StartsWith">начинается с</option><option value="@RuleMatch.Regex">regex</option></select></label>
+            <label>Шаблон <input @bind="rPattern" /></label>
+            <label>Категория <select @bind="rCategory"><option value="">—</option>@foreach (var c in categories) { <option value="@c.Id">@c.Icon @c.Name</option> }</select></label>
+            <button class="primary" @onclick="AddRule" disabled="@(string.IsNullOrWhiteSpace(rPattern) || string.IsNullOrEmpty(rCategory))">Добавить правило</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    List<Category> categories = [];
+    List<CategorizationRule> rules = [];
+    string uid = "";
+    string newName = "", newIcon = "🏷️"; CategoryKind newKind = CategoryKind.Expense;
+    RuleField rField = RuleField.Description; RuleMatch rMatch = RuleMatch.Contains; string rPattern = "", rCategory = "";
+
+    protected override async Task OnInitializedAsync() { uid = await Me.IdAsync(); Load(); }
+    void Load() { categories = Q.Categories(uid); rules = Uow.Rules.Query().Where(r => r.UserId == uid).OrderByDescending(r => r.Priority).ToList(); }
+
+    async Task Add() { await Uow.Categories.AddAsync(new Category(uid, newName.Trim(), newKind, null, newIcon, null)); await Uow.SaveChangesAsync(); newName = ""; Load(); }
+    async Task Remove(Category c) { Uow.Categories.Remove(c); await Uow.SaveChangesAsync(); Load(); }
+    async Task AddRule() { await Uow.Rules.AddAsync(new CategorizationRule(uid, rField, rMatch, rPattern.Trim(), Guid.Parse(rCategory), 100, RuleOrigin.User)); await Uow.SaveChangesAsync(); rPattern = ""; Load(); }
+    async Task RemoveRule(CategorizationRule r) { Uow.Rules.Remove(r); await Uow.SaveChangesAsync(); Load(); }
+
+    static string Kind(CategoryKind k) => k switch { CategoryKind.Income => "доход", CategoryKind.Expense => "расход", CategoryKind.Transfer => "перевод", _ => "инвестиции" };
+}

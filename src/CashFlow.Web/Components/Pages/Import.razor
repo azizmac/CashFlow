@@ -1,0 +1,72 @@
+@page "/import"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject CurrentUser Me
+@inject CashFlow.Application.Import.StatementImportService Importer
+@inject IEnumerable<CashFlow.Connectors.Abstractions.IStatementParser> Parsers
+
+<PageTitle>Импорт выписки — CashFlow</PageTitle>
+<h1>Импорт выписки</h1>
+
+<p class="muted">Поддерживается: @string.Join(" · ", Parsers.Select(p => $"{p.DisplayName} ({string.Join("/", p.Extensions)})")). Файл обрабатывается на вашем сервере и никуда не отправляется.</p>
+
+@if (profiles is null) { <p class="muted">Загрузка…</p> return; }
+
+<div class="form">
+    <label>Профиль
+        <select @bind="profileId">@foreach (var p in profiles) { <option value="@p.Id">@p.Name (@Kind(p.Kind))</option> }</select>
+    </label>
+    <label>Банк (подсказка парсеру, необязательно)
+        <select @bind="bank"><option value="">Определить автоматически</option>@foreach (var p in Parsers.DistinctBy(p => p.BankCode)) { <option value="@p.BankCode">@p.DisplayName</option> }</select>
+    </label>
+    <label>Файлы выписок
+        <InputFile OnChange="OnFiles" multiple accept=".pdf,.xlsx,.csv" />
+    </label>
+    <button class="primary" @onclick="Run" disabled="@(files.Count == 0 || busy)">@(busy ? "Импортирую…" : $"Импортировать ({files.Count})")</button>
+</div>
+
+@foreach (var m in messages)
+{
+    <div class="alert @m.Css">@((MarkupString)m.Text)</div>
+}
+
+@code {
+    List<FinancialProfile>? profiles;
+    string profileId = "";
+    string bank = "";
+    List<IBrowserFile> files = [];
+    List<(string Css, string Text)> messages = [];
+    bool busy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        profiles = await Me.ProfilesAsync();
+        profileId = profiles[0].Id.ToString();
+    }
+
+    void OnFiles(InputFileChangeEventArgs e) => files = e.GetMultipleFiles(20).ToList();
+
+    async Task Run()
+    {
+        busy = true; messages.Clear();
+        var uid = await Me.IdAsync();
+        foreach (var f in files)
+        {
+            try
+            {
+                await using var s = f.OpenReadStream(50 * 1024 * 1024);
+                var r = await Importer.ImportAsync(uid, Guid.Parse(profileId), s, f.Name, string.IsNullOrEmpty(bank) ? null : bank, default);
+                var w = r.Warnings.Count > 0 ? $"<br/><small>Предупреждения: {r.Warnings.Count} (первое: {System.Net.WebUtility.HtmlEncode(r.Warnings[0])})</small>" : "";
+                messages.Add(("ok", $"<b>{System.Net.WebUtility.HtmlEncode(f.Name)}</b> → {r.ParserName}, счёт «{System.Net.WebUtility.HtmlEncode(r.Account.Name)}»: новых {r.Summary.Imported}, обновлено {r.Summary.Updated}, дубликатов {r.Summary.SkippedDuplicates}, контрагентов +{r.Summary.CounterpartiesCreated}, переводов {r.Summary.TransfersLinked}, категоризировано {r.Summary.Categorized}.{w}"));
+            }
+            catch (Exception ex)
+            {
+                messages.Add(("err", $"<b>{System.Net.WebUtility.HtmlEncode(f.Name)}</b>: {System.Net.WebUtility.HtmlEncode(ex.Message)}"));
+            }
+        }
+        files.Clear();
+        busy = false;
+    }
+
+    static string Kind(ProfileKind k) => k switch { ProfileKind.SoleProprietor => "ИП", ProfileKind.Company => "компания", _ => "физлицо" };
+}

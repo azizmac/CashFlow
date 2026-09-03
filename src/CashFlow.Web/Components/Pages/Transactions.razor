@@ -1,0 +1,116 @@
+@page "/transactions"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject CurrentUser Me
+@inject LedgerQueries Q
+@inject CashFlow.Application.Categorization.CategorizationService Categorization
+
+<PageTitle>Операции — CashFlow</PageTitle>
+<h1>Операции</h1>
+
+@if (profiles is null) { <p class="muted">Загрузка…</p> return; }
+
+<div class="toolbar">
+    <select @bind="profileId" @bind:after="Reload"><option value="">Все профили</option>@foreach (var p in profiles) { <option value="@p.Id">@p.Name</option> }</select>
+    <select @bind="accountId" @bind:after="Reload"><option value="">Все счета</option>@foreach (var a in accounts) { <option value="@a.Id">@a.Name</option> }</select>
+    <select @bind="categoryId" @bind:after="Reload"><option value="">Все категории</option>@foreach (var c in categories) { <option value="@c.Id">@c.Icon @c.Name</option> }</select>
+    <input type="date" @bind="from" @bind:after="Reload" />
+    <input type="date" @bind="to" @bind:after="Reload" />
+    <input placeholder="Поиск по описанию / контрагенту" @bind="search" @bind:after="Reload" style="min-width:240px" />
+    <label><input type="checkbox" @bind="onlyUncategorized" @bind:after="Reload" /> только без категории</label>
+    <label><input type="checkbox" @bind="includeTransfers" @bind:after="Reload" /> показывать переводы</label>
+</div>
+
+@if (Cp is not null) { <div class="alert info">Фильтр по контрагенту: <b>@Cp.DisplayName</b> <a href="/transactions">сбросить</a></div> }
+
+<p class="muted">@rows.Count операций · доходы +@rows.Where(r => r.Tx.IsIncome).Sum(r => r.Tx.Amount.Amount).ToString("N0") · расходы −@rows.Where(r => r.Tx.IsExpense).Sum(r => -r.Tx.Amount.Amount).ToString("N0")</p>
+
+<table>
+    <thead><tr><th>Дата</th><th>Кто / кому</th><th>Описание</th><th>Категория</th><th>Счёт</th><th class="num">Сумма</th></tr></thead>
+    <tbody>
+    @foreach (var r in rows)
+    {
+        <tr>
+            <td style="white-space:nowrap">@r.Tx.PostedAt.Local().ToString("dd.MM.yy HH:mm")</td>
+            <td>
+                @if (r.Counterparty is not null) { <a href="/transactions?cp=@r.Counterparty.Id">@r.Counterparty.DisplayName</a> }
+                else { <span class="muted">—</span> }
+                @if (r.Tx.Kind == TransactionKind.Transfer) { <span class="pill">перевод</span> }
+                @if (r.Tx.Status == TransactionStatus.Pending) { <span class="pill warn">в обработке</span> }
+            </td>
+            <td>
+                <div>@r.Tx.Description</div>
+                @if (!string.IsNullOrEmpty(r.Tx.Purpose) && r.Tx.Purpose != r.Tx.Description) { <div class="muted" style="font-size:12px">@r.Tx.Purpose</div> }
+                @if (r.Tx.Mcc is not null) { <span class="muted" style="font-size:11px">MCC @r.Tx.Mcc</span> }
+            </td>
+            <td>
+                <select value="@(r.Tx.CategoryId?.ToString() ?? "")" @onchange="e => SetCategory(r, e.Value?.ToString())" style="max-width:200px">
+                    <option value="">— без категории —</option>
+                    @foreach (var c in categories.Where(c => c.Kind == (r.Tx.IsIncome ? CategoryKind.Income : CategoryKind.Expense) || c.Kind == CategoryKind.Transfer || c.Kind == CategoryKind.Investment))
+                    { <option value="@c.Id">@c.Icon @c.Name</option> }
+                </select>
+                @if (r.Tx.CategoryId is null && r.Proposed is not null)
+                {
+                    <div style="font-size:12px">предложено: @r.Proposed.Icon @r.Proposed.Name <button class="small" @onclick="() => Accept(r)">✓</button></div>
+                }
+                else if (r.Tx.CategoryId is not null)
+                {
+                    <div class="muted" style="font-size:11px">@Src(r.Tx.CategorySource)</div>
+                }
+            </td>
+            <td class="muted">@r.Account.Name</td>
+            <td class="num @(r.Tx.IsIncome ? "pos" : "neg")">@(r.Tx.IsIncome ? "+" : "")@r.Tx.Amount.Amount.ToString("N2") @r.Tx.Amount.Currency.Code</td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+@code {
+    [SupplyParameterFromQuery(Name = "cp")] public Guid? CpId { get; set; }
+    [SupplyParameterFromQuery(Name = "uncategorized")] public int? Uncat { get; set; }
+
+    List<FinancialProfile>? profiles;
+    List<Account> accounts = [];
+    List<Category> categories = [];
+    List<TxRow> rows = [];
+    Counterparty? Cp;
+    string? profileId, accountId, categoryId, search;
+    DateOnly from = DateOnly.FromDateTime(DateTime.Today).AddMonths(-3), to = DateOnly.FromDateTime(DateTime.Today);
+    bool onlyUncategorized, includeTransfers;
+    string uid = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        uid = await Me.IdAsync();
+        profiles = await Me.ProfilesAsync();
+        accounts = Q.Accounts(uid);
+        categories = Q.Categories(uid);
+        onlyUncategorized = Uncat == 1;
+        if (CpId is { } id) { Cp = Q.Counterparties(uid).FirstOrDefault(c => c.Id == id); from = from.AddMonths(-9); }
+        await Reload();
+    }
+
+    Task Reload()
+    {
+        var f = new TxFilter(G(profileId), G(accountId), G(categoryId), CpId, from, to, search, onlyUncategorized, includeTransfers);
+        rows = Q.Transactions(uid, f);
+        return Task.CompletedTask;
+    }
+
+    static Guid? G(string? s) => Guid.TryParse(s, out var g) ? g : null;
+
+    async Task SetCategory(TxRow r, string? value)
+    {
+        Guid? cat = Guid.TryParse(value, out var g) ? g : null;
+        await Categorization.SetCategoryAsync(uid, r.Tx.Id, cat, applyToCounterparty: false, default);
+        await Reload();
+    }
+
+    async Task Accept(TxRow r)
+    {
+        await Categorization.AcceptProposalAsync(uid, r.Tx.Id, default);
+        await Reload();
+    }
+
+    static string Src(CategorySource s) => s switch { CategorySource.User => "вручную", CategorySource.Rule => "правило", CategorySource.Mcc => "по MCC", CategorySource.Ai => "ИИ", CategorySource.Counterparty => "по контрагенту", _ => "" };
+}

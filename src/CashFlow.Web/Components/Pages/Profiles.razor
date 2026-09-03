@@ -1,0 +1,54 @@
+@page "/profiles"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject CurrentUser Me
+@inject CashFlow.Application.IUnitOfWork Uow
+
+<PageTitle>Профили — CashFlow</PageTitle>
+<h1>Финансовые профили</h1>
+<p class="muted">Физлицо и ИП — отдельные профили одного пользователя. ИНН нужен, чтобы переводы «с р/с ИП на свою карту» автоматически распознавались как перевод самому себе, а не доход. ИНН хранится в зашифрованном виде.</p>
+
+@if (profiles is null) { <p class="muted">Загрузка…</p> return; }
+
+<table>
+    <thead><tr><th>Название</th><th>Тип</th><th>ИНН</th><th></th></tr></thead>
+    <tbody>
+    @foreach (var p in profiles)
+    {
+        <tr>
+            <td><input value="@p.Name" @onchange="e => { p.Rename(e.Value?.ToString() ?? p.Name); Save(); }" /></td>
+            <td class="muted">@Kind(p.Kind)</td>
+            <td><input value="@p.Inn" placeholder="ИНН" maxlength="12" @onchange="e => { p.SetIdentifiers(Clean(e.Value?.ToString()), p.Ogrn); Save(); }" /></td>
+            <td></td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+<h2>Добавить профиль</h2>
+<div class="form">
+    <label>Название <input @bind="name" placeholder="напр. ИП Иванов" /></label>
+    <label>Тип <select @bind="kind"><option value="@ProfileKind.Individual">Физлицо</option><option value="@ProfileKind.SoleProprietor">ИП</option><option value="@ProfileKind.Company">Компания</option></select></label>
+    <label>ИНН <input @bind="inn" maxlength="12" /></label>
+    <button class="primary" @onclick="Add" disabled="@string.IsNullOrWhiteSpace(name)">Добавить</button>
+</div>
+
+@code {
+    List<FinancialProfile>? profiles;
+    string name = "", inn = ""; ProfileKind kind = ProfileKind.SoleProprietor;
+
+    protected override async Task OnInitializedAsync() => profiles = await Me.ProfilesAsync();
+
+    async void Save() => await Uow.SaveChangesAsync();
+
+    async Task Add()
+    {
+        await Uow.Profiles.AddAsync(new FinancialProfile(await Me.IdAsync(), kind, name.Trim(), Clean(inn)));
+        await Uow.SaveChangesAsync();
+        name = ""; inn = "";
+        profiles = await Me.ProfilesAsync();
+    }
+
+    static string? Clean(string? s) { var d = new string((s ?? "").Where(char.IsDigit).ToArray()); return d.Length is 10 or 12 ? d : null; }
+    static string Kind(ProfileKind k) => k switch { ProfileKind.SoleProprietor => "ИП", ProfileKind.Company => "Компания", _ => "Физлицо" };
+}

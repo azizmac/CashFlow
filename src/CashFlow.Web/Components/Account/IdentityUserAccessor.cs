@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Identity;
-using CashFlow.Web.Data;
+using CashFlow.Infrastructure.Persistence;
 
 namespace CashFlow.Web.Components.Account;
 

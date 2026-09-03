@@ -1,15 +1,21 @@
+using CashFlow.Application;
+using CashFlow.Application.Seed;
+using CashFlow.Connectors.Sber.Business;
+using CashFlow.Connectors.Statements;
+using CashFlow.Connectors.TBank.Business;
+using CashFlow.Connectors.TInvest;
+using CashFlow.Infrastructure;
+using CashFlow.Infrastructure.Persistence;
+using CashFlow.Web.Components;
+using CashFlow.Web.Components.Account;
+using CashFlow.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using CashFlow.Web.Components;
-using CashFlow.Web.Components.Account;
-using CashFlow.Web.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
@@ -23,13 +29,25 @@ builder.Services.AddAuthentication(options =>
     })
     .AddIdentityCookies();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(connectionString));
+builder.Services.AddCashFlowInfrastructure(builder.Configuration);
+builder.Services.AddCashFlowApplication();
+builder.Services.AddStatementParsers();
+builder.Services.AddTInvestConnector();
+builder.Services.AddTBankBusinessConnector();
+builder.Services.AddSberBusinessConnector();
+builder.Services.AddScoped<CurrentUser>();
+builder.Services.AddScoped<LedgerQueries>();
+builder.Services.AddScoped<ConnectionsFacade>();
+builder.Services.AddHostedService<SyncScheduler>();
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddEntityFrameworkStores<ApplicationDbContext>()
+builder.Services.AddIdentityCore<ApplicationUser>(options =>
+    {
+        options.SignIn.RequireConfirmedAccount = false; // self-hosted: почта не обязательна
+        options.Password.RequiredLength = 10;
+        options.Lockout.MaxFailedAccessAttempts = 5;
+    })
+    .AddEntityFrameworkStores<CashFlowDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
@@ -37,7 +55,14 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Миграции + справочники при старте (self-hosted: пользователь просто запускает контейнер)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<CashFlowDbContext>();
+    await db.Database.MigrateAsync();
+    await scope.ServiceProvider.GetRequiredService<SeedService>().SeedAsync();
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
@@ -45,20 +70,11 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
 }
 
-app.UseHttpsRedirection();
-
-
 app.UseAntiforgery();
-
 app.MapStaticAssets();
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
-
-// Add additional endpoints required by the Identity /Account Razor components.
+app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 app.MapAdditionalIdentityEndpoints();
 
 app.Run();

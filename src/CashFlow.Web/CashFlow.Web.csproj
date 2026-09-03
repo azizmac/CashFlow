@@ -5,17 +5,21 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aspnet-CashFlow.Web-969ed695-dbe2-4c29-a16b-3fdc42631b3e</UserSecretsId>
+    <InvariantGlobalization>false</InvariantGlobalization>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Update="Data\app.db" CopyToOutputDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.9" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.9" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.19" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.19" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.19" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.19" />
+    <ProjectReference Include="..\CashFlow.Application\CashFlow.Application.csproj" />
+    <ProjectReference Include="..\CashFlow.Infrastructure\CashFlow.Infrastructure.csproj" />
+    <ProjectReference Include="..\CashFlow.Connectors.Statements\CashFlow.Connectors.Statements.csproj" />
+    <ProjectReference Include="..\CashFlow.Connectors.TInvest\CashFlow.Connectors.TInvest.csproj" />
+    <ProjectReference Include="..\CashFlow.Connectors.TBank.Business\CashFlow.Connectors.TBank.Business.csproj" />
+    <ProjectReference Include="..\CashFlow.Connectors.Sber.Business\CashFlow.Connectors.Sber.Business.csproj" />
   </ItemGroup>
 
 </Project>

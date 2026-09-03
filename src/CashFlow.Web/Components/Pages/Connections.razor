@@ -1,0 +1,129 @@
+@page "/connections"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject CurrentUser Me
+@inject LedgerQueries Q
+@inject ConnectionsFacade Facade
+
+<PageTitle>Подключения — CashFlow</PageTitle>
+<h1>Подключения к API</h1>
+<p class="muted">Только чтение. Токены шифруются и хранятся на вашем сервере. Запрашивайте у банка токен с минимальными правами (T-Invest — «только чтение», T-API — «счета и выписки»).</p>
+
+@if (profiles is null) { <p class="muted">Загрузка…</p> return; }
+
+<table>
+    <thead><tr><th>Название</th><th>Тип</th><th>Статус</th><th>Последняя синхронизация</th><th></th></tr></thead>
+    <tbody>
+    @foreach (var c in connections)
+    {
+        <tr>
+            <td>@c.Name<div class="muted" style="font-size:11px">@profiles.FirstOrDefault(p => p.Id == c.ProfileId)?.Name</div></td>
+            <td>@c.ConnectorType</td>
+            <td>
+                <span class="pill @(c.Status == ConnectionStatus.Active ? "ok" : c.Status == ConnectionStatus.Disabled ? "" : "err")">@c.Status</span>
+                @if (c.LastError is not null) { <div class="muted" style="font-size:11px;max-width:320px">@c.LastError</div> }
+            </td>
+            <td class="muted">@(c.LastSyncAt?.Local().ToString("dd.MM.yy HH:mm") ?? "—")</td>
+            <td style="white-space:nowrap">
+                @if (c.ConnectorType != ConnectorType.StatementImport && c.Status != ConnectionStatus.Disabled)
+                {
+                    <button class="small primary" @onclick="() => Sync(c)" disabled="@(busyId == c.Id)">@(busyId == c.Id ? "…" : "Синхронизировать")</button>
+                    <button class="small" @onclick="() => Delete(c)">Удалить</button>
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+<h2>Новое подключение</h2>
+<div class="form">
+    <label>Тип
+        <select @bind="type" @bind:after="() => secrets.Clear()">
+            <option value="@ConnectorType.TInvest">Т-Инвестиции (T-Invest API)</option>
+            <option value="@ConnectorType.TBankBusiness">Т-Бизнес (T-API) — р/с ИП/ЮЛ</option>
+            <option value="@ConnectorType.SberBusiness">СберБизнес (Sber API) — р/с ИП/ЮЛ</option>
+        </select>
+    </label>
+    <label>Профиль <select @bind="profileId">@foreach (var p in profiles) { <option value="@p.Id">@p.Name</option> }</select></label>
+    <label>Название <input @bind="name" placeholder="напр. Брокерский Т-Инвестиции" /></label>
+    @foreach (var key in Connector?.RequiredSecrets ?? [])
+    {
+        <label>@Label(key)
+            @if (key.Contains("pfx"))
+            {
+                <InputFile OnChange="e => LoadPfx(e, key)" accept=".pfx,.p12" />
+            }
+            else
+            {
+                <input type="@(key.Contains("password") || key.Contains("secret") || key.Contains("token") ? "password" : "text")" value="@secrets.GetValueOrDefault(key)" @onchange="e => secrets[key] = e.Value?.ToString() ?? string.Empty" />
+            }
+        </label>
+    }
+    <label>Глубина первой загрузки, дней <input type="number" @bind="initialDays" /></label>
+    <button class="primary" @onclick="Create" disabled="@(busyId is not null || string.IsNullOrWhiteSpace(name))">Подключить и синхронизировать</button>
+    @if (msg is not null) { <div class="alert @msgCss">@msg</div> }
+</div>
+
+@code {
+    List<FinancialProfile>? profiles;
+    List<Connection> connections = [];
+    ConnectorType type = ConnectorType.TInvest;
+    string profileId = "", name = "";
+    int initialDays = 365;
+    Dictionary<string, string> secrets = new();
+    Guid? busyId; string? msg, msgCss;
+    string uid = "";
+
+    CashFlow.Connectors.Abstractions.IConnector? Connector => Facade.ApiConnectors.FirstOrDefault(c => c.Type == type);
+
+    protected override async Task OnInitializedAsync()
+    {
+        uid = await Me.IdAsync();
+        profiles = await Me.ProfilesAsync();
+        profileId = profiles[0].Id.ToString();
+        connections = Q.Connections(uid);
+    }
+
+    async Task LoadPfx(InputFileChangeEventArgs e, string key)
+    {
+        using var ms = new MemoryStream();
+        await e.File.OpenReadStream(1024 * 1024).CopyToAsync(ms);
+        secrets[key] = Convert.ToBase64String(ms.ToArray());
+    }
+
+    async Task Create()
+    {
+        msg = null;
+        try
+        {
+            var c = await Facade.CreateAsync(uid, Guid.Parse(profileId), type, name.Trim(), secrets, default);
+            connections = Q.Connections(uid);
+            secrets.Clear(); name = "";
+            await Sync(c);
+        }
+        catch (Exception ex) { msg = ex.Message; msgCss = "err"; }
+    }
+
+    async Task Sync(Connection c)
+    {
+        busyId = c.Id; msg = null;
+        try
+        {
+            var run = await Facade.SyncNowAsync(c.Id, initialDays, default);
+            msg = run.Error is null ? $"Готово: новых операций {run.ImportedTransactions}, дубликатов {run.SkippedDuplicates}" : $"Ошибка: {run.Error}";
+            msgCss = run.Error is null ? "ok" : "err";
+        }
+        catch (Exception ex) { msg = ex.Message; msgCss = "err"; }
+        busyId = null;
+        connections = Q.Connections(uid);
+    }
+
+    async Task Delete(Connection c) { await Facade.DeleteAsync(uid, c.Id, default); connections = Q.Connections(uid); }
+
+    static string Label(string key) => key switch
+    {
+        "token" => "API-токен (только чтение)", "client_id" => "Client ID", "client_secret" => "Client Secret", "refresh_token" => "Refresh token",
+        "cert_pfx_base64" => "Клиентский сертификат (.pfx)", "cert_password" => "Пароль сертификата", _ => key
+    };
+}

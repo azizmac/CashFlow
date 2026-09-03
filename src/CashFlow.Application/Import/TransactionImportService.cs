@@ -113,6 +113,7 @@ public sealed class TransactionImportService
             var m = matcher.Resolve(t.CounterpartyRaw);
             if (m is null) continue;
             t.ResolveCounterparty(m.Counterparty.Id);
+            if (m.Counterparty.Kind == CounterpartyKind.Unknown && t.Mcc is not null) m.Counterparty.SetKind(CounterpartyKind.Merchant);
             if (m.Created && knownIds.Add(m.Counterparty.Id))
             {
                 await _uow.Counterparties.AddAsync(m.Counterparty, ct);
