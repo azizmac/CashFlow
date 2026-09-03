@@ -35,7 +35,7 @@ public sealed class TransactionImportService
     {
         var existing = _uow.Transactions.Query().Where(t => t.AccountId == account.Id).ToList();
         var byKey = existing.ToDictionary(t => t.DedupeKey.Value);
-        var byExt = existing.Where(t => t.ExternalRef is not null).ToDictionary(t => t.ExternalRef!.Value.ExternalId);
+        var byExt = existing.Where(t => t.ExternalRef is not null).ToDictionary(t => t.ExternalRef!.ExternalId);
 
         var added = new List<Transaction>();
         int updated = 0, skipped = 0;

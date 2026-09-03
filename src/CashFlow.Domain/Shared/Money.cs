@@ -1,7 +1,7 @@
 namespace CashFlow.Domain.Shared;
 
 /// <summary>Денежная сумма с валютой. Знак = направление (минус — расход).</summary>
-public readonly record struct Money(decimal Amount, Currency Currency)
+public sealed record Money(decimal Amount, Currency Currency)
 {
     public static Money Zero(Currency c) => new(0m, c);
 

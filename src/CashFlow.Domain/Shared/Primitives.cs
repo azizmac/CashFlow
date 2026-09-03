@@ -44,7 +44,7 @@ public enum ConnectorType
 }
 
 /// <summary>Ссылка на объект во внешней системе.</summary>
-public readonly record struct ExternalRef(ConnectorType Connector, string ExternalId)
+public sealed record ExternalRef(ConnectorType Connector, string ExternalId)
 {
     public override string ToString() => $"{Connector}:{ExternalId}";
 }

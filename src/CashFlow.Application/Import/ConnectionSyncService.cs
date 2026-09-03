@@ -48,7 +48,7 @@ public sealed class ConnectionSyncService
             var extAccounts = await connector.GetAccountsAsync(ctx, ct);
             foreach (var ea in extAccounts)
             {
-                var account = _uow.Accounts.Query().FirstOrDefault(a => a.ConnectionId == connection.Id && a.ExternalRef != null && a.ExternalRef!.Value.ExternalId == ea.ExternalId);
+                var account = _uow.Accounts.Query().FirstOrDefault(a => a.ConnectionId == connection.Id && a.ExternalRef != null && a.ExternalRef!.ExternalId == ea.ExternalId);
                 if (account is null)
                 {
                     account = new Account(connection.UserId, connection.ProfileId, connection.InstitutionId, ea.Type, ea.Name, ea.Currency,
