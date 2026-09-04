@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CashFlow.Application\CashFlow.Application.csproj" />
+    <ProjectReference Include="..\CashFlow.Api\CashFlow.Api.csproj" />
     <ProjectReference Include="..\CashFlow.Infrastructure\CashFlow.Infrastructure.csproj" />
     <ProjectReference Include="..\CashFlow.Connectors.Statements\CashFlow.Connectors.Statements.csproj" />
     <ProjectReference Include="..\CashFlow.Connectors.TInvest\CashFlow.Connectors.TInvest.csproj" />

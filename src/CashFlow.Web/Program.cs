@@ -1,3 +1,4 @@
+using CashFlow.Api;
 using CashFlow.Application;
 using CashFlow.Application.Seed;
 using CashFlow.Connectors.Alfa.Business;
@@ -23,12 +24,19 @@ builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
-builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultScheme = IdentityConstants.ApplicationScheme;
-        options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-    })
-    .AddIdentityCookies();
+// Два способа входа: cookie для браузера и bearer-токен Identity для MAUI-клиента (/api/auth/login?useCookies=false)
+var auth = builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = IdentityConstants.ApplicationScheme;
+    options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+});
+auth.AddIdentityCookies();
+auth.AddBearerToken(IdentityConstants.BearerScheme, o =>
+{
+    o.BearerTokenExpiration = TimeSpan.FromHours(12);
+    o.RefreshTokenExpiration = TimeSpan.FromDays(30);
+});
+builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
 builder.Services.AddCashFlowInfrastructure(builder.Configuration);
 builder.Services.AddCashFlowApplication();
@@ -51,7 +59,8 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
     })
     .AddEntityFrameworkStores<CashFlowDbContext>()
     .AddSignInManager()
-    .AddDefaultTokenProviders();
+    .AddDefaultTokenProviders()
+    .AddApiEndpoints();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
@@ -79,5 +88,7 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 app.MapAdditionalIdentityEndpoints();
 app.MapBankOAuth(); // /oauth/{provider}/start|callback — подключение банка через авторизацию
+app.MapGroup("/api/auth").MapIdentityApi<ApplicationUser>(); // login/refresh для MAUI-клиента (bearer-токены)
+app.MapCashFlowApi(); // REST поверх контрактов Application — единственный вход для мобильного клиента
 
 app.Run();
