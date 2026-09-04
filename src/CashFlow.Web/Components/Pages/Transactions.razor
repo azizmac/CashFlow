@@ -31,7 +31,7 @@
     @foreach (var r in rows)
     {
         <tr>
-            <td style="white-space:nowrap">@r.Tx.PostedAt.Local().ToString("dd.MM.yy HH:mm")</td>
+            <td style="white-space:nowrap"><a href="/transactions/@r.Tx.Id" title="Открыть операцию">@r.Tx.PostedAt.Local().ToString("dd.MM.yy HH:mm")</a></td>
             <td>
                 @if (r.Counterparty is not null) { <a href="/transactions?cp=@r.Counterparty.Id">@r.Counterparty.DisplayName</a> }
                 else { <span class="muted">—</span> }
@@ -39,7 +39,7 @@
                 @if (r.Tx.Status == TransactionStatus.Pending) { <span class="pill warn">в обработке</span> }
             </td>
             <td>
-                <div>@r.Tx.Description</div>
+                <div><a href="/transactions/@r.Tx.Id" class="plain">@r.Tx.Description</a></div>
                 @if (!string.IsNullOrEmpty(r.Tx.Purpose) && r.Tx.Purpose != r.Tx.Description) { <div class="muted" style="font-size:12px">@r.Tx.Purpose</div> }
                 @if (r.Tx.Mcc is not null) { <span class="muted" style="font-size:11px">MCC @r.Tx.Mcc</span> }
             </td>
@@ -68,6 +68,10 @@
 @code {
     [SupplyParameterFromQuery(Name = "cp")] public Guid? CpId { get; set; }
     [SupplyParameterFromQuery(Name = "uncategorized")] public int? Uncat { get; set; }
+    [SupplyParameterFromQuery(Name = "account")] public Guid? AccountQ { get; set; }
+    [SupplyParameterFromQuery(Name = "from")] public string? FromQ { get; set; }
+    [SupplyParameterFromQuery(Name = "to")] public string? ToQ { get; set; }
+    [SupplyParameterFromQuery(Name = "transfers")] public int? TransfersQ { get; set; }
 
     List<FinancialProfile>? profiles;
     List<Account> accounts = [];
@@ -86,6 +90,10 @@
         accounts = Q.Accounts(uid);
         categories = Q.Categories(uid);
         onlyUncategorized = Uncat == 1;
+        includeTransfers = TransfersQ == 1;
+        if (AccountQ is { } aq) { accountId = aq.ToString(); from = from.AddMonths(-9); }
+        if (DateOnly.TryParse(FromQ, out var fq)) from = fq;
+        if (DateOnly.TryParse(ToQ, out var tq)) to = tq;
         if (CpId is { } id) { Cp = Q.Counterparties(uid).FirstOrDefault(c => c.Id == id); from = from.AddMonths(-9); }
         await Reload();
     }

@@ -106,6 +106,26 @@ public sealed class Transaction : Entity
         Touch();
     }
 
+    /// <summary>
+    /// Тот же документ пришёл из более полного источника (например, 1С после краткой XLSX): переписываем реквизиты контрагента,
+    /// назначение и описание. Пользовательские поля (категория, заметка, теги, перевод) не трогаем.
+    /// </summary>
+    public bool EnrichFromSource(CounterpartyRaw counterparty, string? purpose, string description)
+    {
+        // Новый источник богаче, если принёс ИНН, которого не было, или настоящее назначение платежа вместо
+        // служебного («ВО 17, док. 123» из краткой выписки), или имя контрагента там, где его не было.
+        var hasRealPurpose = !string.IsNullOrWhiteSpace(purpose) && (string.IsNullOrWhiteSpace(Purpose) || Purpose.StartsWith("ВО ", StringComparison.Ordinal));
+        var richer = counterparty.Inn is { Length: > 0 } && CounterpartyRaw.Inn is null
+                     || hasRealPurpose
+                     || (string.IsNullOrWhiteSpace(CounterpartyRaw.Name) && !string.IsNullOrWhiteSpace(counterparty.Name));
+        if (!richer) return false;
+        CounterpartyRaw = counterparty;
+        Purpose = purpose ?? Purpose;
+        Description = description;
+        Touch();
+        return true;
+    }
+
     public void SetAmountInBase(Money amountInBase) { AmountInBase = amountInBase; Touch(); }
     public void SetKind(TransactionKind kind) { Kind = kind; Touch(); }
 

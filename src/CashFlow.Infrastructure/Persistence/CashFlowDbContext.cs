@@ -97,6 +97,7 @@ public sealed class CashFlowDbContext : IdentityDbContext<ApplicationUser>
         {
             e.HasIndex(c => new { c.UserId, c.ProfileId });
             e.Property(c => c.CredentialRef).HasMaxLength(64);
+            e.Property(c => c.SourceCode).HasMaxLength(64);
             e.Ignore(p => p.DomainEvents);
         });
 

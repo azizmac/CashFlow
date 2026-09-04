@@ -1,22 +1,53 @@
 using System.Globalization;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Text.Json;
 using CashFlow.Connectors.Abstractions;
 using CashFlow.Domain.Ledger;
 using CashFlow.Domain.Shared;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace CashFlow.Connectors.Sber.Business;
 
 /// <summary>
-/// Sber API (СберБизнес) — только чтение: client-info, statement/summary, statement/transactions.
-/// Транспорт: mTLS (клиентский сертификат из ЛК Sber API) + OAuth2 (refresh_token).
-/// Секреты: client_id, client_secret, refresh_token, cert_pfx_base64, cert_password.
-/// Права (scope) при подключении: только GET_STATEMENT_ACCOUNT / GET_CLIENT_ACCOUNTS — платёжные scope не запрашиваются.
+/// Реквизиты приложения в Sber API (прямая интеграция ИП/ЮЛ). Задаются владельцем сервера в конфигурации
+/// (Integrations:Sber:*), пользователи их не вводят — они только авторизуются в СберБизнес ID.
 /// </summary>
-public sealed class SberBusinessConnector : ReadOnlyConnectorBase
+public sealed class SberApiOptions
+{
+    public const string Section = "Integrations:Sber";
+
+    public string? ClientId { get; set; }
+    public string? ClientSecret { get; set; }
+    /// <summary>Клиентский сертификат для mTLS: путь к .pfx или base64 содержимого.</summary>
+    public string? CertPfxPath { get; set; }
+    public string? CertPfxBase64 { get; set; }
+    public string? CertPassword { get; set; }
+    /// <summary>Страница входа СберБизнес ID (Authorization Code + PKCE).</summary>
+    public string AuthorizeUrl { get; set; } = "https://sbi.sberbank.ru:9443/ic/sso/api/v2/oauth/authorize";
+    public string TokenUrl { get; set; } = "https://fintech.sberbank.ru:9443/ic/sso/api/v2/oauth/token";
+    public string ApiBase { get; set; } = "https://fintech.sberbank.ru:9443/fintech/api/";
+    /// <summary>Только чтение: список счетов и выписки. Платёжные scope не запрашиваются.</summary>
+    public string Scope { get; set; } = "openid GET_CLIENT_ACCOUNTS GET_STATEMENT_ACCOUNT";
+
+    public bool IsConfigured => !string.IsNullOrWhiteSpace(ClientId) && !string.IsNullOrWhiteSpace(ClientSecret)
+                                && (!string.IsNullOrWhiteSpace(CertPfxPath) || !string.IsNullOrWhiteSpace(CertPfxBase64));
+}
+
+/// <summary>
+/// Sber API (СберБизнес) — только чтение: client-info, statement/summary, statement/transactions.
+/// Транспорт: mTLS (клиентский сертификат из ЛК Sber API) + OAuth2.
+/// Два способа подключения:
+///  • вручную — пользователь вводит client_id/client_secret/refresh_token/сертификат;
+///  • через авторизацию — сервер настроен (Integrations:Sber), пользователь входит в СберБизнес ID, приложение получает токены само.
+/// Секреты подключения: client_id, client_secret, refresh_token, cert_pfx_base64, cert_password.
+/// </summary>
+public sealed class SberBusinessConnector : ReadOnlyConnectorBase, IOAuthConnector
 {
     public const string SecretClientId = "client_id";
     public const string SecretClientSecret = "client_secret";
@@ -24,32 +55,104 @@ public sealed class SberBusinessConnector : ReadOnlyConnectorBase
     public const string SecretCertPfx = "cert_pfx_base64";
     public const string SecretCertPassword = "cert_password";
 
-    private const string ApiBase = "https://fintech.sberbank.ru:9443/fintech/api/";
-    private const string TokenUrl = "https://fintech.sberbank.ru:9443/ic/sso/api/v2/oauth/token";
-
     private readonly ILogger<SberBusinessConnector> _log;
-    public SberBusinessConnector(ILogger<SberBusinessConnector> log) => _log = log;
+    private readonly SberApiOptions _opt;
+
+    public SberBusinessConnector(ILogger<SberBusinessConnector> log, IOptions<SberApiOptions> options)
+    {
+        _log = log;
+        _opt = options.Value;
+    }
 
     public override ConnectorType Type => ConnectorType.SberBusiness;
     public override ConnectorCapabilities Capabilities => ConnectorCapabilities.Accounts | ConnectorCapabilities.Balances | ConnectorCapabilities.Transactions;
     public override IReadOnlyList<string> RequiredSecrets => [SecretClientId, SecretClientSecret, SecretRefreshToken, SecretCertPfx, SecretCertPassword];
 
+    // ---------- OAuth (СберБизнес ID) ----------
+
+    public bool IsConfigured => _opt.IsConfigured;
+    public string ProviderDisplayName => "СберБизнес ID";
+    public string SetupHint =>
+        "В СберБизнес: Настройки → Интеграции → Sber API (прямая интеграция): зарегистрируйте приложение, укажите redirect URI " +
+        "«<адрес сервера>/oauth/sberbusiness/callback», права только «Информация о счетах» и «Выписки», выпустите сертификат. " +
+        "client_id, client_secret и сертификат пропишите в конфигурации сервера (Integrations:Sber).";
+
+    public string BuildAuthorizationUrl(OAuthFlow flow)
+    {
+        if (!IsConfigured) throw new InvalidOperationException("Sber API не настроен (Integrations:Sber)");
+        var q = new Dictionary<string, string>
+        {
+            ["response_type"] = "code",
+            ["client_id"] = _opt.ClientId!,
+            ["scope"] = _opt.Scope,
+            ["state"] = flow.State,
+            ["nonce"] = flow.Nonce,
+            ["redirect_uri"] = flow.RedirectUri,
+            ["code_challenge"] = Pkce.Challenge(flow.CodeVerifier),
+            ["code_challenge_method"] = "S256",
+        };
+        return _opt.AuthorizeUrl + "?" + string.Join("&", q.Select(kv => $"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(kv.Value)}"));
+    }
+
+    public async Task<IReadOnlyDictionary<string, string>> ExchangeCodeAsync(string code, OAuthFlow flow, CancellationToken ct)
+    {
+        if (!IsConfigured) throw new InvalidOperationException("Sber API не настроен (Integrations:Sber)");
+        var pfxBase64 = LoadCertBase64();
+        using var http = CreateMtlsClient(pfxBase64, _opt.CertPassword ?? "");
+        using var form = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["grant_type"] = "authorization_code",
+            ["code"] = code,
+            ["redirect_uri"] = flow.RedirectUri,
+            ["client_id"] = _opt.ClientId!,
+            ["client_secret"] = _opt.ClientSecret!,
+            ["code_verifier"] = flow.CodeVerifier,
+        });
+        using var resp = await http.PostAsync(_opt.TokenUrl, form, ct);
+        var json = await resp.Content.ReadAsStringAsync(ct);
+        if (!resp.IsSuccessStatusCode) throw new UnauthorizedAccessException($"Sber OAuth (code exchange): {(int)resp.StatusCode} {json}");
+        using var doc = JsonDocument.Parse(json);
+        var refresh = doc.RootElement.TryGetProperty("refresh_token", out var r) ? r.GetString() : null;
+        if (string.IsNullOrEmpty(refresh)) throw new InvalidOperationException("Sber OAuth: в ответе нет refresh_token");
+
+        return new Dictionary<string, string>
+        {
+            [SecretClientId] = _opt.ClientId!,
+            [SecretClientSecret] = _opt.ClientSecret!,
+            [SecretRefreshToken] = refresh,
+            [SecretCertPfx] = pfxBase64,
+            [SecretCertPassword] = _opt.CertPassword ?? "",
+        };
+    }
+
+    private string LoadCertBase64()
+    {
+        if (!string.IsNullOrWhiteSpace(_opt.CertPfxBase64)) return _opt.CertPfxBase64.Trim();
+        if (!string.IsNullOrWhiteSpace(_opt.CertPfxPath)) return Convert.ToBase64String(File.ReadAllBytes(_opt.CertPfxPath));
+        throw new InvalidOperationException("Не задан сертификат Sber API (Integrations:Sber:CertPfxPath или CertPfxBase64)");
+    }
+
+    private HttpClient CreateMtlsClient(string pfxBase64, string password)
+    {
+        var handler = new HttpClientHandler { ClientCertificateOptions = ClientCertificateOption.Manual };
+        var pfx = Convert.FromBase64String(pfxBase64);
+        handler.ClientCertificates.Add(X509CertificateLoader.LoadPkcs12(pfx, password, X509KeyStorageFlags.EphemeralKeySet));
+        return new HttpClient(handler) { BaseAddress = new Uri(_opt.ApiBase) };
+    }
+
+    // ---------- Сессия API ----------
+
     private sealed class Session : IDisposable
     {
         public required HttpClient Http { get; init; }
-        public required string AccessToken { get; init; }
-        public string? NewRefreshToken { get; init; }
         public void Dispose() => Http.Dispose();
     }
 
     private async Task<Session> OpenAsync(ConnectionContext ctx, CancellationToken ct)
     {
-        var handler = new HttpClientHandler { ClientCertificateOptions = ClientCertificateOption.Manual };
-        var pfx = Convert.FromBase64String(ctx.Secret(SecretCertPfx));
-        handler.ClientCertificates.Add(X509CertificateLoader.LoadPkcs12(pfx, ctx.Secret(SecretCertPassword), X509KeyStorageFlags.EphemeralKeySet));
-        var http = new HttpClient(handler) { BaseAddress = new Uri(ApiBase) };
+        var http = CreateMtlsClient(ctx.Secret(SecretCertPfx), ctx.Secret(SecretCertPassword));
 
-        // OAuth2: обновляем access_token по refresh_token. Refresh-токен одноразовый — новый нужно сохранить (см. ConnectionSyncService: cursor/secret rotation TODO).
+        // OAuth2: обновляем access_token по refresh_token. Refresh-токен одноразовый — новый сохраняем через OnSecretsRotated.
         using var form = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["grant_type"] = "refresh_token",
@@ -57,10 +160,13 @@ public sealed class SberBusinessConnector : ReadOnlyConnectorBase
             ["client_id"] = ctx.Secret(SecretClientId),
             ["client_secret"] = ctx.Secret(SecretClientSecret),
         });
-        using var resp = await http.PostAsync(TokenUrl, form, ct);
+        using var resp = await http.PostAsync(_opt.TokenUrl, form, ct);
         var json = await resp.Content.ReadAsStringAsync(ct);
         if (!resp.IsSuccessStatusCode)
+        {
+            http.Dispose();
             throw new UnauthorizedAccessException($"Sber OAuth: {(int)resp.StatusCode} {json}");
+        }
         using var doc = JsonDocument.Parse(json);
         var access = doc.RootElement.GetProperty("access_token").GetString()!;
         var refresh = doc.RootElement.TryGetProperty("refresh_token", out var r) ? r.GetString() : null;
@@ -71,7 +177,7 @@ public sealed class SberBusinessConnector : ReadOnlyConnectorBase
         }
         http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", access);
         http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        return new Session { Http = http, AccessToken = access, NewRefreshToken = refresh };
+        return new Session { Http = http };
     }
 
     public override async Task<IReadOnlyList<ExternalAccount>> GetAccountsAsync(ConnectionContext ctx, CancellationToken ct)
@@ -92,7 +198,7 @@ public sealed class SberBusinessConnector : ReadOnlyConnectorBase
             var state = Str(a, "state");
             if (state is not null && !state.Equals("OPEN", StringComparison.OrdinalIgnoreCase)) continue;
             var cur = Currency.FromStatement(Str(a, "currencyCode") ?? "643");
-            var name = Str(a, "name") ?? $"Р/с …{number[^4..]}";
+            var name = Str(a, "name") ?? $"Р/с …{number[^Math.Min(4, number.Length)..]}";
 
             Money? balance = null;
             try
@@ -184,10 +290,20 @@ public sealed class SberBusinessConnector : ReadOnlyConnectorBase
             : null;
 }
 
+/// <summary>PKCE (RFC 7636): code_verifier → code_challenge S256.</summary>
+public static class Pkce
+{
+    public static string NewVerifier() => Base64Url(RandomNumberGenerator.GetBytes(48));
+    public static string Challenge(string verifier) => Base64Url(SHA256.HashData(Encoding.ASCII.GetBytes(verifier)));
+    public static string NewState() => Base64Url(RandomNumberGenerator.GetBytes(24));
+    private static string Base64Url(byte[] b) => Convert.ToBase64String(b).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+}
+
 public static class DependencyInjection
 {
-    public static IServiceCollection AddSberBusinessConnector(this IServiceCollection services)
+    public static IServiceCollection AddSberBusinessConnector(this IServiceCollection services, IConfiguration config)
     {
+        services.Configure<SberApiOptions>(config.GetSection(SberApiOptions.Section));
         services.AddSingleton<IConnector, SberBusinessConnector>();
         return services;
     }

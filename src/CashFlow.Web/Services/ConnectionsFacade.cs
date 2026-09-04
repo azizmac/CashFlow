@@ -24,6 +24,9 @@ public sealed class ConnectionsFacade
 
     public IReadOnlyList<IConnector> ApiConnectors => _connectors.Where(c => !c.Capabilities.HasFlag(ConnectorCapabilities.FileImport)).ToList();
 
+    /// <summary>Коннекторы, у которых на сервере заданы реквизиты приложения — для них доступна кнопка «Подключить через авторизацию».</summary>
+    public IReadOnlyList<IOAuthConnector> OAuthConnectors => _connectors.OfType<IOAuthConnector>().Where(c => c.IsConfigured).ToList();
+
     public async Task<Connection> CreateAsync(string userId, Guid profileId, ConnectorType type, string name, IReadOnlyDictionary<string, string> secrets, CancellationToken ct)
     {
         var connector = _connectors.First(c => c.Type == type);
@@ -35,6 +38,7 @@ public sealed class ConnectionsFacade
             ConnectorType.TInvest => Institution.Codes.TInvest,
             ConnectorType.TBankBusiness => Institution.Codes.TBank,
             ConnectorType.SberBusiness => Institution.Codes.Sber,
+            ConnectorType.AlfaBusiness => Institution.Codes.Alfa,
             _ => Institution.Codes.Other,
         };
         var inst = _uow.Institutions.Query().First(i => i.Code == instCode);

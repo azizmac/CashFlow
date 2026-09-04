@@ -485,3 +485,11 @@ $RECYCLE.BIN/
 
 # secrets
 .env
+
+# скачанная документация банков и реальные выписки — не коммитим
+docs/vendor/
+cashflow-src.zip
+
+# сертификаты банков для OAuth-интеграций
+secrets/*
+!secrets/.gitkeep

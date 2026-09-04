@@ -17,7 +17,8 @@ namespace CashFlow.Connectors.Statements;
 public sealed class TBankOperationsParser : IStatementParser
 {
     public string BankCode => Institution.Codes.TBank;
-    public string DisplayName => "Т-Банк: выгрузка операций";
+    public string Code => "tbank-operations";
+    public string DisplayName => "Т-Банк: выгрузка операций (XLSX/CSV, физлицо)";
     public IReadOnlyList<string> Extensions => [".xlsx", ".csv"];
 
     private static readonly string[] RequiredHeaders = ["дата операции", "сумма операции", "описание"];

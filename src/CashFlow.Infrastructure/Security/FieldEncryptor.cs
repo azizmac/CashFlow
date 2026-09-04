@@ -47,9 +47,18 @@ public sealed class AesGcmFieldEncryptor : IFieldEncryptor, IDisposable
     {
         if (!string.IsNullOrWhiteSpace(o.MasterKey))
         {
-            var k = Convert.FromBase64String(o.MasterKey);
-            if (k.Length != 32) throw new InvalidOperationException("Encryption:MasterKey must be 32 bytes (base64)");
-            return k;
+            var raw = o.MasterKey.Trim().Trim('"', '\'');
+            // Base64 из 32 байт — используем напрямую
+            try
+            {
+                var k = Convert.FromBase64String(raw);
+                if (k.Length == 32) return k;
+            }
+            catch (FormatException) { /* не base64 — трактуем как парольную фразу */ }
+
+            // Любая другая строка — парольная фраза: выводим ключ Argon2id с фиксированной солью приложения
+            if (raw.Length < 16) throw new InvalidOperationException("Encryption:MasterKey must be either base64 of 32 bytes or a passphrase of at least 16 characters");
+            return DeriveKey(raw, SHA256.HashData(Encoding.UTF8.GetBytes("cashflow-ai/master-key/v1")));
         }
         if (!string.IsNullOrWhiteSpace(o.MasterPassphrase))
         {

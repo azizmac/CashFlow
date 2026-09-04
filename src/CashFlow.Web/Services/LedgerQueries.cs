@@ -1,5 +1,6 @@
 using CashFlow.Application;
 using CashFlow.Domain.Connections;
+using CashFlow.Domain.Identity;
 using CashFlow.Domain.Ledger;
 using CashFlow.Domain.Shared;
 
@@ -9,6 +10,18 @@ public sealed record TxRow(Transaction Tx, Account Account, Counterparty? Counte
 public sealed record CategoryTotal(Category? Category, decimal Total, int Count);
 public sealed record CounterpartyTotal(Counterparty Counterparty, decimal Total, int Count);
 public sealed record TxFilter(Guid? ProfileId, Guid? AccountId, Guid? CategoryId, Guid? CounterpartyId, DateOnly From, DateOnly To, string? Search, bool OnlyUncategorized, bool IncludeTransfers);
+
+/// <summary>Карточка операции: всё, что о ней известно, включая источник и парную операцию перевода.</summary>
+public sealed record TxDetail(Transaction Tx, Account Account, FinancialProfile? Profile, Institution? Institution, Counterparty? Counterparty,
+    Category? Category, Category? Proposed, Connection? Connection, RawRecord? Raw, Transaction? Pair, Account? PairAccount, List<TxRow> Similar);
+
+/// <summary>Покрытие счёта данными: за какой период есть операции, откуда они пришли и насколько данные устарели.</summary>
+public sealed record AccountCoverage(Account Account, Institution? Institution, FinancialProfile? Profile, DateOnly? First, DateOnly? Last, int Count,
+    DateTimeOffset? LastImportAt, IReadOnlyList<string> Sources)
+{
+    public int StaleDays => Last is { } l ? Math.Max(0, DateOnly.FromDateTime(DateTime.Today).DayNumber - l.DayNumber) : int.MaxValue;
+    public bool IsStale => Count == 0 || StaleDays > 30;
+}
 
 /// <summary>Read-model для страниц. Read-only.</summary>
 public static class Tz
@@ -89,6 +102,79 @@ public sealed class LedgerQueries
             .OrderByDescending(x => x.Total).Take(15).ToList();
 
         return (income, expense, byCat, byCp);
+    }
+
+    public TxDetail? TransactionDetail(string userId, Guid id)
+    {
+        var tx = _uow.Transactions.Query().FirstOrDefault(t => t.Id == id);
+        if (tx is null) return null;
+        var account = _uow.Accounts.Query().FirstOrDefault(a => a.Id == tx.AccountId && a.UserId == userId);
+        if (account is null) return null;
+
+        var profile = _uow.Profiles.Query().FirstOrDefault(p => p.Id == account.ProfileId);
+        var institution = _uow.Institutions.Query().FirstOrDefault(i => i.Id == account.InstitutionId);
+        var cp = tx.CounterpartyId is { } cpId ? _uow.Counterparties.Query().FirstOrDefault(c => c.Id == cpId) : null;
+        var cats = Categories(userId).ToDictionary(c => c.Id);
+        var raw = tx.RawRecordId is { } rid ? _uow.RawRecords.Query().FirstOrDefault(r => r.Id == rid) : null;
+        var connection = raw is not null ? _uow.Connections.Query().FirstOrDefault(c => c.Id == raw.ConnectionId)
+            : account.ConnectionId is { } cid ? _uow.Connections.Query().FirstOrDefault(c => c.Id == cid) : null;
+
+        Transaction? pair = null; Account? pairAccount = null;
+        if (tx.TransferLinkId is { } linkId)
+        {
+            var link = _uow.TransferLinks.Query().FirstOrDefault(l => l.Id == linkId);
+            var otherId = link is null ? (Guid?)null : link.OutgoingTransactionId == tx.Id ? link.IncomingTransactionId : link.OutgoingTransactionId;
+            if (otherId is { } oid)
+            {
+                pair = _uow.Transactions.Query().FirstOrDefault(t => t.Id == oid);
+                if (pair is not null) pairAccount = _uow.Accounts.Query().FirstOrDefault(a => a.Id == pair.AccountId);
+            }
+        }
+
+        // Похожие: тот же контрагент, иначе то же нормализованное описание
+        var similar = new List<TxRow>();
+        if (cp is not null)
+            similar = Transactions(userId, new TxFilter(null, null, null, cp.Id, tx.PostedDate.AddYears(-2), tx.PostedDate.AddMonths(1), null, false, true), 11).Where(r => r.Tx.Id != tx.Id).Take(10).ToList();
+        else
+        {
+            var norm = TextNormalizer.Normalize(tx.Description);
+            if (norm.Length >= 5)
+                similar = Transactions(userId, new TxFilter(null, null, null, null, tx.PostedDate.AddYears(-2), tx.PostedDate.AddMonths(1), tx.Description, false, true), 11).Where(r => r.Tx.Id != tx.Id).Take(10).ToList();
+        }
+
+        return new TxDetail(tx, account, profile, institution, cp,
+            tx.CategoryId is { } c1 ? cats.GetValueOrDefault(c1) : null,
+            tx.ProposedCategoryId is { } c2 ? cats.GetValueOrDefault(c2) : null,
+            connection, raw, pair, pairAccount, similar);
+    }
+
+    /// <summary>Покрытие данными по каждому счёту: период операций, число, дата последнего импорта, источники (подключения).</summary>
+    public List<AccountCoverage> Coverage(string userId, Guid? profileId = null)
+    {
+        var accounts = Accounts(userId, profileId);
+        var ids = accounts.Select(a => a.Id).ToList();
+        var stats = _uow.Transactions.Query().Where(t => ids.Contains(t.AccountId))
+            .GroupBy(t => t.AccountId)
+            .Select(g => new { AccountId = g.Key, Min = g.Min(t => t.PostedAt), Max = g.Max(t => t.PostedAt), Count = g.Count() })
+            .ToList().ToDictionary(x => x.AccountId);
+        var sources = _uow.Transactions.Query().Where(t => ids.Contains(t.AccountId) && t.RawRecordId != null)
+            .Join(_uow.RawRecords.Query(), t => t.RawRecordId, r => r.Id, (t, r) => new { t.AccountId, r.ConnectionId })
+            .Distinct().ToList();
+        var connIds = sources.Select(s => s.ConnectionId).Distinct().ToList();
+        var conns = _uow.Connections.Query().Where(c => connIds.Contains(c.Id)).ToList().ToDictionary(c => c.Id);
+        var institutions = Institutions().ToDictionary(i => i.Id);
+        var profiles = _uow.Profiles.Query().Where(p => p.UserId == userId).ToList().ToDictionary(p => p.Id);
+
+        return accounts.Select(a =>
+        {
+            var s = stats.GetValueOrDefault(a.Id);
+            var src = sources.Where(x => x.AccountId == a.Id).Select(x => conns.GetValueOrDefault(x.ConnectionId)).Where(c => c is not null).ToList();
+            if (src.Count == 0 && a.ConnectionId is { } cid && _uow.Connections.Query().FirstOrDefault(c => c.Id == cid) is { } own) src.Add(own);
+            var lastImport = src.Select(c => c!.LastSyncAt).Where(d => d is not null).DefaultIfEmpty(null).Max();
+            return new AccountCoverage(a, institutions.GetValueOrDefault(a.InstitutionId), profiles.GetValueOrDefault(a.ProfileId),
+                s is null ? null : DateOnly.FromDateTime(s.Min.Local().DateTime), s is null ? null : DateOnly.FromDateTime(s.Max.Local().DateTime), s?.Count ?? 0,
+                lastImport, src.Select(c => c!.Name).Distinct().ToList());
+        }).OrderBy(c => c.Profile?.Name).ThenBy(c => c.Account.Name).ToList();
     }
 
     public decimal NetWorth(string userId, Guid? profileId) =>

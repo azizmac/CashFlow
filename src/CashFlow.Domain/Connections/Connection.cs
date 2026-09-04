@@ -24,6 +24,8 @@ public sealed class Connection : Entity
     public Guid InstitutionId { get; private set; }
     public ConnectorType ConnectorType { get; private set; }
     public string Name { get; private set; } = default!;
+    /// <summary>Формат источника внутри типа: для StatementImport — код парсера (sber-card-pdf, 1c-client-bank…). Разные форматы одного банка = разные подключения.</summary>
+    public string? SourceCode { get; private set; }
     public ConnectionStatus Status { get; private set; }
     public string? LastError { get; private set; }
 
@@ -35,6 +37,8 @@ public sealed class Connection : Entity
     public string? SyncCursor { get; private set; }
     public DateTimeOffset? ConsentExpiresAt { get; private set; }
 
+    public void SetSource(string? sourceCode) { SourceCode = sourceCode; Touch(); }
+    public void Rename(string name) { Name = name; Touch(); }
     public void AttachCredential(string credentialRef) { CredentialRef = credentialRef; Status = ConnectionStatus.Active; LastError = null; Touch(); }
     public void MarkSynced(string? cursor) { LastSyncAt = DateTimeOffset.UtcNow; SyncCursor = cursor; Status = ConnectionStatus.Active; LastError = null; Touch(); }
     public void MarkError(string error) { Status = ConnectionStatus.Error; LastError = error; Touch(); }

@@ -20,6 +20,7 @@
     <ProjectReference Include="..\CashFlow.Connectors.TInvest\CashFlow.Connectors.TInvest.csproj" />
     <ProjectReference Include="..\CashFlow.Connectors.TBank.Business\CashFlow.Connectors.TBank.Business.csproj" />
     <ProjectReference Include="..\CashFlow.Connectors.Sber.Business\CashFlow.Connectors.Sber.Business.csproj" />
+    <ProjectReference Include="..\CashFlow.Connectors.Alfa.Business\CashFlow.Connectors.Alfa.Business.csproj" />
   </ItemGroup>
 
 </Project>

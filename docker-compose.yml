@@ -31,8 +31,19 @@ services:
       Encryption__MasterKey: ${ENCRYPTION_MASTER_KEY:?set ENCRYPTION_MASTER_KEY in .env}
       Sync__IntervalHours: ${SYNC_INTERVAL_HOURS:-6}
       CASHFLOW_TZ: ${CASHFLOW_TZ:-Europe/Moscow}
+      # Подключение банков «через авторизацию» (необязательно). Публичный адрес нужен для redirect URI за reverse proxy.
+      Integrations__PublicBaseUrl: ${PUBLIC_BASE_URL:-}
+      Integrations__Sber__ClientId: ${SBER_CLIENT_ID:-}
+      Integrations__Sber__ClientSecret: ${SBER_CLIENT_SECRET:-}
+      Integrations__Sber__CertPfxPath: ${SBER_CERT_PFX_PATH:-}
+      Integrations__Sber__CertPassword: ${SBER_CERT_PASSWORD:-}
+      Integrations__Alfa__ClientId: ${ALFA_CLIENT_ID:-}
+      Integrations__Alfa__ClientSecret: ${ALFA_CLIENT_SECRET:-}
+      Integrations__TBank__ClientId: ${TBANK_CLIENT_ID:-}
+      Integrations__TBank__ClientSecret: ${TBANK_CLIENT_SECRET:-}
     volumes:
       - dpkeys:/root/.aspnet/DataProtection-Keys
+      - ./secrets:/secrets:ro   # сюда положите sber.pfx и укажите SBER_CERT_PFX_PATH=/secrets/sber.pfx
 
 volumes:
   pgdata:

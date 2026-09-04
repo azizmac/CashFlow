@@ -9,6 +9,9 @@ public static class DependencyInjection
     {
         services.AddSingleton<IStatementParser, TBankOperationsParser>();
         services.AddSingleton<IStatementParser, SberPdfStatementParser>();
+        services.AddSingleton<IStatementParser, SberBusinessStatementParser>();
+        services.AddSingleton<IStatementParser, SberBusinessOperationsParser>();
+        services.AddSingleton<IStatementParser, ClientBankExchangeParser>();
         return services;
     }
 }

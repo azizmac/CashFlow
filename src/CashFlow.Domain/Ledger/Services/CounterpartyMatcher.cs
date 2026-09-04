@@ -99,8 +99,21 @@ public sealed class CounterpartyMatcher
         return new CounterpartyMatch(created, true, "new");
     }
 
+    /// <summary>
+    /// Имя-заглушка из краткой выписки без контрагентов: «Организация (поступление) · 0123», «Счёт 61501…0002 БИК 044525225».
+    /// Такого контрагента переименовываем, как только из более полного файла приходит настоящее название.
+    /// </summary>
+    public static bool IsPlaceholderName(string? name) =>
+        !string.IsNullOrWhiteSpace(name) && (System.Text.RegularExpressions.Regex.IsMatch(name, @" · \d{4}$") || name.StartsWith("Счёт ", StringComparison.Ordinal) && name.Contains("БИК"));
+
     private static void Enrich(Counterparty c, CounterpartyRaw raw)
     {
+        if (!string.IsNullOrWhiteSpace(raw.Name) && IsPlaceholderName(c.DisplayName) && !IsPlaceholderName(raw.Name))
+        {
+            c.Rename(raw.Name.Trim());
+            var k = GuessKind(raw);
+            if (k != CounterpartyKind.Unknown) c.SetKind(k);
+        }
         if (!string.IsNullOrWhiteSpace(raw.Name)) c.AddAlias(raw.Name);
         if (raw.Account is { Length: > 0 }) c.AddAccount(raw.Account);
         if (raw.Phone is { Length: > 0 }) c.AddPhone(raw.Phone);

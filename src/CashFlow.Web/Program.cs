@@ -1,5 +1,6 @@
 using CashFlow.Application;
 using CashFlow.Application.Seed;
+using CashFlow.Connectors.Alfa.Business;
 using CashFlow.Connectors.Sber.Business;
 using CashFlow.Connectors.Statements;
 using CashFlow.Connectors.TBank.Business;
@@ -33,8 +34,11 @@ builder.Services.AddCashFlowInfrastructure(builder.Configuration);
 builder.Services.AddCashFlowApplication();
 builder.Services.AddStatementParsers();
 builder.Services.AddTInvestConnector();
-builder.Services.AddTBankBusinessConnector();
-builder.Services.AddSberBusinessConnector();
+builder.Services.AddTBankBusinessConnector(builder.Configuration);
+builder.Services.AddSberBusinessConnector(builder.Configuration);
+builder.Services.AddAlfaBusinessConnector(builder.Configuration);
+builder.Services.AddMemoryCache();
+builder.Services.AddAuthorization();
 builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<LedgerQueries>();
 builder.Services.AddScoped<ConnectionsFacade>();
@@ -76,5 +80,6 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 app.MapAdditionalIdentityEndpoints();
+app.MapBankOAuth(); // /oauth/{provider}/start|callback — подключение банка через авторизацию
 
 app.Run();

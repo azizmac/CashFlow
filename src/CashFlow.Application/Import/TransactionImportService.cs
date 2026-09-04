@@ -38,6 +38,7 @@ public sealed class TransactionImportService
         var byExt = existing.Where(t => t.ExternalRef is not null).ToDictionary(t => t.ExternalRef!.ExternalId);
 
         var added = new List<Transaction>();
+        var enriched = new List<Transaction>();
         int updated = 0, skipped = 0;
 
         foreach (var e in external)
@@ -56,12 +57,19 @@ public sealed class TransactionImportService
 
             if (match is not null)
             {
+                var changed = false;
                 if (match.Status != e.Status || (match.Mcc is null && e.Mcc is not null))
                 {
                     match.UpdateFromSource(e.Status, e.BookedAt, e.Mcc);
-                    updated++;
+                    changed = true;
                 }
-                else skipped++;
+                // Более полный формат той же выписки (1С после краткой XLSX): подтягиваем контрагента и назначение, пересопоставляем
+                if (match.EnrichFromSource(e.Counterparty, e.Purpose, e.Description))
+                {
+                    enriched.Add(match);
+                    changed = true;
+                }
+                if (changed) updated++; else skipped++;
                 continue;
             }
 
@@ -86,9 +94,9 @@ public sealed class TransactionImportService
 
         await _uow.Transactions.AddRangeAsync(added, ct);
 
-        var cpCreated = await ResolveCounterpartiesAsync(userId, added, ct);
+        var cpCreated = await ResolveCounterpartiesAsync(userId, added.Concat(enriched).ToList(), ct);
         var transfers = await LinkTransfersAsync(userId, added, existing, ct);
-        var categorized = CategorizeAsync(userId, added);
+        var categorized = CategorizeAsync(userId, added.Concat(enriched.Where(t => t.CategoryId == null)).ToList());
 
         await _uow.SaveChangesAsync(ct);
 
@@ -113,7 +121,9 @@ public sealed class TransactionImportService
             var m = matcher.Resolve(t.CounterpartyRaw);
             if (m is null) continue;
             t.ResolveCounterparty(m.Counterparty.Id);
-            if (m.Counterparty.Kind == CounterpartyKind.Unknown && t.Mcc is not null) m.Counterparty.SetKind(CounterpartyKind.Merchant);
+            // Торговая точка: есть MCC или операция по бизнес-карте («Покупка: …», «Отмена покупки: …»)
+            if (m.Counterparty.Kind == CounterpartyKind.Unknown && (t.Mcc is not null || t.Description.StartsWith("Покупка", StringComparison.Ordinal) || t.Description.Contains("покупки:", StringComparison.Ordinal)))
+                m.Counterparty.SetKind(CounterpartyKind.Merchant);
             if (m.Created && knownIds.Add(m.Counterparty.Id))
             {
                 await _uow.Counterparties.AddAsync(m.Counterparty, ct);

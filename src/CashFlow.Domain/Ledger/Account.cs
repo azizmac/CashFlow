@@ -54,6 +54,8 @@ public sealed class Account : Entity
     public DateTimeOffset? LastBalanceAt { get; private set; }
 
     public void Rename(string name) { Name = name; Touch(); }
+    /// <summary>Счёт, созданный из выписки, «усыновляется» API-подключением, когда оно находит тот же номер счёта.</summary>
+    public void AttachToConnection(Guid connectionId, ExternalRef externalRef) { ConnectionId = connectionId; ExternalRef = externalRef; Touch(); }
     public void Archive() { IsArchived = true; Touch(); }
     public void SetFlags(bool netWorth, bool cashFlow) { IncludeInNetWorth = netWorth; IncludeInCashFlow = cashFlow; Touch(); }
 
@@ -65,7 +67,8 @@ public sealed class Account : Entity
         LastBalanceAt = ts;
         Touch();
         Raise(new BalanceSnapshotTaken(Id, current, ts));
-        return new BalanceSnapshot(Id, ts, current, available, blocked);
+        // Отдельные экземпляры Money: owned-типы EF Core не должны разделять один объект между Account и BalanceSnapshot
+        return new BalanceSnapshot(Id, ts, current with { }, available is null ? null : available with { }, blocked is null ? null : blocked with { });
     }
 }
 

@@ -75,7 +75,9 @@ public sealed record StatementParseResult(
     ExternalAccount Account,
     IReadOnlyList<ExternalTransaction> Transactions,
     DateRange? Period,
-    IReadOnlyList<string> Warnings);
+    IReadOnlyList<string> Warnings,
+    /// <summary>Банк, определённый по содержимому файла (Institution.Codes). null — брать IStatementParser.BankCode.</summary>
+    string? DetectedBankCode = null);
 
 /// <summary>
 /// Коннектор — только чтение. Методов записи здесь нет и не будет.
@@ -97,11 +99,33 @@ public interface IConnector
 public interface IStatementParser
 {
     string BankCode { get; }               // Institution.Codes
+    /// <summary>Стабильный код формата (sber-card-pdf, sber-business, 1c-client-bank…). Хранится в Connection.SourceCode.</summary>
+    string Code { get; }
     string DisplayName { get; }
     IReadOnlyList<string> Extensions { get; }
     /// <summary>Быстрая проверка, похож ли файл на выписку этого банка.</summary>
     Task<bool> CanParseAsync(Stream content, string fileName, CancellationToken ct);
     Task<StatementParseResult> ParseAsync(Stream content, string fileName, CancellationToken ct);
+}
+
+/// <summary>Одна попытка OAuth-подключения: живёт от редиректа в банк до callback.</summary>
+public sealed record OAuthFlow(string State, string RedirectUri, string CodeVerifier, string Nonce);
+
+/// <summary>
+/// Коннектор, к которому можно подключиться «через авторизацию в банке»: OAuth 2.0 Authorization Code + PKCE.
+/// Учётные данные приложения (client_id, client_secret, сертификат) задаются в конфигурации сервера,
+/// а токены конкретного пользователя после обмена кладутся в ISecretStore как обычные секреты подключения.
+/// </summary>
+public interface IOAuthConnector : IConnector
+{
+    /// <summary>Заданы ли client_id и прочие реквизиты приложения. Без них кнопка подключения не показывается.</summary>
+    bool IsConfigured { get; }
+    string ProviderDisplayName { get; }
+    /// <summary>Что нужно сделать заранее в ЛК банка (регистрация приложения, redirect URI, права).</summary>
+    string SetupHint { get; }
+    string BuildAuthorizationUrl(OAuthFlow flow);
+    /// <summary>Обменивает authorization code на токены и возвращает секреты для ISecretStore (ключи = RequiredSecrets).</summary>
+    Task<IReadOnlyDictionary<string, string>> ExchangeCodeAsync(string code, OAuthFlow flow, CancellationToken ct);
 }
 
 public abstract class ReadOnlyConnectorBase : IConnector

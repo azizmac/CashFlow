@@ -32,7 +32,11 @@
 
 @if (income == 0 && expense == 0)
 {
-    <div class="alert info">Данных пока нет. <a href="/import">Загрузите выписку</a> или <a href="/connections">подключите API</a>.</div>
+    <div class="alert info">Данных пока нет. <a href="/sources">Загрузите выписку</a> или <a href="/connections">подключите API</a>.</div>
+}
+@if (stale.Count > 0)
+{
+    <div class="alert warn">Данные устарели: @string.Join("; ", stale.Take(3).Select(s => $"«{s.Account.Name}» — последняя операция {s.Last:dd.MM.yyyy}"))@(stale.Count > 3 ? $" и ещё {stale.Count - 3}" : ""). <a href="/sources">Догрузить выписки</a></div>
 }
 
 <div class="grid2">
@@ -81,6 +85,7 @@
     decimal income, expense, netWorth;
     List<CategoryTotal> byCat = [];
     List<CounterpartyTotal> byCp = [];
+    List<AccountCoverage> stale = [];
     string uid = "";
 
     protected override async Task OnInitializedAsync()
@@ -98,6 +103,7 @@
         Guid? pid = Guid.TryParse(profileId, out var g) ? g : null;
         (income, expense, byCat, byCp) = Q.Summary(uid, pid, from, to);
         netWorth = Q.NetWorth(uid, pid);
+        stale = Q.Coverage(uid, pid).Where(c => c.Count > 0 && c.StaleDays > 30 && c.Account.IncludeInCashFlow).ToList();
         return Task.CompletedTask;
     }
 

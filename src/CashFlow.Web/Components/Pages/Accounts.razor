@@ -16,7 +16,7 @@
     @foreach (var a in accounts)
     {
         <tr>
-            <td>@a.Name</td>
+            <td><a href="/transactions?account=@a.Id&transfers=1">@a.Name</a></td>
             <td class="muted">@profiles.FirstOrDefault(p => p.Id == a.ProfileId)?.Name</td>
             <td class="muted">@institutions.GetValueOrDefault(a.InstitutionId)?.Name</td>
             <td><span class="pill">@Type(a.Type)</span></td>

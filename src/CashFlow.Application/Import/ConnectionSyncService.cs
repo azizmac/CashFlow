@@ -59,6 +59,19 @@ public sealed class ConnectionSyncService
             foreach (var ea in extAccounts)
             {
                 var account = _uow.Accounts.Query().FirstOrDefault(a => a.ConnectionId == connection.Id && a.ExternalRef != null && a.ExternalRef!.ExternalId == ea.ExternalId);
+                if (account is null && ea.AccountNumber is { Length: >= 16 } number)
+                {
+                    // Счёт уже мог быть создан из выписки (тот же номер в этом профиле и банке) — забираем его под API-подключение,
+                    // чтобы не плодить дубли и чтобы операции из файла и из API дедуплицировались в одном месте.
+                    account = _uow.Accounts.Query().FirstOrDefault(a => a.UserId == connection.UserId && a.ProfileId == connection.ProfileId
+                        && a.InstitutionId == connection.InstitutionId && !a.IsArchived && a.AccountNumber == number);
+                    if (account is not null)
+                    {
+                        _log.LogInformation("Account {Number} adopted by connection {Connection}", number[^4..], connection.Name);
+                        account.AttachToConnection(connection.Id, new ExternalRef(connection.ConnectorType, ea.ExternalId));
+                        await _uow.SaveChangesAsync(ct);
+                    }
+                }
                 if (account is null)
                 {
                     account = new Account(connection.UserId, connection.ProfileId, connection.InstitutionId, ea.Type, ea.Name, ea.Currency,

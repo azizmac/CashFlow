@@ -39,6 +39,7 @@ public enum ConnectorType
     TInvest = 10,
     TBankBusiness = 11,
     SberBusiness = 20,
+    AlfaBusiness = 21,
     CbrOpenApi = 30,
     PushListener = 40,
 }
