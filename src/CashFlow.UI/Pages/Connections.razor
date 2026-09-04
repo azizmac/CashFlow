@@ -1,12 +1,8 @@
 @page "/connections"
 @attribute [Authorize]
-@rendermode InteractiveServer
-@inject CurrentUser Me
+@inject ICurrentUser Me
 @inject IConnectionsService Svc
-@inject NavigationManager Nav
-@using CashFlow.Application
-@using CashFlow.Application.Contracts
-@using Microsoft.AspNetCore.WebUtilities
+@inject IAppShell Shell
 
 <PageTitle>Подключения — CashFlow</PageTitle>
 <h1>Подключения</h1>
@@ -93,6 +89,10 @@ else
 </div>
 
 @code {
+    [SupplyParameterFromQuery(Name = "connected")] public Guid? ConnectedQ { get; set; }
+    [SupplyParameterFromQuery(Name = "oauth")] public string? OAuthQ { get; set; }
+    [SupplyParameterFromQuery(Name = "msg")] public string? MsgQ { get; set; }
+
     IReadOnlyList<ProfileDto>? profiles;
     IReadOnlyList<ConnectionDto> connections = [];
     IReadOnlyList<ConnectorInfoDto> connectors = [];
@@ -116,13 +116,12 @@ else
         await Reload();
 
         // Возврат из банка после OAuth: ?connected=<id> или ?oauth=error&msg=...
-        var query = QueryHelpers.ParseQuery(new Uri(Nav.Uri).Query);
-        if (query.TryGetValue("oauth", out var o) && o == "error")
+        if (OAuthQ == "error")
         {
-            msg = "Не удалось подключить: " + query.GetValueOrDefault("msg");
+            msg = "Не удалось подключить: " + MsgQ;
             msgCss = "err";
         }
-        else if (query.TryGetValue("connected", out var idStr) && Guid.TryParse(idStr, out var id) && connections.FirstOrDefault(x => x.Id == id) is { } c)
+        else if (ConnectedQ is { } id && connections.FirstOrDefault(x => x.Id == id) is { } c)
         {
             msg = $"Подключение «{c.Name}» создано, запускаю первую синхронизацию…";
             msgCss = "ok";
@@ -132,8 +131,7 @@ else
 
     async Task Reload() => connections = await Svc.ListAsync(uid);
 
-    void StartOAuth(ConnectorInfoDto oc) =>
-        Nav.NavigateTo($"/oauth/{oc.OAuthProviderKey}/start?profileId={oauthProfileId}&name={Uri.EscapeDataString(oauthName.Trim())}", forceLoad: true);
+    Task StartOAuth(ConnectorInfoDto oc) => Shell.StartBankOAuthAsync(oc.OAuthProviderKey!, Guid.Parse(oauthProfileId), oauthName.Trim());
 
     async Task LoadPfx(InputFileChangeEventArgs e, string key)
     {

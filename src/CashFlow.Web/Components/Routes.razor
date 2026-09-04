@@ -1,7 +1,7 @@
-﻿@using CashFlow.Web.Components.Account.Shared
-<Router AppAssembly="typeof(Program).Assembly">
+@using CashFlow.Web.Components.Account.Shared
+<Router AppAssembly="typeof(Program).Assembly" AdditionalAssemblies="new[] { typeof(CashFlow.UI.Layout.MainLayout).Assembly }">
     <Found Context="routeData">
-        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(CashFlow.UI.Layout.MainLayout)">
             <NotAuthorized>
                 <RedirectToLogin />
             </NotAuthorized>

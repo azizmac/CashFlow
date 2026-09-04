@@ -1,14 +1,11 @@
 @page "/sources"
 @page "/import"
 @attribute [Authorize]
-@rendermode InteractiveServer
-@inject CurrentUser Me
+@inject ICurrentUser Me
 @inject ILedgerQueries Q
 @inject IConnectionsService Connections
 @inject IImportService Importer
-@inject NavigationManager Nav
-@using CashFlow.Application
-@using CashFlow.Application.Contracts
+@inject IAppShell Shell
 
 <PageTitle>Источники данных — CashFlow</PageTitle>
 <h1>Источники данных</h1>
@@ -162,7 +159,7 @@ else
 
     void OnFiles(InputFileChangeEventArgs e) => files = e.GetMultipleFiles(20).ToList();
 
-    void StartOAuth(ConnectorInfoDto oc) => Nav.NavigateTo($"/oauth/{oc.OAuthProviderKey}/start?profileId={profileId}", forceLoad: true);
+    Task StartOAuth(ConnectorInfoDto oc) => Shell.StartBankOAuthAsync(oc.OAuthProviderKey!, Guid.Parse(profileId), null);
 
     static string H(string? s) => System.Net.WebUtility.HtmlEncode(s ?? "");
 

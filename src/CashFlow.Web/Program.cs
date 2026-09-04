@@ -48,7 +48,8 @@ builder.Services.AddAlfaBusinessConnector(builder.Configuration);
 builder.Services.AddMemoryCache();
 builder.Services.AddAuthorization();
 builder.Services.AddCashFlowBackgroundJobs(builder.Configuration);
-builder.Services.AddScoped<CurrentUser>();
+builder.Services.AddScoped<CashFlow.UI.Services.ICurrentUser, CurrentUser>();
+builder.Services.AddScoped<CashFlow.UI.Services.IAppShell, WebAppShell>();
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>

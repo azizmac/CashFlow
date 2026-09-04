@@ -1,10 +1,7 @@
 @page "/profiles"
 @attribute [Authorize]
-@rendermode InteractiveServer
-@inject CurrentUser Me
+@inject ICurrentUser Me
 @inject IProfileService Svc
-@using CashFlow.Application
-@using CashFlow.Application.Contracts
 
 <PageTitle>Профили — CashFlow</PageTitle>
 <h1>Финансовые профили</h1>

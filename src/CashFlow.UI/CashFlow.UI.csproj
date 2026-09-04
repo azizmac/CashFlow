@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <!-- Общий UI: страницы и макет для веб-хоста (Blazor Server) и MAUI Blazor Hybrid.
+       Работает только через контракты Application (DTO + интерфейсы) и две абстракции хоста: ICurrentUser и IAppShell. -->
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <StaticWebAssetBasePath>_content/CashFlow.UI</StaticWebAssetBasePath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.9" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="9.0.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CashFlow.Application\CashFlow.Application.csproj" />
+  </ItemGroup>
+
+</Project>

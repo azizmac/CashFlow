@@ -1,11 +1,8 @@
 @page "/transactions"
 @attribute [Authorize]
-@rendermode InteractiveServer
-@inject CurrentUser Me
+@inject ICurrentUser Me
 @inject ILedgerQueries Q
 @inject ILedgerCommands Commands
-@using CashFlow.Application
-@using CashFlow.Application.Contracts
 
 <PageTitle>Операции — CashFlow</PageTitle>
 <h1>Операции</h1>

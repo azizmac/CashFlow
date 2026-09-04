@@ -1,11 +1,8 @@
 @page "/accounts"
 @attribute [Authorize]
-@rendermode InteractiveServer
-@inject CurrentUser Me
+@inject ICurrentUser Me
 @inject ILedgerQueries Q
 @inject ILedgerCommands Commands
-@using CashFlow.Application
-@using CashFlow.Application.Contracts
 
 <PageTitle>Счета — CashFlow</PageTitle>
 <h1>Счета</h1>
