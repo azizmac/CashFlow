@@ -55,7 +55,7 @@ src/
   CashFlow.Infrastructure           EF Core + Npgsql, шифрование колонок, ISecretStore, миграции
   CashFlow.Web                      Blazor Server: обзор, операции, контрагенты, счета, импорт, подключения, категории, профили
 tests/CashFlow.Domain.Tests         xUnit
-docs/                               исследование API банков, доменная модель
+docs/                               исследование API банков (bank-integrations.md, banks/ — карточки и MCP)
 ```
 
 ## Статус и ограничения
