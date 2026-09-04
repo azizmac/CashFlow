@@ -74,6 +74,39 @@ docs/                               исследование API банков (b
 
 MIT
 
+## Архитектура и проекты
+
+```
+src/CashFlow.Domain            сущности, value objects, доменные сервисы (матчинг контрагентов, переводов, правила)
+src/CashFlow.Application       use cases и единственная граница для UI/API: DTO (Contracts), интерфейсы (IProfileService, ILedgerQueries,
+                               ILedgerCommands, ICategoryService, IImportService, IConnectionsService) и их серверные реализации
+src/CashFlow.Infrastructure    EF Core + PostgreSQL, шифрование полей, хранилище секретов, планировщик синхронизации
+src/CashFlow.Connectors.*      парсеры выписок и API банков (только чтение)
+src/CashFlow.Api               REST /api поверх интерфейсов Application; вход по bearer-токену Identity (/api/auth)
+src/CashFlow.UI                общие Razor-страницы и макет; знают только DTO и две абстракции хоста (ICurrentUser, IAppShell)
+src/CashFlow.Web               сервер: Blazor Server (тот же UI, вход по cookie) + API + OAuth-callback банков
+src/CashFlow.Client            HTTP-реализации интерфейсов Application для клиентов
+src/CashFlow.Maui              MAUI Blazor Hybrid: тот же UI, данные через CashFlow.Client → сервер
+tools/StatementProbe           проверка парсеров на файлах и сквозной прогон импорта через PostgreSQL
+tools/docker-mcp               MCP-сервер поверх docker CLI для Claude Code
+```
+
+Правило безопасности: наружу (в страницы, API, MAUI) уходят только DTO. В них нет ссылок на секреты, номера счетов и телефоны маскированы, сырая запись выписки отдаётся только в карточке одной операции. Сервер берёт пользователя из cookie или токена и проверяет владельца в каждой команде, поэтому клиент не может запросить чужие данные.
+
+## Мобильное и настольное приложение (MAUI)
+
+`src/CashFlow.Maui` — один код для Windows, macOS, iOS и Android. Приложение не хранит данные, оно входит на ваш сервер CashFlow (адрес, e-mail, пароль) и работает через REST; сессия лежит в защищённом хранилище платформы. Экран входа принимает адрес вида `http://192.168.1.10:8080` (домашняя сеть, Tailscale) или `https://cashflow.example.com`.
+
+```bash
+# Windows (воркод maui-windows уже есть)
+dotnet build src/CashFlow.Maui -f net9.0-windows10.0.19041.0
+# Android / iOS / macOS: один раз установить воркоды, затем собирать с мобильными целями
+dotnet workload install maui
+dotnet build src/CashFlow.Maui -p:MobileTargets=true -f net9.0-android
+```
+
+Что нужно для распространения: Android ставится из APK, iOS требует аккаунт разработчика Apple и TestFlight, macOS — подпись и нотаризацию. Подключение банков «через авторизацию» из приложения открывает системный браузер на сервере: там нужен вход в веб-версию.
+
 ## Страницы
 
 - **Источники данных** (`/sources`) — одно место для загрузки: зона перетаскивания файлов, карточки покрытия по каждому счёту (за какой период есть операции, откуда они пришли, когда загружались), подсветка счетов, по которым данных нет больше 30 дней, с подсказкой «догрузите с такой-то даты» и инструкцией, где взять выписку в конкретном банке. Здесь же синхронизация API-подключений и кнопки OAuth.

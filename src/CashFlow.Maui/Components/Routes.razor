@@ -1,0 +1,35 @@
+@using CashFlow.Maui.Components.Pages
+@inject CashFlow.Client.ApiSession Session
+
+@if (!restored)
+{
+    <p style="padding:24px;color:#6b7280">Загрузка…</p>
+}
+else
+{
+    <CascadingAuthenticationState>
+        <Router AppAssembly="typeof(MauiProgram).Assembly" AdditionalAssemblies="new[] { typeof(CashFlow.UI.Layout.MainLayout).Assembly }">
+            <Found Context="routeData">
+                <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(CashFlow.UI.Layout.MainLayout)">
+                    <NotAuthorized>
+                        <Login />
+                    </NotAuthorized>
+                </AuthorizeRouteView>
+                <FocusOnNavigate RouteData="routeData" Selector="h1" />
+            </Found>
+            <NotFound>
+                <LayoutView Layout="typeof(CashFlow.UI.Layout.MainLayout)"><p style="padding:24px">Страница не найдена.</p></LayoutView>
+            </NotFound>
+        </Router>
+    </CascadingAuthenticationState>
+}
+
+@code {
+    bool restored;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Session.RestoreAsync();
+        restored = true;
+    }
+}

@@ -86,7 +86,9 @@ else
 
 app.UseAntiforgery();
 app.MapStaticAssets();
-app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode()
+    .AddAdditionalAssemblies(typeof(CashFlow.UI.Layout.MainLayout).Assembly); // страницы общей библиотеки CashFlow.UI
 app.MapAdditionalIdentityEndpoints();
 app.MapBankOAuth(); // /oauth/{provider}/start|callback — подключение банка через авторизацию
 app.MapGroup("/api/auth").MapIdentityApi<ApplicationUser>(); // login/refresh для MAUI-клиента (bearer-токены)

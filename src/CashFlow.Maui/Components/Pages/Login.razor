@@ -1,0 +1,63 @@
+@page "/Account/Login"
+@page "/Account/Register"
+@page "/login"
+@inject CashFlow.Client.ApiClient Api
+@inject NavigationManager Nav
+
+<div class="login">
+    <div class="login-card">
+        <div class="brand">💸 CashFlow AI</div>
+        <p class="muted">Приложение подключается к вашему серверу CashFlow. Данные хранятся там, здесь только сессия.</p>
+        <div class="form">
+            <label>Адрес сервера <input @bind="server" placeholder="https://cashflow.example.com или http://192.168.1.10:8080" /></label>
+            <label>E-mail <input @bind="email" type="email" autocomplete="username" /></label>
+            <label>Пароль <input @bind="password" type="password" autocomplete="current-password" @onkeydown="OnKey" /></label>
+            @if (error is not null) { <div class="alert err">@error</div> }
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="primary" @onclick="DoLogin" disabled="@busy">@(busy ? "Входим…" : "Войти")</button>
+                <button @onclick="DoRegister" disabled="@busy">Зарегистрироваться</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    string server = "", email = "", password = "";
+    string? error; bool busy;
+
+    protected override void OnInitialized()
+    {
+        server = Preferences.Default.Get("cashflow.server", "");
+        email = Preferences.Default.Get("cashflow.email", "");
+    }
+
+    Task OnKey(KeyboardEventArgs e) => e.Key == "Enter" ? DoLogin() : Task.CompletedTask;
+
+    async Task DoLogin() => await Run(() => Api.LoginAsync(server.Trim(), email.Trim(), password));
+
+    async Task DoRegister() => await Run(async () =>
+    {
+        await Api.RegisterAsync(server.Trim(), email.Trim(), password);
+        await Api.LoginAsync(server.Trim(), email.Trim(), password);
+    });
+
+    async Task Run(Func<Task> action)
+    {
+        error = null;
+        if (string.IsNullOrWhiteSpace(server) || !Uri.TryCreate(server.Trim(), UriKind.Absolute, out _)) { error = "Укажите адрес сервера, например http://192.168.1.10:8080"; return; }
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrEmpty(password)) { error = "Введите e-mail и пароль"; return; }
+        busy = true;
+        try
+        {
+            await action();
+            Preferences.Default.Set("cashflow.server", server.Trim());
+            Preferences.Default.Set("cashflow.email", email.Trim());
+            password = "";
+            Nav.NavigateTo("/");
+        }
+        catch (CashFlow.Client.ApiException ex) { error = ex.Message; }
+        catch (HttpRequestException ex) { error = "Сервер недоступен: " + ex.Message; }
+        catch (Exception ex) { error = ex.Message; }
+        finally { busy = false; }
+    }
+}
