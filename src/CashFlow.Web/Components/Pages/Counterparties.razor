@@ -2,8 +2,10 @@
 @attribute [Authorize]
 @rendermode InteractiveServer
 @inject CurrentUser Me
-@inject LedgerQueries Q
-@inject CashFlow.Application.IUnitOfWork Uow
+@inject ILedgerQueries Q
+@inject ILedgerCommands Commands
+@using CashFlow.Application
+@using CashFlow.Application.Contracts
 
 <PageTitle>Контрагенты — CashFlow</PageTitle>
 <h1>Контрагенты</h1>
@@ -24,34 +26,34 @@
     {
         <tr>
             <td>
-                @if (editId == c.Cp.Id)
+                @if (editId == c.Counterparty.Id)
                 {
                     <input @bind="editName" style="width:100%" />
                 }
                 else
                 {
-                    <a href="/transactions?cp=@c.Cp.Id">@c.Cp.DisplayName</a>
-                    @if (c.Cp.Aliases.Count > 1) { <div class="muted" style="font-size:11px">также: @string.Join(", ", c.Cp.Aliases.Where(a => a != TextNormalizer.Normalize(c.Cp.DisplayName)).Take(3))</div> }
+                    <a href="/transactions?cp=@c.Counterparty.Id">@c.Counterparty.DisplayName</a>
+                    @if (c.Counterparty.Aliases.Count > 1) { <div class="muted" style="font-size:11px">также: @string.Join(", ", c.Counterparty.Aliases.Where(a => a != TextNormalizer.Normalize(c.Counterparty.DisplayName)).Take(3))</div> }
                 }
             </td>
             <td>
-                <select value="@c.Cp.Kind" @onchange="e => SetKind(c.Cp, e.Value?.ToString())">
+                <select value="@c.Counterparty.Kind" @onchange="e => SetKind(c.Counterparty, e.Value?.ToString())">
                     @foreach (var k in Enum.GetValues<CounterpartyKind>()) { <option value="@k">@Kind(k)</option> }
                 </select>
             </td>
-            <td class="muted">@c.Cp.Inn</td>
+            <td class="muted">@c.Counterparty.Inn</td>
             <td>
-                <select value="@(c.Cp.DefaultCategoryId?.ToString() ?? "")" @onchange="e => SetDefaultCategory(c.Cp, e.Value?.ToString())" style="max-width:200px">
+                <select value="@(c.Counterparty.DefaultCategoryId?.ToString() ?? "")" @onchange="e => SetDefaultCategory(c.Counterparty, e.Value?.ToString())" style="max-width:200px">
                     <option value="">—</option>
-                    @foreach (var cat in categories) { <option value="@cat.Id">@cat.Icon @cat.Name</option> }
+                    @foreach (var cat in categories) { <option value="@cat.Id">@cat.Label</option> }
                 </select>
             </td>
             <td class="num">@c.Count</td>
             <td class="num neg">@(c.Out > 0 ? c.Out.ToString("N0") : "")</td>
             <td class="num pos">@(c.In > 0 ? c.In.ToString("N0") : "")</td>
             <td style="white-space:nowrap">
-                @if (editId == c.Cp.Id) { <button class="small primary" @onclick="() => SaveName(c.Cp)">Сохранить</button> }
-                else { <button class="small" @onclick="() => { editId = c.Cp.Id; editName = c.Cp.DisplayName; }">✎</button> }
+                @if (editId == c.Counterparty.Id) { <button class="small primary" @onclick="() => SaveName(c.Counterparty)">Сохранить</button> }
+                else { <button class="small" @onclick="() => { editId = c.Counterparty.Id; editName = c.Counterparty.DisplayName; }">✎</button> }
             </td>
         </tr>
     }
@@ -59,9 +61,8 @@
 </table>
 
 @code {
-    record Row(Counterparty Cp, int Count, decimal Out, decimal In);
-    List<Row> rows = [];
-    List<Category> categories = [];
+    IReadOnlyList<CounterpartyStatsDto> rows = [];
+    IReadOnlyList<CategoryDto> categories = [];
     string? search, kind;
     Guid? editId; string editName = "";
     string uid = "";
@@ -69,41 +70,15 @@
     protected override async Task OnInitializedAsync()
     {
         uid = await Me.IdAsync();
-        categories = Q.Categories(uid);
+        categories = await Q.CategoriesAsync(uid);
         await Reload();
     }
 
-    Task Reload()
-    {
-        var cps = Q.Counterparties(uid);
-        if (!string.IsNullOrWhiteSpace(search)) { var s = TextNormalizer.Normalize(search); cps = cps.Where(c => c.Aliases.Any(a => a.Contains(s)) || (c.Inn?.Contains(s) ?? false)).ToList(); }
-        if (Enum.TryParse<CounterpartyKind>(kind, out var k)) cps = cps.Where(c => c.Kind == k).ToList();
+    async Task Reload() => rows = await Q.CounterpartiesAsync(uid, search, Enum.TryParse<CounterpartyKind>(kind, out var k) ? k : null);
 
-        var ids = cps.Select(c => c.Id).ToList();
-        var stats = Uow.Transactions.Query().Where(t => t.CounterpartyId != null && ids.Contains(t.CounterpartyId!.Value) && t.Kind != TransactionKind.Transfer)
-            .Select(t => new { t.CounterpartyId, t.Amount.Amount }).ToList()
-            .GroupBy(x => x.CounterpartyId!.Value)
-            .ToDictionary(g => g.Key, g => (Count: g.Count(), Out: g.Where(x => x.Amount < 0).Sum(x => -x.Amount), In: g.Where(x => x.Amount > 0).Sum(x => x.Amount)));
-
-        rows = cps.Select(c => { var s = stats.GetValueOrDefault(c.Id); return new Row(c, s.Count, s.Out, s.In); })
-            .OrderByDescending(r => r.Out + r.In).ToList();
-        return Task.CompletedTask;
-    }
-
-    async Task SetKind(Counterparty c, string? v) { if (Enum.TryParse<CounterpartyKind>(v, out var k)) { c.SetKind(k); await Uow.SaveChangesAsync(); } }
-
-    async Task SetDefaultCategory(Counterparty c, string? v)
-    {
-        c.SetDefaultCategory(Guid.TryParse(v, out var g) ? g : null);
-        if (c.DefaultCategoryId is { } cat)
-        {
-            var txs = Uow.Transactions.Query().Where(t => t.CounterpartyId == c.Id && !t.ReviewedByUser).ToList();
-            foreach (var t in txs) t.Categorize(cat, CategorySource.Counterparty, 0.95m);
-        }
-        await Uow.SaveChangesAsync();
-    }
-
-    async Task SaveName(Counterparty c) { if (!string.IsNullOrWhiteSpace(editName)) c.Rename(editName.Trim()); editId = null; await Uow.SaveChangesAsync(); await Reload(); }
+    async Task SetKind(CounterpartyDto c, string? v) { if (Enum.TryParse<CounterpartyKind>(v, out var k)) { await Commands.SetCounterpartyKindAsync(uid, c.Id, k); await Reload(); } }
+    async Task SetDefaultCategory(CounterpartyDto c, string? v) { await Commands.SetCounterpartyDefaultCategoryAsync(uid, c.Id, Guid.TryParse(v, out var g) ? g : null); await Reload(); }
+    async Task SaveName(CounterpartyDto c) { await Commands.RenameCounterpartyAsync(uid, c.Id, editName); editId = null; await Reload(); }
 
     public static string Kind(CounterpartyKind k) => k switch
     {

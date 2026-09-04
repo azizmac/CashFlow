@@ -2,11 +2,14 @@
 @attribute [Authorize]
 @rendermode InteractiveServer
 @inject CurrentUser Me
-@inject LedgerQueries Q
-@inject CashFlow.Application.IUnitOfWork Uow
+@inject ICategoryService Svc
+@using CashFlow.Application
+@using CashFlow.Application.Contracts
 
 <PageTitle>Категории — CashFlow</PageTitle>
 <h1>Категории и правила</h1>
+
+@if (err is not null) { <div class="alert err">@err</div> }
 
 <div class="grid2">
     <div>
@@ -16,7 +19,7 @@
             <tbody>
             @foreach (var c in categories)
             {
-                <tr><td>@c.Icon @c.Name @(c.IsSystem ? "" : "·") </td><td class="muted">@Kind(c.Kind)</td><td>@if (!c.IsSystem) { <button class="small" @onclick="() => Remove(c)">удалить</button> }</td></tr>
+                <tr><td>@c.Label @(c.IsSystem ? "" : "·")</td><td class="muted">@Kind(c.Kind)</td><td>@if (!c.IsSystem) { <button class="small" @onclick="() => Remove(c)">удалить</button> }</td></tr>
             }
             </tbody>
         </table>
@@ -50,26 +53,29 @@
             <label>Поле <select @bind="rField"><option value="@RuleField.Description">Описание</option><option value="@RuleField.CounterpartyName">Имя контрагента</option><option value="@RuleField.CounterpartyInn">ИНН контрагента</option><option value="@RuleField.Mcc">MCC</option></select></label>
             <label>Условие <select @bind="rMatch"><option value="@RuleMatch.Contains">содержит</option><option value="@RuleMatch.Equals">равно</option><option value="@RuleMatch.StartsWith">начинается с</option><option value="@RuleMatch.Regex">regex</option></select></label>
             <label>Шаблон <input @bind="rPattern" /></label>
-            <label>Категория <select @bind="rCategory"><option value="">—</option>@foreach (var c in categories) { <option value="@c.Id">@c.Icon @c.Name</option> }</select></label>
+            <label>Категория <select @bind="rCategory"><option value="">—</option>@foreach (var c in categories) { <option value="@c.Id">@c.Label</option> }</select></label>
             <button class="primary" @onclick="AddRule" disabled="@(string.IsNullOrWhiteSpace(rPattern) || string.IsNullOrEmpty(rCategory))">Добавить правило</button>
         </div>
     </div>
 </div>
 
 @code {
-    List<Category> categories = [];
-    List<CategorizationRule> rules = [];
+    IReadOnlyList<CategoryDto> categories = [];
+    IReadOnlyList<RuleDto> rules = [];
     string uid = "";
+    string? err;
     string newName = "", newIcon = "🏷️"; CategoryKind newKind = CategoryKind.Expense;
     RuleField rField = RuleField.Description; RuleMatch rMatch = RuleMatch.Contains; string rPattern = "", rCategory = "";
 
-    protected override async Task OnInitializedAsync() { uid = await Me.IdAsync(); Load(); }
-    void Load() { categories = Q.Categories(uid); rules = Uow.Rules.Query().Where(r => r.UserId == uid).OrderByDescending(r => r.Priority).ToList(); }
+    protected override async Task OnInitializedAsync() { uid = await Me.IdAsync(); await Load(); }
+    async Task Load() { categories = await Svc.ListAsync(uid); rules = await Svc.RulesAsync(uid); }
 
-    async Task Add() { await Uow.Categories.AddAsync(new Category(uid, newName.Trim(), newKind, null, newIcon, null)); await Uow.SaveChangesAsync(); newName = ""; Load(); }
-    async Task Remove(Category c) { Uow.Categories.Remove(c); await Uow.SaveChangesAsync(); Load(); }
-    async Task AddRule() { await Uow.Rules.AddAsync(new CategorizationRule(uid, rField, rMatch, rPattern.Trim(), Guid.Parse(rCategory), 100, RuleOrigin.User)); await Uow.SaveChangesAsync(); rPattern = ""; Load(); }
-    async Task RemoveRule(CategorizationRule r) { Uow.Rules.Remove(r); await Uow.SaveChangesAsync(); Load(); }
+    async Task Run(Func<Task> action) { err = null; try { await action(); await Load(); } catch (Exception ex) { err = ex.Message; } }
+
+    Task Add() => Run(async () => { await Svc.CreateAsync(uid, newName, newKind, newIcon); newName = ""; });
+    Task Remove(CategoryDto c) => Run(() => Svc.DeleteAsync(uid, c.Id));
+    Task AddRule() => Run(async () => { await Svc.AddRuleAsync(uid, rField, rMatch, rPattern, Guid.Parse(rCategory)); rPattern = ""; });
+    Task RemoveRule(RuleDto r) => Run(() => Svc.DeleteRuleAsync(uid, r.Id));
 
     static string Kind(CategoryKind k) => k switch { CategoryKind.Income => "доход", CategoryKind.Expense => "расход", CategoryKind.Transfer => "перевод", _ => "инвестиции" };
 }

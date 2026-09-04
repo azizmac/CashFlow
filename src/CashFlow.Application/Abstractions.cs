@@ -4,6 +4,8 @@ using CashFlow.Domain.Ledger;
 
 namespace CashFlow.Application;
 
+// Инфраструктурные контракты: реализуются в CashFlow.Infrastructure. Контракты сервисов для UI — в Abstractions/Services.cs.
+
 /// <summary>Единица работы над всей моделью. Инфраструктура реализует поверх EF Core.</summary>
 public interface IUnitOfWork
 {
@@ -33,8 +35,8 @@ public interface IRepository<T> where T : class
 }
 
 /// <summary>
-/// Хранилище секретов (токены, сертификаты). Значения шифруются ключом пользователя.
-/// Домен видит только CredentialRef.
+/// Хранилище секретов (токены, сертификаты). Значения шифруются ключом сервера.
+/// Домен видит только CredentialRef, наружу (DTO) не уходит даже он.
 /// </summary>
 public interface ISecretStore
 {
@@ -51,4 +53,20 @@ public interface IClock
 public sealed class SystemClock : IClock
 {
     public DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
+}
+
+/// <summary>Часовой пояс для отображения и группировки по датам (CASHFLOW_TZ, по умолчанию Москва).</summary>
+public static class AppTime
+{
+    public static readonly TimeZoneInfo Zone = Resolve();
+
+    private static TimeZoneInfo Resolve()
+    {
+        var id = Environment.GetEnvironmentVariable("CASHFLOW_TZ") ?? "Europe/Moscow";
+        try { return TimeZoneInfo.FindSystemTimeZoneById(id); }
+        catch { return TimeZoneInfo.CreateCustomTimeZone("MSK", TimeSpan.FromHours(3), "Moscow", "Moscow"); }
+    }
+
+    public static DateTimeOffset ToLocal(this DateTimeOffset utc) => TimeZoneInfo.ConvertTime(utc, Zone);
+    public static DateOnly LocalDate(this DateTimeOffset utc) => DateOnly.FromDateTime(ToLocal(utc).DateTime);
 }

@@ -3,12 +3,12 @@
 @attribute [Authorize]
 @rendermode InteractiveServer
 @inject CurrentUser Me
-@inject LedgerQueries Q
-@inject ConnectionsFacade Facade
+@inject ILedgerQueries Q
+@inject IConnectionsService Connections
+@inject IImportService Importer
 @inject NavigationManager Nav
-@inject CashFlow.Application.Import.StatementImportService Importer
-@inject IEnumerable<CashFlow.Connectors.Abstractions.IStatementParser> Parsers
-@using CashFlow.Connectors.Abstractions
+@using CashFlow.Application
+@using CashFlow.Application.Contracts
 
 <PageTitle>Источники данных — CashFlow</PageTitle>
 <h1>Источники данных</h1>
@@ -20,7 +20,7 @@
 <div class="upload-panel">
     <div class="toolbar">
         <label>Профиль <select @bind="profileId">@foreach (var p in profiles) { <option value="@p.Id">@p.Name (@Kind(p.Kind))</option> }</select></label>
-        <label>Банк <select @bind="bank"><option value="">определить по файлу</option>@foreach (var p in Parsers.DistinctBy(p => p.BankCode)) { <option value="@p.BankCode">@p.DisplayName</option> }</select></label>
+        <label>Банк <select @bind="bank"><option value="">определить по файлу</option>@foreach (var f in Importer.Formats.DistinctBy(f => f.BankCode)) { <option value="@f.BankCode">@f.DisplayName</option> }</select></label>
     </div>
     <label class="dropzone">
         <InputFile OnChange="OnFiles" multiple accept=".pdf,.xlsx,.csv,.txt" />
@@ -48,8 +48,8 @@ else
     @foreach (var c in coverage)
     {
         <div class="card @(c.IsStale ? "stale" : "")">
-            <div class="label">@c.Profile?.Name · @c.Institution?.Name · @Accounts.Type(c.Account.Type)</div>
-            <div class="title"><a href="/transactions?account=@c.Account.Id&transfers=1">@c.Account.Name</a> <span class="muted">@Mask(c.Account.AccountNumber)</span></div>
+            <div class="label">@c.Account.ProfileName · @c.Account.BankName · @Accounts.Type(c.Account.Type)</div>
+            <div class="title"><a href="/transactions?account=@c.Account.Id&transfers=1">@c.Account.Name</a> <span class="muted">@c.Account.NumberMasked</span></div>
             @if (c.Count == 0)
             {
                 <div class="pill err">операций нет</div>
@@ -60,11 +60,11 @@ else
                 @if (c.StaleDays > 30) { <div class="pill warn">последняя операция @c.StaleDays дн. назад</div> }
                 else { <div class="pill ok">свежие данные</div> }
             }
-            @if (c.Account.LastBalance is { } bal) { <div class="muted">остаток @bal.Amount.ToString("N2") @bal.Currency.Code на @c.Account.LastBalanceAt?.Local().ToString("dd.MM.yyyy")</div> }
+            @if (c.Account.Balance is { } bal) { <div class="muted">остаток @bal.ToString("N2") @c.Account.Currency на @c.Account.BalanceAt?.Local().ToString("dd.MM.yyyy")</div> }
             <div class="muted" style="font-size:12px">источники: @(c.Sources.Count == 0 ? "—" : string.Join("; ", c.Sources))@(c.LastImportAt is { } li ? $" · загружено {li.Local():dd.MM.yyyy HH:mm}" : "")</div>
             @if (c.IsStale && c.Last is { } last)
             {
-                <div class="hint">Догрузите выписку за период с @last.AddDays(1).ToString("dd.MM.yyyy") по сегодня — @HowTo(c)</div>
+                <div class="hint">Догрузите выписку за период с @last.AddDays(1).ToString("dd.MM.yyyy") по сегодня — @HowTo(c.Account)</div>
             }
         </div>
     }
@@ -85,7 +85,7 @@ else
         @foreach (var c in connections)
         {
             <tr>
-                <td>@c.Name<div class="muted" style="font-size:11px">@profiles.FirstOrDefault(p => p.Id == c.ProfileId)?.Name</div></td>
+                <td>@c.Name<div class="muted" style="font-size:11px">@c.ProfileName</div></td>
                 <td><span class="pill @(c.Status == ConnectionStatus.Active ? "ok" : "err")">@c.Status</span>@if (c.LastError is not null) { <div class="muted" style="font-size:11px;max-width:320px">@c.LastError</div> }</td>
                 <td class="muted">@(c.LastSyncAt?.Local().ToString("dd.MM.yy HH:mm") ?? "—")</td>
                 <td><button class="small primary" @onclick="() => Sync(c)" disabled="@(busyId == c.Id)">@(busyId == c.Id ? "…" : "Синхронизировать")</button></td>
@@ -95,7 +95,7 @@ else
     </table>
 }
 <p>
-    @foreach (var oc in Facade.OAuthConnectors)
+    @foreach (var oc in oauth)
     {
         <button class="primary" @onclick="() => StartOAuth(oc)">Подключить через @oc.ProviderDisplayName</button>
     }
@@ -135,9 +135,10 @@ else
 </details>
 
 @code {
-    List<FinancialProfile>? profiles;
-    List<AccountCoverage> coverage = [];
-    List<Connection> connections = [];
+    IReadOnlyList<ProfileDto>? profiles;
+    IReadOnlyList<AccountCoverageDto> coverage = [];
+    IReadOnlyList<ConnectionDto> connections = [];
+    List<ConnectorInfoDto> oauth = [];
     List<IBrowserFile> files = [];
     List<(string Css, string Text)> messages = [];
     string profileId = "", bank = "", uid = "";
@@ -149,18 +150,19 @@ else
         uid = await Me.IdAsync();
         profiles = await Me.ProfilesAsync();
         profileId = profiles[0].Id.ToString();
-        Reload();
+        oauth = Connections.Connectors().Where(c => c.SupportsOAuth && c.OAuthConfigured).ToList();
+        await Reload();
     }
 
-    void Reload()
+    async Task Reload()
     {
-        coverage = Q.Coverage(uid);
-        connections = Q.Connections(uid).Where(c => c.ConnectorType != ConnectorType.StatementImport && c.Status != ConnectionStatus.Disabled).ToList();
+        coverage = await Q.CoverageAsync(uid);
+        connections = (await Connections.ListAsync(uid)).Where(c => !c.IsStatementImport && c.Status != ConnectionStatus.Disabled).ToList();
     }
 
     void OnFiles(InputFileChangeEventArgs e) => files = e.GetMultipleFiles(20).ToList();
 
-    void StartOAuth(IOAuthConnector oc) => Nav.NavigateTo($"/oauth/{oc.UrlName()}/start?profileId={profileId}", forceLoad: true);
+    void StartOAuth(ConnectorInfoDto oc) => Nav.NavigateTo($"/oauth/{oc.OAuthProviderKey}/start?profileId={profileId}", forceLoad: true);
 
     static string H(string? s) => System.Net.WebUtility.HtmlEncode(s ?? "");
 
@@ -172,13 +174,13 @@ else
             try
             {
                 await using var s = f.OpenReadStream(50 * 1024 * 1024);
-                var r = await Importer.ImportAsync(uid, Guid.Parse(profileId), s, f.Name, string.IsNullOrEmpty(bank) ? null : bank, default);
-                var period = r.Period is { } p ? $"{p.From:dd.MM.yyyy} — {p.To:dd.MM.yyyy}" : "период не определён";
-                var link = r.Period is { } pp ? $"/transactions?account={r.Account.Id}&from={pp.From:yyyy-MM-dd}&to={pp.To:yyyy-MM-dd}&transfers=1" : $"/transactions?account={r.Account.Id}&transfers=1";
+                var r = await Importer.ImportAsync(uid, Guid.Parse(profileId), s, f.Name, string.IsNullOrEmpty(bank) ? null : bank);
+                var period = r.PeriodFrom is { } pf && r.PeriodTo is { } pt ? $"{pf:dd.MM.yyyy} — {pt:dd.MM.yyyy}" : "период не определён";
+                var link = r.PeriodFrom is { } lf && r.PeriodTo is { } lt ? $"/transactions?account={r.AccountId}&from={lf:yyyy-MM-dd}&to={lt:yyyy-MM-dd}&transfers=1" : $"/transactions?account={r.AccountId}&transfers=1";
                 var w = r.Warnings.Count > 0 ? $"<br/><small>{H(r.Warnings[0])}</small>" : "";
-                messages.Add((r.Summary.Imported > 0 ? "ok" : "info",
-                    $"<b>{H(f.Name)}</b> → счёт «{H(r.Account.Name)}», {period}: новых {r.Summary.Imported}, обновлено {r.Summary.Updated}, дубликатов {r.Summary.SkippedDuplicates}, контрагентов +{r.Summary.CounterpartiesCreated}, переводов {r.Summary.TransfersLinked}, категоризировано {r.Summary.Categorized}. " +
-                    $"<a href=\"{link}\">Посмотреть операции</a> · подключение «{H(r.Connection.Name)}»{w}"));
+                messages.Add((r.Imported > 0 || r.Updated > 0 ? "ok" : "info",
+                    $"<b>{H(f.Name)}</b> → счёт «{H(r.AccountName)}», {period}: новых {r.Imported}, обновлено {r.Updated}, дубликатов {r.SkippedDuplicates}, контрагентов +{r.CounterpartiesCreated}, переводов {r.TransfersLinked}, категоризировано {r.Categorized}. " +
+                    $"<a href=\"{link}\">Посмотреть операции</a> · подключение «{H(r.ConnectionName)}»{w}"));
             }
             catch (Exception ex)
             {
@@ -189,23 +191,23 @@ else
         }
         files.Clear();
         busy = false;
-        Reload();
+        await Reload();
     }
 
-    async Task Sync(Connection c)
+    async Task Sync(ConnectionDto c)
     {
         busyId = c.Id;
         try
         {
-            var run = await Facade.SyncNowAsync(c.Id, 365, default);
-            messages.Add((run.Error is null ? "ok" : "err", run.Error is null ? $"«{H(c.Name)}»: новых операций {run.ImportedTransactions}, дубликатов {run.SkippedDuplicates}" : $"«{H(c.Name)}»: {H(run.Error)}"));
+            var run = await Connections.SyncAsync(uid, c.Id, 365);
+            messages.Add((run.Error is null ? "ok" : "err", run.Error is null ? $"«{H(c.Name)}»: новых операций {run.Imported}, дубликатов {run.Skipped}" : $"«{H(c.Name)}»: {H(run.Error)}"));
         }
         catch (Exception ex) { messages.Add(("err", H(ex.Message))); }
         busyId = null;
-        Reload();
+        await Reload();
     }
 
-    static string HowTo(AccountCoverage c) => (c.Institution?.Code, c.Account.Type) switch
+    static string HowTo(AccountDto a) => (a.BankCode, a.Type) switch
     {
         (Institution.Codes.Sber, AccountType.Card) => "PDF из СберБанк Онлайн (Выписки и справки).",
         (Institution.Codes.Sber, _) => "экспорт в 1С из СберБизнеса (Выписки → Экспорт → 1С).",
@@ -214,6 +216,5 @@ else
         _ => "экспорт в 1С из интернет-банка.",
     };
 
-    static string Mask(string? n) => string.IsNullOrEmpty(n) ? "" : n.Length > 4 ? "…" + n[^4..] : n;
     static string Kind(ProfileKind k) => k switch { ProfileKind.SoleProprietor => "ИП", ProfileKind.Company => "компания", _ => "физлицо" };
 }

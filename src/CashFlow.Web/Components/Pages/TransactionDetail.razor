@@ -2,27 +2,27 @@
 @attribute [Authorize]
 @rendermode InteractiveServer
 @inject CurrentUser Me
-@inject LedgerQueries Q
-@inject CashFlow.Application.IUnitOfWork Uow
-@inject CashFlow.Application.Categorization.CategorizationService Categorization
-@inject NavigationManager Nav
+@inject ILedgerQueries Q
+@inject ILedgerCommands Commands
+@using CashFlow.Application
+@using CashFlow.Application.Contracts
 
 <PageTitle>Операция — CashFlow</PageTitle>
 
 @if (d is null) { <p class="muted">@(loaded ? "Операция не найдена." : "Загрузка…")</p> return; }
 
-<div class="crumbs"><a href="/transactions">Операции</a> › <a href="/transactions?account=@d.Account.Id">@d.Account.Name</a> › @d.Tx.PostedAt.Local().ToString("dd.MM.yyyy")</div>
+<div class="crumbs"><a href="/transactions">Операции</a> › <a href="/transactions?account=@d.Transaction.AccountId">@d.Transaction.AccountName</a> › @d.Transaction.PostedAt.Local().ToString("dd.MM.yyyy")</div>
 
 <div class="detail-head">
     <div>
-        <div class="amount @(d.Tx.IsIncome ? "pos" : "neg")">@(d.Tx.IsIncome ? "+" : "−")@Math.Abs(d.Tx.Amount.Amount).ToString("N2") @d.Tx.Amount.Currency.Code</div>
-        <h1 style="margin:4px 0">@d.Tx.Description</h1>
+        <div class="amount @(d.Transaction.IsIncome ? "pos" : "neg")">@(d.Transaction.IsIncome ? "+" : "−")@Math.Abs(d.Transaction.Amount).ToString("N2") @d.Transaction.Currency</div>
+        <h1 style="margin:4px 0">@d.Transaction.Description</h1>
         <div class="muted">
-            @d.Tx.PostedAt.Local().ToString("dd.MM.yyyy HH:mm")
-            @if (d.Tx.BookedAt is { } b && b.Date != d.Tx.PostedAt.Date) { <span> · проведено @b.Local().ToString("dd.MM.yyyy")</span> }
-            @if (d.Tx.Kind == TransactionKind.Transfer) { <span class="pill">перевод между своими счетами</span> }
-            @if (d.Tx.Status == TransactionStatus.Pending) { <span class="pill warn">в обработке</span> }
-            @if (d.Tx.Status == TransactionStatus.Cancelled) { <span class="pill err">отменена</span> }
+            @d.Transaction.PostedAt.Local().ToString("dd.MM.yyyy HH:mm")
+            @if (d.Transaction.BookedAt is { } b && b.Date != d.Transaction.PostedAt.Date) { <span> · проведено @b.Local().ToString("dd.MM.yyyy")</span> }
+            @if (d.Transaction.IsTransfer) { <span class="pill">перевод между своими счетами</span> }
+            @if (d.Transaction.Status == TransactionStatus.Pending) { <span class="pill warn">в обработке</span> }
+            @if (d.Transaction.Status == TransactionStatus.Cancelled) { <span class="pill err">отменена</span> }
         </div>
     </div>
 </div>
@@ -34,16 +34,16 @@
         <h2>Категория</h2>
         <div class="form">
             <label>Категория
-                <select value="@(d.Tx.CategoryId?.ToString() ?? "")" @onchange="e => SetCategory(e.Value?.ToString())">
+                <select value="@(d.Transaction.CategoryId?.ToString() ?? "")" @onchange="e => SetCategory(e.Value?.ToString())">
                     <option value="">— без категории —</option>
-                    @foreach (var c in categories.Where(c => c.Kind == (d.Tx.IsIncome ? CategoryKind.Income : CategoryKind.Expense) || c.Kind == CategoryKind.Transfer || c.Kind == CategoryKind.Investment))
-                    { <option value="@c.Id">@c.Icon @c.Name</option> }
+                    @foreach (var c in categories.Where(c => c.Kind == (d.Transaction.IsIncome ? CategoryKind.Income : CategoryKind.Expense) || c.Kind == CategoryKind.Transfer || c.Kind == CategoryKind.Investment))
+                    { <option value="@c.Id">@c.Label</option> }
                 </select>
             </label>
-            @if (d.Tx.CategoryId is not null) { <div class="muted" style="font-size:12px">источник: @Src(d.Tx.CategorySource)@(d.Tx.CategoryConfidence is { } cf && d.Tx.CategorySource != CategorySource.User ? $", уверенность {cf:P0}" : "")</div> }
-            @if (d.Tx.CategoryId is null && d.Proposed is not null)
+            @if (d.Transaction.CategoryId is not null) { <div class="muted" style="font-size:12px">источник: @Src(d.Transaction.CategorySource)@(d.Transaction.CategoryConfidence is { } cf && d.Transaction.CategorySource != CategorySource.User ? $", уверенность {cf:P0}" : "")</div> }
+            @if (d.Transaction.CategoryId is null && d.Transaction.ProposedCategoryId is not null)
             {
-                <div>Предложено: @d.Proposed.Icon @d.Proposed.Name <button class="small primary" @onclick="Accept">Принять</button></div>
+                <div>Предложено: @d.Transaction.ProposedCategoryLabel <button class="small primary" @onclick="Accept">Принять</button></div>
             }
             @if (d.Counterparty is not null)
             {
@@ -57,23 +57,23 @@
             <table class="kv">
                 <tr><th>Кто</th><td><a href="/transactions?cp=@d.Counterparty.Id">@d.Counterparty.DisplayName</a> <span class="pill">@Counterparties.Kind(d.Counterparty.Kind)</span></td></tr>
                 @if (d.Counterparty.Inn is not null) { <tr><th>ИНН</th><td>@d.Counterparty.Inn@(d.Counterparty.Kpp is not null ? $" / КПП {d.Counterparty.Kpp}" : "")</td></tr> }
-                @if (d.Counterparty.Accounts.Count > 0) { <tr><th>Счета</th><td class="muted">@string.Join(", ", d.Counterparty.Accounts.Select(Mask))</td></tr> }
-                @if (d.Counterparty.Phones.Count > 0) { <tr><th>Телефоны</th><td class="muted">@string.Join(", ", d.Counterparty.Phones)</td></tr> }
-                @if (d.Counterparty.DefaultCategoryId is { } dc && categories.FirstOrDefault(c => c.Id == dc) is { } dcat) { <tr><th>Категория по умолчанию</th><td>@dcat.Icon @dcat.Name</td></tr> }
+                @if (d.Counterparty.AccountsMasked.Count > 0) { <tr><th>Счета</th><td class="muted">@string.Join(", ", d.Counterparty.AccountsMasked)</td></tr> }
+                @if (d.Counterparty.PhonesMasked.Count > 0) { <tr><th>Телефоны</th><td class="muted">@string.Join(", ", d.Counterparty.PhonesMasked)</td></tr> }
+                @if (d.Counterparty.DefaultCategoryId is { } dc && categories.FirstOrDefault(c => c.Id == dc) is { } dcat) { <tr><th>Категория по умолчанию</th><td>@dcat.Label</td></tr> }
             </table>
         }
         else { <p class="muted">Контрагент не определён.</p> }
 
-        @if (!d.Tx.CounterpartyRaw.IsEmpty)
+        @if (!d.Raw.IsEmpty)
         {
             <details>
                 <summary class="muted">Реквизиты из выписки</summary>
                 <table class="kv">
-                    @if (d.Tx.CounterpartyRaw.Name is not null) { <tr><th>Название</th><td>@d.Tx.CounterpartyRaw.Name</td></tr> }
-                    @if (d.Tx.CounterpartyRaw.Inn is not null) { <tr><th>ИНН</th><td>@d.Tx.CounterpartyRaw.Inn</td></tr> }
-                    @if (d.Tx.CounterpartyRaw.Account is not null) { <tr><th>Счёт</th><td>@d.Tx.CounterpartyRaw.Account</td></tr> }
-                    @if (d.Tx.CounterpartyRaw.Bik is not null) { <tr><th>БИК</th><td>@d.Tx.CounterpartyRaw.Bik @d.Tx.CounterpartyRaw.BankName</td></tr> }
-                    @if (d.Tx.CounterpartyRaw.Phone is not null) { <tr><th>Телефон</th><td>@d.Tx.CounterpartyRaw.Phone</td></tr> }
+                    @if (d.Raw.Name is not null) { <tr><th>Название</th><td>@d.Raw.Name</td></tr> }
+                    @if (d.Raw.Inn is not null) { <tr><th>ИНН</th><td>@d.Raw.Inn</td></tr> }
+                    @if (d.Raw.AccountMasked is not null) { <tr><th>Счёт</th><td>@d.Raw.AccountMasked</td></tr> }
+                    @if (d.Raw.Bik is not null) { <tr><th>БИК</th><td>@d.Raw.Bik @d.Raw.BankName</td></tr> }
+                    @if (d.Raw.PhoneMasked is not null) { <tr><th>Телефон</th><td>@d.Raw.PhoneMasked</td></tr> }
                 </table>
             </details>
         }
@@ -89,28 +89,28 @@
     <div>
         <h2>Детали</h2>
         <table class="kv">
-            <tr><th>Счёт</th><td><a href="/transactions?account=@d.Account.Id">@d.Account.Name</a> <span class="muted">@Mask(d.Account.AccountNumber)</span></td></tr>
-            <tr><th>Профиль / банк</th><td>@d.Profile?.Name · @d.Institution?.Name</td></tr>
-            @if (!string.IsNullOrWhiteSpace(d.Tx.Purpose) && d.Tx.Purpose != d.Tx.Description) { <tr><th>Назначение платежа</th><td>@d.Tx.Purpose</td></tr> }
-            @if (d.Tx.Mcc is not null) { <tr><th>MCC</th><td>@d.Tx.Mcc</td></tr> }
-            @if (d.Pair is not null && d.PairAccount is not null)
+            <tr><th>Счёт</th><td><a href="/transactions?account=@d.Transaction.AccountId">@d.Transaction.AccountName</a> <span class="muted">@d.AccountNumberMasked</span></td></tr>
+            <tr><th>Профиль / банк</th><td>@d.ProfileName · @d.BankName</td></tr>
+            @if (!string.IsNullOrWhiteSpace(d.Transaction.Purpose) && d.Transaction.Purpose != d.Transaction.Description) { <tr><th>Назначение платежа</th><td>@d.Transaction.Purpose</td></tr> }
+            @if (d.Transaction.Mcc is not null) { <tr><th>MCC</th><td>@d.Transaction.Mcc</td></tr> }
+            @if (d.Pair is not null)
             {
-                <tr><th>Парная операция</th><td><a href="/transactions/@d.Pair.Id">@d.PairAccount.Name: @(d.Pair.IsIncome ? "+" : "−")@Math.Abs(d.Pair.Amount.Amount).ToString("N2") @d.Pair.PostedAt.Local().ToString("dd.MM.yyyy")</a></td></tr>
+                <tr><th>Парная операция</th><td><a href="/transactions/@d.Pair.Id">@d.Pair.AccountName: @(d.Pair.IsIncome ? "+" : "−")@Math.Abs(d.Pair.Amount).ToString("N2") @d.Pair.PostedAt.Local().ToString("dd.MM.yyyy")</a></td></tr>
             }
         </table>
 
         <h2>Откуда эти данные</h2>
         <table class="kv">
-            <tr><th>Источник</th><td>@SourceLabel(d.Tx.Source)</td></tr>
-            @if (d.Connection is not null) { <tr><th>Подключение</th><td><a href="/sources">@d.Connection.Name</a>@(d.Connection.SourceCode is not null ? $" · {d.Connection.SourceCode}" : "")</td></tr> }
-            @if (d.Raw?.FileName is not null) { <tr><th>Файл</th><td>@d.Raw.FileName</td></tr> }
-            @if (d.Raw is not null) { <tr><th>Загружено</th><td>@d.Raw.CreatedAt.Local().ToString("dd.MM.yyyy HH:mm")</td></tr> }
-            @if (d.Tx.ExternalRef is not null) { <tr><th>Внешний ID</th><td class="muted">@d.Tx.ExternalRef.ExternalId</td></tr> }
-            <tr><th>Импортировано</th><td class="muted">@d.Tx.CreatedAt.Local().ToString("dd.MM.yyyy HH:mm")</td></tr>
+            <tr><th>Источник</th><td>@SourceLabel(d.Source.Source)</td></tr>
+            @if (d.Source.ConnectionName is not null) { <tr><th>Подключение</th><td><a href="/sources">@d.Source.ConnectionName</a>@(d.Source.SourceCode is not null ? $" · {d.Source.SourceCode}" : "")</td></tr> }
+            @if (d.Source.FileName is not null) { <tr><th>Файл</th><td>@d.Source.FileName</td></tr> }
+            @if (d.Source.LoadedAt is { } la) { <tr><th>Загружено</th><td>@la.Local().ToString("dd.MM.yyyy HH:mm")</td></tr> }
+            @if (d.Source.ExternalId is not null) { <tr><th>Внешний ID</th><td class="muted">@d.Source.ExternalId</td></tr> }
+            <tr><th>Импортировано</th><td class="muted">@d.Source.ImportedAt.Local().ToString("dd.MM.yyyy HH:mm")</td></tr>
         </table>
-        @if (d.Raw is not null)
+        @if (d.Source.RawPayload is not null)
         {
-            <details><summary class="muted">Сырая запись из выписки</summary><pre class="raw">@d.Raw.Payload</pre></details>
+            <details><summary class="muted">Сырая запись из выписки</summary><pre class="raw">@d.Source.RawPayload</pre></details>
         }
 
         @if (d.Similar.Count > 0)
@@ -122,10 +122,10 @@
                 @foreach (var r in d.Similar)
                 {
                     <tr>
-                        <td style="white-space:nowrap"><a href="/transactions/@r.Tx.Id">@r.Tx.PostedAt.Local().ToString("dd.MM.yy")</a></td>
-                        <td>@r.Tx.Description</td>
-                        <td class="muted">@(r.Category is null ? "—" : $"{r.Category.Icon} {r.Category.Name}")</td>
-                        <td class="num @(r.Tx.IsIncome ? "pos" : "neg")">@(r.Tx.IsIncome ? "+" : "")@r.Tx.Amount.Amount.ToString("N2")</td>
+                        <td style="white-space:nowrap"><a href="/transactions/@r.Id">@r.PostedAt.Local().ToString("dd.MM.yy")</a></td>
+                        <td>@r.Description</td>
+                        <td class="muted">@(r.CategoryLabel ?? "—")</td>
+                        <td class="num @(r.IsIncome ? "pos" : "neg")">@(r.IsIncome ? "+" : "")@r.Amount.ToString("N2")</td>
                     </tr>
                 }
                 </tbody>
@@ -137,8 +137,8 @@
 @code {
     [Parameter] public Guid Id { get; set; }
 
-    TxDetail? d;
-    List<Category> categories = [];
+    TransactionDetailDto? d;
+    IReadOnlyList<CategoryDto> categories = [];
     bool loaded, applyToCounterparty;
     string uid = "", note = "", tags = "";
     string? msg;
@@ -146,38 +146,34 @@
     protected override async Task OnParametersSetAsync()
     {
         uid = await Me.IdAsync();
-        categories = Q.Categories(uid);
-        Load();
+        categories = await Q.CategoriesAsync(uid);
+        await Load();
     }
 
-    void Load()
+    async Task Load()
     {
-        d = Q.TransactionDetail(uid, Id);
+        d = await Q.TransactionAsync(uid, Id);
         loaded = true;
-        if (d is not null) { note = d.Tx.Note ?? ""; tags = string.Join(", ", d.Tx.Tags); }
+        if (d is not null) { note = d.Transaction.Note ?? ""; tags = string.Join(", ", d.Transaction.Tags); }
     }
 
     async Task SetCategory(string? value)
     {
         Guid? cat = Guid.TryParse(value, out var g) ? g : null;
-        await Categorization.SetCategoryAsync(uid, Id, cat, applyToCounterparty, default);
+        await Commands.SetCategoryAsync(uid, Id, cat, applyToCounterparty);
         msg = applyToCounterparty && cat is not null ? "Категория сохранена и применена к операциям контрагента." : "Категория сохранена.";
-        Load();
+        await Load();
     }
 
-    async Task Accept() { await Categorization.AcceptProposalAsync(uid, Id, default); Load(); }
+    async Task Accept() { await Commands.AcceptProposalAsync(uid, Id); await Load(); }
 
     async Task SaveNote()
     {
-        if (d is null) return;
-        d.Tx.SetNote(string.IsNullOrWhiteSpace(note) ? null : note.Trim());
-        d.Tx.SetTags(tags.Split(',', StringSplitOptions.RemoveEmptyEntries));
-        await Uow.SaveChangesAsync();
+        await Commands.SetNoteAsync(uid, Id, note, tags.Split(',', StringSplitOptions.RemoveEmptyEntries));
         msg = "Заметка сохранена.";
-        Load();
+        await Load();
     }
 
-    static string Mask(string? n) => string.IsNullOrEmpty(n) ? "" : n.Length > 4 ? "…" + n[^4..] : n;
     static string Src(CategorySource s) => s switch { CategorySource.User => "вручную", CategorySource.Rule => "правило", CategorySource.Mcc => "по MCC", CategorySource.Ai => "ИИ", CategorySource.Counterparty => "по контрагенту", _ => "" };
     static string SourceLabel(ConnectorType t) => t switch
     {

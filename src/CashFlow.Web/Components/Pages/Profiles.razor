@@ -2,7 +2,9 @@
 @attribute [Authorize]
 @rendermode InteractiveServer
 @inject CurrentUser Me
-@inject CashFlow.Application.IUnitOfWork Uow
+@inject IProfileService Svc
+@using CashFlow.Application
+@using CashFlow.Application.Contracts
 
 <PageTitle>Профили — CashFlow</PageTitle>
 <h1>Финансовые профили</h1>
@@ -11,15 +13,14 @@
 @if (profiles is null) { <p class="muted">Загрузка…</p> return; }
 
 <table>
-    <thead><tr><th>Название</th><th>Тип</th><th>ИНН</th><th></th></tr></thead>
+    <thead><tr><th>Название</th><th>Тип</th><th>ИНН</th></tr></thead>
     <tbody>
     @foreach (var p in profiles)
     {
         <tr>
-            <td><input value="@p.Name" @onchange="e => { p.Rename(e.Value?.ToString() ?? p.Name); Save(); }" /></td>
+            <td><input value="@p.Name" @onchange="e => Rename(p, e.Value?.ToString())" /></td>
             <td class="muted">@Kind(p.Kind)</td>
-            <td><input value="@p.Inn" placeholder="ИНН" maxlength="12" @onchange="e => { p.SetIdentifiers(Clean(e.Value?.ToString()), p.Ogrn); Save(); }" /></td>
-            <td></td>
+            <td><input value="@p.Inn" placeholder="ИНН" maxlength="12" @onchange="e => SetInn(p, e.Value?.ToString())" /></td>
         </tr>
     }
     </tbody>
@@ -34,21 +35,20 @@
 </div>
 
 @code {
-    List<FinancialProfile>? profiles;
-    string name = "", inn = ""; ProfileKind kind = ProfileKind.SoleProprietor;
+    IReadOnlyList<ProfileDto>? profiles;
+    string uid = "", name = "", inn = ""; ProfileKind kind = ProfileKind.SoleProprietor;
 
-    protected override async Task OnInitializedAsync() => profiles = await Me.ProfilesAsync();
+    protected override async Task OnInitializedAsync() { uid = await Me.IdAsync(); profiles = await Svc.ListAsync(uid); }
 
-    async void Save() => await Uow.SaveChangesAsync();
+    async Task Rename(ProfileDto p, string? v) { if (!string.IsNullOrWhiteSpace(v)) { await Svc.RenameAsync(uid, p.Id, v); profiles = await Svc.ListAsync(uid); } }
+    async Task SetInn(ProfileDto p, string? v) { await Svc.SetInnAsync(uid, p.Id, v); profiles = await Svc.ListAsync(uid); }
 
     async Task Add()
     {
-        await Uow.Profiles.AddAsync(new FinancialProfile(await Me.IdAsync(), kind, name.Trim(), Clean(inn)));
-        await Uow.SaveChangesAsync();
+        await Svc.CreateAsync(uid, kind, name, inn);
         name = ""; inn = "";
-        profiles = await Me.ProfilesAsync();
+        profiles = await Svc.ListAsync(uid);
     }
 
-    static string? Clean(string? s) { var d = new string((s ?? "").Where(char.IsDigit).ToArray()); return d.Length is 10 or 12 ? d : null; }
     static string Kind(ProfileKind k) => k switch { ProfileKind.SoleProprietor => "ИП", ProfileKind.Company => "Компания", _ => "Физлицо" };
 }

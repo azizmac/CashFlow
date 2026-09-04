@@ -2,8 +2,10 @@
 @attribute [Authorize]
 @rendermode InteractiveServer
 @inject CurrentUser Me
-@inject LedgerQueries Q
-@inject CashFlow.Application.IUnitOfWork Uow
+@inject ILedgerQueries Q
+@inject ILedgerCommands Commands
+@using CashFlow.Application
+@using CashFlow.Application.Contracts
 
 <PageTitle>Счета — CashFlow</PageTitle>
 <h1>Счета</h1>
@@ -17,15 +19,15 @@
     {
         <tr>
             <td><a href="/transactions?account=@a.Id&transfers=1">@a.Name</a></td>
-            <td class="muted">@profiles.FirstOrDefault(p => p.Id == a.ProfileId)?.Name</td>
-            <td class="muted">@institutions.GetValueOrDefault(a.InstitutionId)?.Name</td>
+            <td class="muted">@a.ProfileName</td>
+            <td class="muted">@a.BankName</td>
             <td><span class="pill">@Type(a.Type)</span></td>
-            <td class="muted">@Mask(a.AccountNumber)</td>
-            <td class="num">@(a.LastBalance is { } b ? $"{b.Amount:N2} {b.Currency.Code}" : "—")</td>
-            <td class="muted">@(a.LastBalanceAt?.Local().ToString("dd.MM.yy") ?? "")</td>
+            <td class="muted">@a.NumberMasked</td>
+            <td class="num">@(a.Balance is { } b ? $"{b:N2} {a.Currency}" : "—")</td>
+            <td class="muted">@(a.BalanceAt?.Local().ToString("dd.MM.yy") ?? "")</td>
             <td>
-                <label><input type="checkbox" checked="@a.IncludeInCashFlow" @onchange="e => Flags(a, cf: (bool)e.Value!)" /> в потоке</label><br/>
-                <label><input type="checkbox" checked="@a.IncludeInNetWorth" @onchange="e => Flags(a, nw: (bool)e.Value!)" /> в активах</label>
+                <label><input type="checkbox" checked="@a.IncludeInCashFlow" @onchange="e => Flags(a, cashFlow: (bool)e.Value!)" /> в потоке</label><br/>
+                <label><input type="checkbox" checked="@a.IncludeInNetWorth" @onchange="e => Flags(a, netWorth: (bool)e.Value!)" /> в активах</label>
             </td>
             <td><button class="small" @onclick="() => Archive(a)">в архив</button></td>
         </tr>
@@ -41,39 +43,44 @@
     <label>Валюта <input @bind="newCurrency" maxlength="3" /></label>
     <label>Текущий остаток <input type="number" step="0.01" @bind="newBalance" /></label>
     <button class="primary" @onclick="Add" disabled="@string.IsNullOrWhiteSpace(newName)">Добавить</button>
+    @if (err is not null) { <div class="alert err">@err</div> }
 </div>
 
 @code {
-    List<FinancialProfile>? profiles;
-    List<Account> accounts = [];
-    Dictionary<Guid, Institution> institutions = new();
+    IReadOnlyList<ProfileDto>? profiles;
+    IReadOnlyList<AccountDto> accounts = [];
     string uid = "";
     string newName = "", newProfile = "", newCurrency = "RUB"; AccountType newType = AccountType.Cash; decimal newBalance;
+    string? err;
 
     protected override async Task OnInitializedAsync()
     {
         uid = await Me.IdAsync();
         profiles = await Me.ProfilesAsync();
         newProfile = profiles[0].Id.ToString();
-        institutions = Q.Institutions().ToDictionary(i => i.Id);
-        accounts = Q.Accounts(uid);
+        accounts = await Q.AccountsAsync(uid);
     }
 
-    async Task Flags(Account a, bool? cf = null, bool? nw = null) { a.SetFlags(nw ?? a.IncludeInNetWorth, cf ?? a.IncludeInCashFlow); await Uow.SaveChangesAsync(); }
-    async Task Archive(Account a) { a.Archive(); await Uow.SaveChangesAsync(); accounts = Q.Accounts(uid); }
+    async Task Flags(AccountDto a, bool? cashFlow = null, bool? netWorth = null)
+    {
+        await Commands.SetAccountFlagsAsync(uid, a.Id, cashFlow ?? a.IncludeInCashFlow, netWorth ?? a.IncludeInNetWorth);
+        accounts = await Q.AccountsAsync(uid);
+    }
+
+    async Task Archive(AccountDto a) { await Commands.ArchiveAccountAsync(uid, a.Id); accounts = await Q.AccountsAsync(uid); }
 
     async Task Add()
     {
-        var inst = institutions.Values.First(i => i.Code == (newType == AccountType.Cash ? Institution.Codes.Cash : Institution.Codes.Other));
-        var a = new Account(uid, Guid.Parse(newProfile), inst.Id, newType, newName.Trim(), Currency.Parse(newCurrency));
-        await Uow.Accounts.AddAsync(a);
-        await Uow.BalanceSnapshots.AddAsync(a.RecordBalance(new Money(newBalance, a.Currency)));
-        await Uow.SaveChangesAsync();
-        newName = ""; newBalance = 0;
-        accounts = Q.Accounts(uid);
+        err = null;
+        try
+        {
+            await Commands.CreateManualAccountAsync(uid, Guid.Parse(newProfile), newType, newName, newCurrency, newBalance);
+            newName = ""; newBalance = 0;
+            accounts = await Q.AccountsAsync(uid);
+        }
+        catch (Exception ex) { err = ex.Message; }
     }
 
-    static string Mask(string? n) => string.IsNullOrEmpty(n) ? "" : n.Length > 4 ? "…" + n[^4..] : n;
     public static string Type(AccountType t) => t switch
     {
         AccountType.Checking => "Расчётный", AccountType.Card => "Карта", AccountType.Savings => "Накопительный", AccountType.Deposit => "Вклад",

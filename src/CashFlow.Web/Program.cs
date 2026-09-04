@@ -39,10 +39,8 @@ builder.Services.AddSberBusinessConnector(builder.Configuration);
 builder.Services.AddAlfaBusinessConnector(builder.Configuration);
 builder.Services.AddMemoryCache();
 builder.Services.AddAuthorization();
+builder.Services.AddCashFlowBackgroundJobs(builder.Configuration);
 builder.Services.AddScoped<CurrentUser>();
-builder.Services.AddScoped<LedgerQueries>();
-builder.Services.AddScoped<ConnectionsFacade>();
-builder.Services.AddHostedService<SyncScheduler>();
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>

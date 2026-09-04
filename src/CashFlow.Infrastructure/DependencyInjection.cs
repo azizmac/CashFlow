@@ -1,6 +1,7 @@
 using CashFlow.Application;
 using CashFlow.Infrastructure.Persistence;
 using CashFlow.Infrastructure.Security;
+using CashFlow.Infrastructure.Sync;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,6 +10,7 @@ namespace CashFlow.Infrastructure;
 
 public static class DependencyInjection
 {
+    /// <summary>Хранилище: PostgreSQL, шифрование полей, секреты. Нужно и серверу, и утилитам.</summary>
     public static IServiceCollection AddCashFlowInfrastructure(this IServiceCollection services, IConfiguration config)
     {
         services.Configure<EncryptionOptions>(config.GetSection(EncryptionOptions.Section));
@@ -20,6 +22,14 @@ public static class DependencyInjection
 
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped<ISecretStore, DbSecretStore>();
+        return services;
+    }
+
+    /// <summary>Фоновые задачи сервера (планировщик синхронизации). В утилитах и тестах не подключается.</summary>
+    public static IServiceCollection AddCashFlowBackgroundJobs(this IServiceCollection services, IConfiguration config)
+    {
+        services.Configure<SyncOptions>(config.GetSection(SyncOptions.Section));
+        services.AddHostedService<SyncScheduler>();
         return services;
     }
 }

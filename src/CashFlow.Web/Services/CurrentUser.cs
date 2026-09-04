@@ -1,20 +1,20 @@
 using System.Security.Claims;
 using CashFlow.Application;
-using CashFlow.Domain.Identity;
+using CashFlow.Application.Contracts;
 using Microsoft.AspNetCore.Components.Authorization;
 
 namespace CashFlow.Web.Services;
 
-/// <summary>Текущий пользователь + гарантия, что у него есть хотя бы один профиль.</summary>
+/// <summary>Текущий пользователь Blazor-хоста: id из cookie-аутентификации, профили через прикладной сервис.</summary>
 public sealed class CurrentUser
 {
     private readonly AuthenticationStateProvider _auth;
-    private readonly IUnitOfWork _uow;
+    private readonly IProfileService _profiles;
 
-    public CurrentUser(AuthenticationStateProvider auth, IUnitOfWork uow)
+    public CurrentUser(AuthenticationStateProvider auth, IProfileService profiles)
     {
         _auth = auth;
-        _uow = uow;
+        _profiles = profiles;
     }
 
     public async Task<string> IdAsync()
@@ -23,17 +23,11 @@ public sealed class CurrentUser
         return state.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException();
     }
 
-    public async Task<List<FinancialProfile>> ProfilesAsync()
-    {
-        var uid = await IdAsync();
-        var list = _uow.Profiles.Query().Where(p => p.UserId == uid).OrderBy(p => p.CreatedAt).ToList();
-        if (list.Count == 0)
-        {
-            var p = new FinancialProfile(uid, ProfileKind.Individual, "Личное");
-            await _uow.Profiles.AddAsync(p);
-            await _uow.SaveChangesAsync();
-            list.Add(p);
-        }
-        return list;
-    }
+    public async Task<IReadOnlyList<ProfileDto>> ProfilesAsync() => await _profiles.ListAsync(await IdAsync());
+}
+
+/// <summary>Отображение времени в часовом поясе пользователя (CASHFLOW_TZ).</summary>
+public static class Tz
+{
+    public static DateTimeOffset Local(this DateTimeOffset utc) => utc.ToLocal();
 }

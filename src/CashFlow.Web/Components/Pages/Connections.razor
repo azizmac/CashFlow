@@ -2,10 +2,10 @@
 @attribute [Authorize]
 @rendermode InteractiveServer
 @inject CurrentUser Me
-@inject LedgerQueries Q
-@inject ConnectionsFacade Facade
+@inject IConnectionsService Svc
 @inject NavigationManager Nav
-@using CashFlow.Connectors.Abstractions
+@using CashFlow.Application
+@using CashFlow.Application.Contracts
 @using Microsoft.AspNetCore.WebUtilities
 
 <PageTitle>Подключения — CashFlow</PageTitle>
@@ -22,17 +22,17 @@
     @foreach (var c in connections)
     {
         <tr>
-            <td>@c.Name<div class="muted" style="font-size:11px">@profiles.FirstOrDefault(p => p.Id == c.ProfileId)?.Name@(c.SourceCode is not null ? $" · формат {c.SourceCode}" : "")</div></td>
-            <td>@TypeLabel(c.ConnectorType)</td>
+            <td>@c.Name<div class="muted" style="font-size:11px">@c.ProfileName@(c.SourceCode is not null ? $" · формат {c.SourceCode}" : "")</div></td>
+            <td>@TypeLabel(c.Type)</td>
             <td>
                 <span class="pill @(c.Status == ConnectionStatus.Active ? "ok" : c.Status == ConnectionStatus.Disabled ? "" : "err")">@c.Status</span>
                 @if (c.LastError is not null) { <div class="muted" style="font-size:11px;max-width:320px">@c.LastError</div> }
             </td>
-            <td class="muted">@(c.LastSyncAt?.Local().ToString("dd.MM.yy HH:mm") ?? "—")@(c.SyncCursor is not null && c.ConnectorType == ConnectorType.StatementImport ? $" (данные по {c.SyncCursor})" : "")</td>
+            <td class="muted">@(c.LastSyncAt?.Local().ToString("dd.MM.yy HH:mm") ?? "—")@(c.SyncCursor is not null && c.IsStatementImport ? $" (данные по {c.SyncCursor})" : "")</td>
             <td style="white-space:nowrap">
-                @if (c.ConnectorType == ConnectorType.StatementImport)
+                @if (c.IsStatementImport)
                 {
-                    <a class="small" href="/import">Загрузить ещё</a>
+                    <a class="small" href="/sources">Загрузить ещё</a>
                 }
                 else if (c.Status != ConnectionStatus.Disabled)
                 {
@@ -45,14 +45,14 @@
     </tbody>
 </table>
 
-@if (Facade.OAuthConnectors.Count > 0)
+@if (oauth.Count > 0)
 {
     <h2>Подключить через авторизацию в банке</h2>
     <p class="muted">Вы войдёте на странице банка и подтвердите доступ только к счетам и выпискам. Токены получит сервер, вводить их вручную не нужно.</p>
     <div class="form">
         <label>Профиль <select @bind="oauthProfileId">@foreach (var p in profiles) { <option value="@p.Id">@p.Name</option> }</select></label>
         <label>Название (необязательно) <input @bind="oauthName" placeholder="напр. Р/с ИП в Сбере" /></label>
-        @foreach (var oc in Facade.OAuthConnectors)
+        @foreach (var oc in oauth)
         {
             <div>
                 <button class="primary" @onclick="() => StartOAuth(oc)">Подключить через @oc.ProviderDisplayName</button>
@@ -63,17 +63,14 @@
 }
 else
 {
-    <p class="muted">Подключение «через авторизацию» (СберБизнес ID, Alfa ID) появится, когда в конфигурации сервера заданы реквизиты приложения банка — см. README, раздел «Интеграции через OAuth».</p>
+    <p class="muted">Подключение «через авторизацию» (СберБизнес ID, T-Business ID, Alfa ID) появится, когда в конфигурации сервера заданы реквизиты приложения банка — см. README, раздел «Интеграции через OAuth».</p>
 }
 
 <h2>Новое подключение по токену</h2>
 <div class="form">
     <label>Тип
         <select @bind="type" @bind:after="() => secrets.Clear()">
-            <option value="@ConnectorType.TInvest">Т-Инвестиции (T-Invest API)</option>
-            <option value="@ConnectorType.TBankBusiness">Т-Бизнес (T-API) — р/с ИП/ЮЛ</option>
-            <option value="@ConnectorType.SberBusiness">СберБизнес (Sber API) — р/с ИП/ЮЛ</option>
-            <option value="@ConnectorType.AlfaBusiness">Альфа-Бизнес (Alfa API) — р/с ИП/ЮЛ</option>
+            @foreach (var c in connectors) { <option value="@c.Type">@c.Label</option> }
         </select>
     </label>
     <label>Профиль <select @bind="profileId">@foreach (var p in profiles) { <option value="@p.Id">@p.Name</option> }</select></label>
@@ -96,8 +93,10 @@ else
 </div>
 
 @code {
-    List<FinancialProfile>? profiles;
-    List<Connection> connections = [];
+    IReadOnlyList<ProfileDto>? profiles;
+    IReadOnlyList<ConnectionDto> connections = [];
+    IReadOnlyList<ConnectorInfoDto> connectors = [];
+    List<ConnectorInfoDto> oauth = [];
     ConnectorType type = ConnectorType.TInvest;
     string profileId = "", name = "", oauthProfileId = "", oauthName = "";
     int initialDays = 365;
@@ -105,14 +104,16 @@ else
     Guid? busyId; string? msg, msgCss;
     string uid = "";
 
-    IConnector? Connector => Facade.ApiConnectors.FirstOrDefault(c => c.Type == type);
+    ConnectorInfoDto? Connector => connectors.FirstOrDefault(c => c.Type == type);
 
     protected override async Task OnInitializedAsync()
     {
         uid = await Me.IdAsync();
         profiles = await Me.ProfilesAsync();
         profileId = oauthProfileId = profiles[0].Id.ToString();
-        connections = Q.Connections(uid);
+        connectors = Svc.Connectors();
+        oauth = connectors.Where(c => c.SupportsOAuth && c.OAuthConfigured).ToList();
+        await Reload();
 
         // Возврат из банка после OAuth: ?connected=<id> или ?oauth=error&msg=...
         var query = QueryHelpers.ParseQuery(new Uri(Nav.Uri).Query);
@@ -121,23 +122,18 @@ else
             msg = "Не удалось подключить: " + query.GetValueOrDefault("msg");
             msgCss = "err";
         }
-        else if (query.TryGetValue("connected", out var idStr) && Guid.TryParse(idStr, out var id))
+        else if (query.TryGetValue("connected", out var idStr) && Guid.TryParse(idStr, out var id) && connections.FirstOrDefault(x => x.Id == id) is { } c)
         {
-            var c = connections.FirstOrDefault(x => x.Id == id);
-            if (c is not null)
-            {
-                msg = $"Подключение «{c.Name}» создано, запускаю первую синхронизацию…";
-                msgCss = "ok";
-                await Sync(c);
-            }
+            msg = $"Подключение «{c.Name}» создано, запускаю первую синхронизацию…";
+            msgCss = "ok";
+            await Sync(c);
         }
     }
 
-    void StartOAuth(IOAuthConnector oc)
-    {
-        var url = $"/oauth/{oc.UrlName()}/start?profileId={oauthProfileId}&name={Uri.EscapeDataString(oauthName.Trim())}";
-        Nav.NavigateTo(url, forceLoad: true);
-    }
+    async Task Reload() => connections = await Svc.ListAsync(uid);
+
+    void StartOAuth(ConnectorInfoDto oc) =>
+        Nav.NavigateTo($"/oauth/{oc.OAuthProviderKey}/start?profileId={oauthProfileId}&name={Uri.EscapeDataString(oauthName.Trim())}", forceLoad: true);
 
     async Task LoadPfx(InputFileChangeEventArgs e, string key)
     {
@@ -151,39 +147,31 @@ else
         msg = null;
         try
         {
-            var c = await Facade.CreateAsync(uid, Guid.Parse(profileId), type, name.Trim(), secrets, default);
-            connections = Q.Connections(uid);
+            var c = await Svc.CreateAsync(uid, Guid.Parse(profileId), type, name.Trim(), secrets);
             secrets.Clear(); name = "";
+            await Reload();
             await Sync(c);
         }
         catch (Exception ex) { msg = ex.Message; msgCss = "err"; }
     }
 
-    async Task Sync(Connection c)
+    async Task Sync(ConnectionDto c)
     {
         busyId = c.Id;
         try
         {
-            var run = await Facade.SyncNowAsync(c.Id, initialDays, default);
-            msg = run.Error is null ? $"«{c.Name}»: новых операций {run.ImportedTransactions}, дубликатов {run.SkippedDuplicates}" : $"«{c.Name}»: ошибка — {run.Error}";
+            var run = await Svc.SyncAsync(uid, c.Id, initialDays);
+            msg = run.Error is null ? $"«{c.Name}»: новых операций {run.Imported}, дубликатов {run.Skipped}" : $"«{c.Name}»: ошибка — {run.Error}";
             msgCss = run.Error is null ? "ok" : "err";
         }
         catch (Exception ex) { msg = ex.Message; msgCss = "err"; }
         busyId = null;
-        connections = Q.Connections(uid);
+        await Reload();
     }
 
-    async Task Delete(Connection c) { await Facade.DeleteAsync(uid, c.Id, default); connections = Q.Connections(uid); }
+    async Task Delete(ConnectionDto c) { await Svc.DeleteAsync(uid, c.Id); await Reload(); }
 
-    static string TypeLabel(ConnectorType t) => t switch
-    {
-        ConnectorType.StatementImport => "Выписки (файлы)",
-        ConnectorType.TInvest => "T-Invest API",
-        ConnectorType.TBankBusiness => "T-API (Т-Бизнес)",
-        ConnectorType.SberBusiness => "Sber API",
-        ConnectorType.AlfaBusiness => "Alfa API",
-        _ => t.ToString(),
-    };
+    static string TypeLabel(ConnectorType t) => CashFlow.Application.Connections.ConnectionsService.Label(t);
 
     static string Label(string key) => key switch
     {

@@ -2,12 +2,14 @@
 @attribute [Authorize]
 @rendermode InteractiveServer
 @inject CurrentUser Me
-@inject LedgerQueries Q
+@inject ILedgerQueries Q
+@using CashFlow.Application
+@using CashFlow.Application.Contracts
 
 <PageTitle>Обзор — CashFlow</PageTitle>
 <h1>Обзор</h1>
 
-@if (profiles is null) { <p class="muted">Загрузка…</p> return; }
+@if (profiles is null || summary is null) { <p class="muted">Загрузка…</p> return; }
 
 <div class="toolbar">
     <select @bind="profileId" @bind:after="Reload">
@@ -24,13 +26,13 @@
 </div>
 
 <div class="cards">
-    <div class="card"><div class="label">Доходы</div><div class="value pos">+@income.ToString("N0") ₽</div></div>
-    <div class="card"><div class="label">Расходы</div><div class="value neg">−@expense.ToString("N0") ₽</div></div>
-    <div class="card"><div class="label">Сальдо</div><div class="value @((income-expense)>=0?"pos":"neg")">@((income - expense).ToString("N0")) ₽</div></div>
-    <div class="card"><div class="label">Чистые активы (по остаткам)</div><div class="value">@netWorth.ToString("N0") ₽</div></div>
+    <div class="card"><div class="label">Доходы</div><div class="value pos">+@summary.Income.ToString("N0") ₽</div></div>
+    <div class="card"><div class="label">Расходы</div><div class="value neg">−@summary.Expense.ToString("N0") ₽</div></div>
+    <div class="card"><div class="label">Сальдо</div><div class="value @((summary.Income - summary.Expense) >= 0 ? "pos" : "neg")">@((summary.Income - summary.Expense).ToString("N0")) ₽</div></div>
+    <div class="card"><div class="label">Чистые активы (по остаткам)</div><div class="value">@summary.NetWorth.ToString("N0") ₽</div></div>
 </div>
 
-@if (income == 0 && expense == 0)
+@if (summary.Income == 0 && summary.Expense == 0)
 {
     <div class="alert info">Данных пока нет. <a href="/sources">Загрузите выписку</a> или <a href="/connections">подключите API</a>.</div>
 }
@@ -45,15 +47,13 @@
         <table>
             <thead><tr><th>Категория</th><th class="num">Сумма</th><th class="num">Опер.</th><th style="width:30%"></th></tr></thead>
             <tbody>
-            @foreach (var c in byCat.Take(15))
+            @foreach (var c in summary.ByCategory.Take(15))
             {
                 <tr>
-                    <td>@(c.Category is null ? "Без категории" : $"{c.Category.Icon} {c.Category.Name}")
-                        @if (c.Category is null) { <a class="small" href="/transactions?uncategorized=1"> → разобрать</a> }
-                    </td>
+                    <td>@c.Label @if (c.CategoryId is null) { <a class="small" href="/transactions?uncategorized=1"> → разобрать</a> }</td>
                     <td class="num">@c.Total.ToString("N0")</td>
                     <td class="num muted">@c.Count</td>
-                    <td><div class="bar"><div style="width:@(expense > 0 ? (int)(c.Total / expense * 100) : 0)%"></div></div></td>
+                    <td><div class="bar"><div style="width:@(summary.Expense > 0 ? (int)(c.Total / summary.Expense * 100) : 0)%"></div></div></td>
                 </tr>
             }
             </tbody>
@@ -64,10 +64,10 @@
         <table>
             <thead><tr><th>Контрагент</th><th class="num">Сумма</th><th class="num">Опер.</th></tr></thead>
             <tbody>
-            @foreach (var c in byCp)
+            @foreach (var c in summary.ByCounterparty)
             {
                 <tr>
-                    <td><a href="/transactions?cp=@c.Counterparty.Id">@c.Counterparty.DisplayName</a> <span class="pill">@Kind(c.Counterparty.Kind)</span></td>
+                    <td><a href="/transactions?cp=@c.CounterpartyId">@c.Name</a> <span class="pill">@Kind(c.Kind)</span></td>
                     <td class="num">@c.Total.ToString("N0")</td>
                     <td class="num muted">@c.Count</td>
                 </tr>
@@ -78,14 +78,12 @@
 </div>
 
 @code {
-    List<FinancialProfile>? profiles;
+    IReadOnlyList<ProfileDto>? profiles;
+    SummaryDto? summary;
+    List<AccountCoverageDto> stale = [];
     string? profileId;
     int months = 1;
     DateOnly from, to;
-    decimal income, expense, netWorth;
-    List<CategoryTotal> byCat = [];
-    List<CounterpartyTotal> byCp = [];
-    List<AccountCoverage> stale = [];
     string uid = "";
 
     protected override async Task OnInitializedAsync()
@@ -95,16 +93,14 @@
         await Reload();
     }
 
-    Task Reload()
+    async Task Reload()
     {
         var today = DateOnly.FromDateTime(DateTime.Now);
         to = today;
         from = months == 1 ? new DateOnly(today.Year, today.Month, 1) : today.AddMonths(-months);
         Guid? pid = Guid.TryParse(profileId, out var g) ? g : null;
-        (income, expense, byCat, byCp) = Q.Summary(uid, pid, from, to);
-        netWorth = Q.NetWorth(uid, pid);
-        stale = Q.Coverage(uid, pid).Where(c => c.Count > 0 && c.StaleDays > 30 && c.Account.IncludeInCashFlow).ToList();
-        return Task.CompletedTask;
+        summary = await Q.SummaryAsync(uid, pid, from, to);
+        stale = (await Q.CoverageAsync(uid, pid)).Where(c => c.Count > 0 && c.StaleDays > 30 && c.Account.IncludeInCashFlow).ToList();
     }
 
     static string Kind(CounterpartyKind k) => k switch
