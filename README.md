@@ -34,6 +34,8 @@ docker compose up -d --build
 
 Требуется .NET 9 SDK, для приложения — воркод `maui-windows` (`dotnet workload restore`), и PostgreSQL из compose: `docker compose up -d db`.
 
+**Версия SDK.** `global.json` закрепляет .NET SDK 9.0.3xx (воркод `maui-windows` ставится на конкретную линейку SDK). Если Rider всё равно берёт другой SDK (в логе сборки строка `Use build tool: …\sdk.0.xxx\MSBuild.dll`), в `File | Settings | Build, Execution, Deployment | Toolset and Build` выберите .NET SDK 9.0.315 из `C:\Program Files\dotnet`.
+
 **Запуск в Rider / из терминала.** В режиме Development веб-хост сам читает `.env` из корня репозитория (пароль базы, `DB_PORT`, `ENCRYPTION_MASTER_KEY`, `DEMO_*`), поэтому `cp .env.example .env` с заполненными значениями достаточно: Rider → конфигурация `CashFlow.Web: http` → Run, откроется `http://localhost:5045`, база та же, что у контейнера, вход демо-пользователем по `/dev/login`. Приложение: конфигурация `CashFlow.Maui: Windows Machine` → Run; встроенный сервер тоже берёт `.env`. Контейнер и IDE одновременно с одной базой работают нормально (один ключ шифрования). Из терминала:
 
 ```bash
