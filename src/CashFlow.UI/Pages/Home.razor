@@ -28,7 +28,14 @@
 </div>
 
 <div class="stack">
-    <div class="card hero">
+    @* Десктоп (макет 1i): ряд из четырёх KPI-карточек; телефон (макет 1a): одна hero-карточка *@
+    <div class="kpis hidden-narrow">
+        <div class="kpi accent"><div class="eyebrow">Net worth</div><div class="value num">@Ui.Rub(summary.NetWorth)</div><div class="sub">по остаткам счетов в активах</div></div>
+        <div class="kpi"><div class="eyebrow">Income</div><div class="value num pos">+@Ui.N0(summary.Income)</div><div class="sub">@PeriodLabel</div></div>
+        <div class="kpi"><div class="eyebrow">Expense</div><div class="value num neg">−@Ui.N0(summary.Expense)</div><div class="sub">@PeriodLabel</div></div>
+        <div class="kpi"><div class="eyebrow">Сальдо</div><div class="value num @(Saldo >= 0 ? "pos" : "neg")">@Ui.Signed(Saldo) ₽</div><div class="sub">доходы минус расходы</div></div>
+    </div>
+    <div class="card hero hidden-wide">
         <div class="eyebrow">Net worth · @PeriodLabel</div>
         <div class="big-number num">@Ui.Rub(summary.NetWorth)</div>
         <div class="muted" style="font-size:12.5px">по остаткам счетов, включённых в активы</div>
