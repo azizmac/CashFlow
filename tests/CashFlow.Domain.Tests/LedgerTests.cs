@@ -130,7 +130,7 @@ public class CounterpartyMatcherTests
     public void Rule_regex_matches_normalized_description()
     {
         var rule = new CategorizationRule(null, RuleField.Description, RuleMatch.Regex, @"ларек|киоск", Guid.NewGuid(), 10, RuleOrigin.System);
-        Assert.True(rule.Matches("SUPERMARKET Магазин 1234"));
-        Assert.False(rule.Matches("Яндекс Такси"));
+        Assert.True(rule.Matches("KIOSK Ларёк 1234"));   // «ё» нормализуется в «е»
+        Assert.False(rule.Matches("Такси"));
     }
 }

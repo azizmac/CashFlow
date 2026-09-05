@@ -24,9 +24,9 @@ public class SberBusinessOperationsParserTests
             if (debit is { } d) { ws.Cell(r, 8).Value = d; ws.Cell(r, 9).Value = "RUB"; }
             ws.Cell(r, 10).Value = purpose;
         }
-        Row(2, "573", "13.04.2026", "40702.810.1.00000000123", "ООО \"Ромашка\"", 250000, null, "Оплата по договору б\\н от 10.11.2025 за услуги");
-        Row(3, "658568", "17.04.2026", "30232.810.9.00020117000", "Отделение №0001 ПАО Сбербанк", null, 69.99, "Покупка PURCHASE_CB в ТУ Сбербанка SUPERMARKET 0001 по карте MIR 2202 за 2026-04-17. Держатель");
-        Row(4, "484445", "01.05.2026", "47423.810.9.72012238225", "ПАО Сбербанк", null, 2400, "Комиссия за ведение счета 40802810700000000001 по договору РКО");
+        Row(2, "101", "13.04.2026", "40702.810.1.00000000123", "ООО \"Ромашка\"", 250000, null, "Оплата по договору б\\н от 10.11.2025 за услуги");
+        Row(3, "102", "17.04.2026", "30232.810.9.00020117000", "Отделение №0001 ПАО Сбербанк", null, 70, "Покупка PURCHASE_CB в ТУ Сбербанка SUPERMARKET 0001 по карте MIR 2202 за 2026-04-17. Держатель");
+        Row(4, "103", "01.05.2026", "47423.810.9.72012238225", "ПАО Сбербанк", null, 2000, "Комиссия за ведение счета 40802810700000000001 по договору РКО");
 
         var ms = new MemoryStream();
         wb.SaveAs(ms);
@@ -54,15 +54,15 @@ public class SberBusinessOperationsParserTests
         Assert.Equal(250000m, income.Amount.Amount);
         Assert.Equal("ООО \"Ромашка\"", income.Counterparty.Name);
         Assert.Equal("40702810100000000123", income.Counterparty.Account);   // точки убраны
-        Assert.Equal("20260413-573-250000.00-C-0123", income.ExternalId);   // тот же ключ, что у выписки и 1С
+        Assert.Equal("20260413-101-250000.00-C-0123", income.ExternalId);   // тот же ключ, что у выписки и 1С
 
         var card = r.Transactions[1];
-        Assert.Equal(-69.99m, card.Amount.Amount);
+        Assert.Equal(-70m, card.Amount.Amount);
         Assert.Equal("SUPERMARKET 0001", card.Counterparty.Name);
         Assert.Equal("Покупка: SUPERMARKET 0001", card.Description);
 
         var fee = r.Transactions[2];
-        Assert.Equal(-2400m, fee.Amount.Amount);
+        Assert.Equal(-2000m, fee.Amount.Amount);
         Assert.StartsWith("Комиссия за ведение счета", fee.Description);
         Assert.Equal("ПАО Сбербанк", fee.Counterparty.Name);
     }

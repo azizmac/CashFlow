@@ -7,7 +7,7 @@ public class SberCardPdfParserTests
 {
     [Theory]
     [InlineData("Перевод от П. Иван Сергеевич. Операция по карте ****1234", "Перевод от П. Иван Сергеевич")]
-    [InlineData("Перевод из Yandex. Операция по карте ****1234", "Перевод из Yandex")]
+    [InlineData("Перевод из Wallet. Операция по карте ****1234", "Перевод из Wallet")]
     [InlineData("SBER*5411*MARKET MOSCOW RUS. Операция по карте ****1234", "SBER*5411*MARKET MOSCOW RUS")]
     [InlineData("COFFEE MALL MOSCOW RUS. Операция по карте ****1234", "COFFEE MALL MOSCOW RUS")]
     [InlineData("Перевод для П. Иван Сергеевич. Операция по карте", "Перевод для П. Иван Сергеевич")]

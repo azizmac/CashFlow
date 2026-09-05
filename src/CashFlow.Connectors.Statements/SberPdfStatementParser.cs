@@ -171,7 +171,7 @@ public sealed partial class SberPdfStatementParser : IStatementParser
         var phone = Regex.Match(desc, @"(\+7|8)[\s\-]?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}");
         if (phone.Success) return new CounterpartyRaw(desc, Phone: phone.Value);
 
-        // «Перевод для П. Иван Сергеевич», «Перевод от С. Пётр», «Перевод из T-Bank», «Перевод в Yandex»
+        // «Перевод для П. Иван Сергеевич», «Перевод от С. Пётр», «Перевод из T-Bank», «Перевод в Wallet»
         var transfer = Regex.Match(desc, @"^Перевод\s+(?:для|от|из|в|на|с)\s+(?<name>.+?)\s*$", RegexOptions.IgnoreCase);
         if (transfer.Success) return new CounterpartyRaw(transfer.Groups["name"].Value.Trim().TrimEnd('.'));
 

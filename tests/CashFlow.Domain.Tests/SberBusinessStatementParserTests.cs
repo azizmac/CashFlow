@@ -27,8 +27,8 @@ public class SberBusinessStatementParserTests
         ws.Cell("B13").Value = "01.07.2026";
         ws.Cell("C13").Value = "40702810100000000456\n7700000001\nООО \"Доставка Еды\"";
         ws.Cell("D13").Value = $"{Own}\n7700000002\nООО \"ТЕСТ\"";
-        ws.Cell("F13").Value = 499.28;
-        ws.Cell("G13").Value = "85519"; ws.Cell("H13").Value = "01";
+        ws.Cell("F13").Value = 500;
+        ws.Cell("G13").Value = "105"; ws.Cell("H13").Value = "01";
         ws.Cell("I13").Value = "БИК 044525225\nПАО Сбербанк";
         ws.Cell("J13").Value = "Перечисление денежных средств по договору 12/26";
 
@@ -36,8 +36,8 @@ public class SberBusinessStatementParserTests
         ws.Cell("B14").Value = "02.07.2026";
         ws.Cell("C14").Value = $"{Own}\n7700000002\nООО \"ТЕСТ\"";
         ws.Cell("D14").Value = "40802810100000000789\n770000000003\nИП Иванов Иван Иванович";
-        ws.Cell("E14").Value = 4760;
-        ws.Cell("G14").Value = "1291"; ws.Cell("H14").Value = "01";
+        ws.Cell("E14").Value = 4000;
+        ws.Cell("G14").Value = "106"; ws.Cell("H14").Value = "01";
         ws.Cell("I14").Value = "БИК 044525801\nООО \"Бланк банк\"";
         ws.Cell("J14").Value = "КЗ Счет № 402 от 21.05.2026 за перчатки";
 
@@ -48,23 +48,23 @@ public class SberBusinessStatementParserTests
         ws.Cell("E15").Value = 300;
         ws.Cell("G15").Value = "108"; ws.Cell("H15").Value = "17";
         ws.Cell("I15").Value = "БИК 044525225\nОТДЕЛЕНИЕ N0001 ПАО СБЕРБАНК";
-        ws.Cell("J15").Value = "Покупка PURCHASE_CB в ТУ Сбербанка DONER по карте MIR 2202 за 2026-07-02. Держатель ИВАНОВ. 1310 КА_1 Чек он-лайн №108 от 02.07.2026";
+        ws.Cell("J15").Value = "Покупка PURCHASE_CB в ТУ Сбербанка CAFE по карте MIR 2202 за 2026-07-02. Держатель ИВАНОВ. 1310 КА_1 Чек он-лайн №108 от 02.07.2026";
 
         // Зарплата физлицу без ИНН: номер счёта склеен с именем в одной строке
         ws.Cell("B16").Value = "03.07.2026";
         ws.Cell("C16").Value = $"{Own}\n7700000002\nООО \"ТЕСТ\"";
         ws.Cell("D16").Value = "40817810100000000004Петрова Мария Ивановна";
-        ws.Cell("E16").Value = 4271.71;
-        ws.Cell("G16").Value = "1375"; ws.Cell("H16").Value = "01";
+        ws.Cell("E16").Value = 4500;
+        ws.Cell("G16").Value = "107"; ws.Cell("H16").Value = "01";
         ws.Cell("I16").Value = "БИК 044525225\nОТДЕЛЕНИЕ N0001 ПАО СБЕРБАНК";
         ws.Cell("J16").Value = "Зарплата за июнь 2026";
 
         ws.Cell("B17").Value = "б/с 40702"; ws.Cell("D17").Value = "Дебет"; ws.Cell("F17").Value = "Кредит"; ws.Cell("J17").Value = "Всего";
         ws.Cell("B18").Value = "Количество операций"; ws.Cell("D18").Value = 2; ws.Cell("F18").Value = 1; ws.Cell("J18").Value = 3;
         ws.Cell("B19").Value = "Входящий остаток"; ws.Cell("D19").Value = "0,00"; ws.Cell("F19").Value = "100 000,00 (П)"; ws.Cell("J19").Value = "01.07.2026";
-        ws.Cell("B20").Value = "Итого оборотов"; ws.Cell("D20").Value = 5060; ws.Cell("F20").Value = 499.28;
+        ws.Cell("B20").Value = "Итого оборотов"; ws.Cell("D20").Value = 8800; ws.Cell("F20").Value = 500;
         // Разряды разделены узким пробелом U+202F, как в реальном файле; в конце строки дата, которую нельзя принять за сумму
-        ws.Cell("B21").Value = "Исходящий остаток"; ws.Cell("D21").Value = "0,00"; ws.Cell("F21").Value = "95 439,28 (П)"; ws.Cell("J21").Value = "31.07.2026";
+        ws.Cell("B21").Value = "Исходящий остаток"; ws.Cell("D21").Value = "0,00"; ws.Cell("F21").Value = "91 700,00 (П)"; ws.Cell("J21").Value = "31.07.2026";
 
         var ms = new MemoryStream();
         wb.SaveAs(ms);
@@ -84,14 +84,14 @@ public class SberBusinessStatementParserTests
         Assert.Equal(Institution.Codes.Sber, r.DetectedBankCode);
         Assert.Equal(Own, r.Account.AccountNumber);
         Assert.Contains("ООО \"ТЕСТ\"", r.Account.Name);
-        Assert.Equal(95439.28m, r.Account.Balance!.Amount);   // «95 439,28 (П)», а не дата 31.07.2026
+        Assert.Equal(91700m, r.Account.Balance!.Amount);   // «91 700,00 (П)», а не дата 31.07.2026
         Assert.Equal(new DateOnly(2026, 7, 1), r.Period!.Value.From);
         Assert.Equal(new DateOnly(2026, 7, 31), r.Period!.Value.To);
         Assert.DoesNotContain(r.Warnings, w => w.Contains("Краткий формат"));
         Assert.Equal(4, r.Transactions.Count);
 
         var income = r.Transactions[0];
-        Assert.Equal(499.28m, income.Amount.Amount);
+        Assert.Equal(500m, income.Amount.Amount);
         Assert.Equal("ООО \"Доставка Еды\"", income.Counterparty.Name);
         Assert.Equal("7700000001", income.Counterparty.Inn);
         Assert.Equal("40702810100000000456", income.Counterparty.Account);
@@ -99,22 +99,22 @@ public class SberBusinessStatementParserTests
         Assert.Contains("Перечисление", income.Purpose);
 
         var payment = r.Transactions[1];
-        Assert.Equal(-4760m, payment.Amount.Amount);
+        Assert.Equal(-4000m, payment.Amount.Amount);
         Assert.Equal("ИП Иванов Иван Иванович", payment.Counterparty.Name);
         Assert.Equal("770000000003", payment.Counterparty.Inn);
         Assert.Equal("ООО \"Бланк банк\"", payment.Counterparty.BankName);
 
         var card = r.Transactions[2];
         Assert.Equal(-300m, card.Amount.Amount);
-        Assert.Equal("DONER", card.Counterparty.Name);
-        Assert.Equal("Покупка: DONER", card.Description);
+        Assert.Equal("CAFE", card.Counterparty.Name);
+        Assert.Equal("Покупка: CAFE", card.Description);
 
         var salary = r.Transactions[3];
-        Assert.Equal(-4271.71m, salary.Amount.Amount);
+        Assert.Equal(-4500m, salary.Amount.Amount);
         Assert.Equal("Петрова Мария Ивановна", salary.Counterparty.Name);
         Assert.Equal("40817810100000000004", salary.Counterparty.Account);
         Assert.Null(salary.Counterparty.Inn);
-        Assert.Equal("20260703-1375-4271.71-D-0004", salary.ExternalId);   // тот же ключ даёт ClientBankExchangeParser
+        Assert.Equal("20260703-107-4500.00-D-0004", salary.ExternalId);   // тот же ключ даёт ClientBankExchangeParser
 
         Assert.Equal(4, r.Transactions.Select(t => t.ExternalId).Distinct().Count());
     }
