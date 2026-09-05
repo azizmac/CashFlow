@@ -31,9 +31,9 @@
 {
     <div class="card" style="margin-bottom:14px">
         <div class="wrap">
-            <label class="select-pill"><select @bind="profileId" @bind:after="Reload"><option value="">Все профили</option>@foreach (var p in profiles) { <option value="@p.Id">@p.Name</option> }</select></label>
-            <label class="select-pill"><select @bind="accountId" @bind:after="Reload"><option value="">Все счета</option>@foreach (var a in accounts) { <option value="@a.Id">@a.Name</option> }</select></label>
-            <label class="select-pill"><select @bind="categoryId" @bind:after="Reload"><option value="">Все категории</option>@foreach (var c in categories) { <option value="@c.Id">@c.Label</option> }</select></label>
+            <Dropdown Pill Value="@(profileId ?? "")" ValueChanged="async v => { profileId = v; await Reload(); }" Items="@(new List<Dropdown.Item> { new("", "Все профили") }.Concat(profiles.Select(p => new Dropdown.Item(p.Id.ToString(), p.Name))).ToList())" />
+            <Dropdown Pill Value="@(accountId ?? "")" ValueChanged="async v => { accountId = v; await Reload(); }" Items="@(new List<Dropdown.Item> { new("", "Все счета") }.Concat(accounts.Select(a => new Dropdown.Item(a.Id.ToString(), a.Name))).ToList())" />
+            <Dropdown Pill Value="@(categoryId ?? "")" ValueChanged="async v => { categoryId = v; await Reload(); }" Items="@(new List<Dropdown.Item> { new("", "Все категории") }.Concat(categories.OrderBy(c => c.Kind).Select(c => new Dropdown.Item(c.Id.ToString(), c.Name, c.Icon))).ToList())" />
             <input type="date" @bind="from" @bind:after="Reload" />
             <input type="date" @bind="to" @bind:after="Reload" />
         </div>
@@ -82,11 +82,7 @@
                     }
                     else if (editId == r.Id)
                     {
-                        <select value="@(r.CategoryId?.ToString() ?? "")" @onchange="e => SetCategory(r, e.Value?.ToString())" style="max-width:180px">
-                            <option value="">— без категории —</option>
-                            @foreach (var c in categories.Where(c => c.Id == r.CategoryId || c.Kind == (r.IsIncome ? CategoryKind.Income : CategoryKind.Expense) || c.Kind == CategoryKind.Transfer || c.Kind == CategoryKind.Investment))
-                            { <option value="@c.Id">@c.Label</option> }
-                        </select>
+                        <Dropdown Value="@(r.CategoryId?.ToString() ?? "")" ValueChanged="v => SetCategory(r, v)" Placeholder="Без категории" Items="@CategoryItemsFor(r)" Class="dd-inline" />
                     }
                     else
                     {
@@ -156,6 +152,10 @@
     }
 
     static Guid? G(string? s) => Guid.TryParse(s, out var g) ? g : null;
+
+    List<Dropdown.Item> CategoryItemsFor(TransactionDto r) => new List<Dropdown.Item> { new("", "Без категории") }
+        .Concat(categories.Where(c => c.Id == r.CategoryId || c.Kind == (r.IsIncome ? CategoryKind.Income : CategoryKind.Expense) || c.Kind == CategoryKind.Transfer || c.Kind == CategoryKind.Investment)
+            .OrderBy(c => c.Kind).Select(c => new Dropdown.Item(c.Id.ToString(), c.Name, c.Icon))).ToList();
 
     async Task SetCategory(TransactionDto r, string? value)
     {

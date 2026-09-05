@@ -24,11 +24,7 @@
                     <div class="row"><h1 style="font-size:24px">@cp.DisplayName</h1><button class="icon-btn" title="Переименовать" @onclick="() => { editing = true; editName = cp.DisplayName; }"><Icon Name="edit" Size="15" /></button></div>
                 }
                 <div class="wrap" style="margin-top:8px">
-                    <label class="select-pill" style="height:28px;font-size:12px">
-                        <select value="@cp.Kind" @onchange="e => SetKind(e.Value?.ToString())">
-                            @foreach (var k in Enum.GetValues<CounterpartyKind>()) { <option value="@k">@Ui.KindLabel(k)</option> }
-                        </select>
-                    </label>
+                    <Dropdown Pill Value="@cp.Kind.ToString()" ValueChanged="SetKind" Items="@(Enum.GetValues<CounterpartyKind>().Select(k => new Dropdown.Item(k.ToString(), Ui.KindLabel(k))).ToList())" />
                     @if (cp.Inn is not null) { <span class="pill">ИНН @cp.Inn</span> }
                     @if (cp.Kpp is not null) { <span class="pill">КПП @cp.Kpp</span> }
                     @foreach (var a in cp.AccountsMasked) { <span class="pill">счёт @a</span> }
@@ -59,12 +55,7 @@
     <div class="card">
         <div class="head"><h3>Категория по умолчанию</h3></div>
         <div class="row">
-            <label class="select-pill grow">
-                <select class="grow" value="@(cp.DefaultCategoryId?.ToString() ?? "")" @onchange="e => SetDefaultCategory(e.Value?.ToString())">
-                    <option value="">— не задана —</option>
-                    @foreach (var cat in categories) { <option value="@cat.Id">@cat.Label</option> }
-                </select>
-            </label>
+            <Dropdown Class="grow" Value="@(cp.DefaultCategoryId?.ToString() ?? "")" ValueChanged="SetDefaultCategory" Placeholder="Не задана" Items="@CategoryItems" />
         </div>
         <div class="small-note" style="margin-top:8px">Применяется ко всем будущим и ещё не разобранным операциям этого контрагента.</div>
         @if (cp.Aliases.Count > 1) { <div class="small-note" style="margin-top:6px">Также встречается как: @string.Join(", ", cp.Aliases.Where(a => a != TextNormalizer.Normalize(cp.DisplayName)).Take(5))</div> }
@@ -92,6 +83,8 @@
     static readonly System.Globalization.CultureInfo Ru = System.Globalization.CultureInfo.GetCultureInfo("ru-RU");
 
     CounterpartyDto? cp;
+    List<Dropdown.Item> CategoryItems => new List<Dropdown.Item> { new("", "Не задана") }.Concat(categories.OrderBy(c => c.Kind).Select(c => new Dropdown.Item(c.Id.ToString(), c.Name, c.Icon, KindGroup(c.Kind)))).ToList();
+    static string KindGroup(CategoryKind k) => k switch { CategoryKind.Income => "Доходы", CategoryKind.Expense => "Расходы", CategoryKind.Transfer => "Переводы", _ => "Инвестиции" };
     IReadOnlyList<CategoryDto> categories = [];
     IReadOnlyList<TransactionDto> tx = [];
     List<(DateOnly Month, decimal Total)> months = [];

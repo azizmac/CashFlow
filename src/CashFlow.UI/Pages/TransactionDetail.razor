@@ -46,11 +46,7 @@
                         <div class="row"><div class="grow"><div class="eyebrow">✦ Предложение</div><div style="margin-top:3px">@d.Transaction.ProposedCategoryLabel</div></div><button class="small white" @onclick="Accept">✓ Принять</button></div>
                     </div>
                 }
-                <select style="width:100%" value="@(d.Transaction.CategoryId?.ToString() ?? "")" @onchange="e => SetCategory(e.Value?.ToString())">
-                    <option value="">— без категории —</option>
-                    @foreach (var c in categories.Where(c => c.Id == d.Transaction.CategoryId || c.Kind == (d.Transaction.IsIncome ? CategoryKind.Income : CategoryKind.Expense) || c.Kind == CategoryKind.Transfer || c.Kind == CategoryKind.Investment))
-                    { <option value="@c.Id">@c.Label</option> }
-                </select>
+                <Dropdown Class="block" Value="@(d.Transaction.CategoryId?.ToString() ?? "")" ValueChanged="SetCategory" Placeholder="Без категории" Items="@CategoryItems" />
                 @if (d.Counterparty is not null)
                 {
                     <label class="row" style="margin-top:10px;font-size:13px;color:var(--text-2)"><input type="checkbox" @bind="applyToCounterparty" /> применять ко всем операциям «@d.Counterparty.DisplayName»</label>
@@ -158,6 +154,9 @@
     string? msg;
 
     CategoryDto? Cat => d?.Transaction.CategoryId is { } c ? categories.FirstOrDefault(x => x.Id == c) : null;
+    List<Dropdown.Item> CategoryItems => d is null ? [] : new List<Dropdown.Item> { new("", "Без категории") }
+        .Concat(categories.Where(c => c.Id == d.Transaction.CategoryId || c.Kind == (d.Transaction.IsIncome ? CategoryKind.Income : CategoryKind.Expense) || c.Kind == CategoryKind.Transfer || c.Kind == CategoryKind.Investment)
+            .OrderBy(c => c.Kind).Select(c => new Dropdown.Item(c.Id.ToString(), c.Name, c.Icon, c.Kind switch { CategoryKind.Income => "Доходы", CategoryKind.Expense => "Расходы", CategoryKind.Transfer => "Переводы", _ => "Инвестиции" }))).ToList();
 
     protected override async Task OnParametersSetAsync()
     {

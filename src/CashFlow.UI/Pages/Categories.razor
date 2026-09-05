@@ -69,7 +69,7 @@
             <div style="padding:12px 16px;border-bottom:.5px solid var(--sep)" class="row">
                 <input @bind="newIcon" maxlength="2" style="width:54px;text-align:center" />
                 <input @bind="newName" placeholder="Название" class="grow" />
-                <select @bind="newKind"><option value="@CategoryKind.Expense">Расход</option><option value="@CategoryKind.Income">Доход</option></select>
+                <Dropdown Value="@newKind.ToString()" ValueChanged="v => newKind = Enum.Parse<CategoryKind>(v!)" Items="@(new List<Dropdown.Item> { new(nameof(CategoryKind.Expense), "Расход"), new(nameof(CategoryKind.Income), "Доход") })" />
                 <button class="small primary" @onclick="Add" disabled="@string.IsNullOrWhiteSpace(newName)">Добавить</button>
             </div>
         }
@@ -109,12 +109,12 @@
             </div>
             <div class="form" style="margin-top:12px">
                 <div class="row">
-                    <select @bind="rField"><option value="@RuleField.Description">Описание</option><option value="@RuleField.CounterpartyName">Имя контрагента</option><option value="@RuleField.CounterpartyInn">ИНН контрагента</option><option value="@RuleField.Mcc">MCC</option></select>
-                    <select @bind="rMatch"><option value="@RuleMatch.Contains">содержит</option><option value="@RuleMatch.Equals">равно</option><option value="@RuleMatch.StartsWith">начинается с</option><option value="@RuleMatch.Regex">regex</option></select>
+                    <Dropdown Class="grow" Value="@rField.ToString()" ValueChanged="v => rField = Enum.Parse<RuleField>(v!)" Items="@(new List<Dropdown.Item> { new(nameof(RuleField.Description), "Описание"), new(nameof(RuleField.CounterpartyName), "Имя контрагента"), new(nameof(RuleField.CounterpartyInn), "ИНН контрагента"), new(nameof(RuleField.Mcc), "MCC") })" />
+                    <Dropdown Class="grow" Value="@rMatch.ToString()" ValueChanged="v => rMatch = Enum.Parse<RuleMatch>(v!)" Items="@(new List<Dropdown.Item> { new(nameof(RuleMatch.Contains), "содержит"), new(nameof(RuleMatch.Equals), "равно"), new(nameof(RuleMatch.StartsWith), "начинается с"), new(nameof(RuleMatch.Regex), "regex") })" />
                 </div>
                 <input @bind="rPattern" placeholder="Шаблон" />
                 <div class="row">
-                    <select class="grow" @bind="rCategory"><option value="">— категория —</option>@foreach (var c in categories) { <option value="@c.Id">@c.Label</option> }</select>
+                    <Dropdown Class="grow" Value="@rCategory" ValueChanged="v => rCategory = v ?? string.Empty" Placeholder="Категория" Items="@CategoryItems" />
                     <button class="primary" @onclick="AddRule" disabled="@(string.IsNullOrWhiteSpace(rPattern) || string.IsNullOrEmpty(rCategory))">Добавить</button>
                 </div>
             </div>
@@ -134,6 +134,7 @@
     RuleField rField = RuleField.Description; RuleMatch rMatch = RuleMatch.Contains; string rPattern = "", rCategory = "";
 
     IEnumerable<CategoryTotalDto> Expenses => summary?.ByCategory ?? [];
+    List<Dropdown.Item> CategoryItems => categories.OrderBy(c => c.Kind).Select(c => new Dropdown.Item(c.Id.ToString(), c.Name, c.Icon, Kind(c.Kind))).ToList();
     CategoryDto? Cat(Guid? id) => id is { } g ? categories.FirstOrDefault(c => c.Id == g) : null;
 
     string Conic

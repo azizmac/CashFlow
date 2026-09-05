@@ -78,7 +78,7 @@
     @if (oauth.Count > 0 && profiles.Count > 1)
     {
         <div class="wrap">
-            <label class="select-pill">◈ <select @bind="oauthProfileId">@foreach (var p in profiles) { <option value="@p.Id">@p.Name</option> }</select></label>
+            <Dropdown Pill Prefix="Профиль" Value="@oauthProfileId" ValueChanged="v => oauthProfileId = v ?? string.Empty" Items="@ProfileItems" />
             <input @bind="oauthName" placeholder="Название подключения (необязательно)" style="max-width:280px" />
         </div>
     }
@@ -89,11 +89,9 @@
             <div class="head"><h3>Новое подключение по токену</h3></div>
             <div class="form">
                 <label class="field">Тип
-                    <select @bind="type" @bind:after="() => secrets.Clear()">
-                        @foreach (var c in connectors) { <option value="@c.Type">@c.Label</option> }
-                    </select>
+                    <Dropdown Value="@type.ToString()" ValueChanged="v => { type = Enum.Parse<ConnectorType>(v!); secrets.Clear(); }" Items="@connectors.Select(c => new Dropdown.Item(c.Type.ToString(), c.Label)).ToList()" />
                 </label>
-                <label class="field">Профиль <select @bind="profileId">@foreach (var p in profiles) { <option value="@p.Id">@p.Name</option> }</select></label>
+                <label class="field">Профиль <Dropdown Value="@profileId" ValueChanged="v => profileId = v ?? string.Empty" Items="@ProfileItems" /></label>
                 <label class="field">Название <input @bind="name" placeholder="напр. Брокерский Т-Инвестиции" /></label>
                 @foreach (var key in Connector?.RequiredSecrets ?? [])
                 {
@@ -133,6 +131,7 @@
     string uid = "";
 
     ConnectorInfoDto? Connector => connectors.FirstOrDefault(c => c.Type == type);
+    List<Dropdown.Item> ProfileItems => (profiles ?? []).Select(p => new Dropdown.Item(p.Id.ToString(), p.Name)).ToList();
 
     protected override async Task OnInitializedAsync()
     {

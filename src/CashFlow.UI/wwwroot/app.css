@@ -2,27 +2,26 @@
    Тёмная тема — базовая, светлая — через [data-theme=light]; «система» следует prefers-color-scheme. */
 
 :root {
-  --bg: #08090d;
-  --bg-gradient: radial-gradient(120% 80% at 20% -10%, rgba(47,107,255,.28), transparent 60%),
-                 radial-gradient(90% 70% at 90% 15%, rgba(140,90,255,.22), transparent 60%),
-                 radial-gradient(120% 90% at 50% 110%, rgba(0,190,160,.18), transparent 60%);
-  --text: #f3f4f6;
-  --text-2: rgba(255,255,255,.65);
-  --muted: rgba(255,255,255,.45);
-  --faint: rgba(255,255,255,.35);
-  --link: #6f97ff;
-  --accent: #2f6bff;
-  --accent-soft: rgba(47,107,255,.22);
-  --accent-grad: linear-gradient(150deg, #4d7cff, #8a5cff);
-  --pos: oklch(.76 .15 152);
-  --neg: oklch(.7 .18 22);
-  --warn-bg: rgba(255,193,7,.1);
-  --warn-border: rgba(255,193,7,.22);
-  --warn-text: rgba(255,209,102,.85);
-  --glass: rgba(255,255,255,.06);
-  --glass-2: rgba(255,255,255,.055);
+  /* Тёмная тема: графит без градиентов, системные цвета Apple (label/secondaryLabel, systemBlue/Green/Red) */
+  --bg: #0e0f12;
+  --bg-gradient: none;
+  --text: rgba(255,255,255,.96);
+  --text-2: rgba(235,235,245,.62);
+  --muted: rgba(235,235,245,.45);
+  --faint: rgba(235,235,245,.32);
+  --link: #4c9fff;
+  --accent: #0a84ff;
+  --accent-soft: rgba(10,132,255,.2);
+  --accent-grad: linear-gradient(150deg, #2b93ff, #0a6fe0);
+  --pos: #30d158;
+  --neg: #ff453a;
+  --warn-bg: rgba(255,214,10,.1);
+  --warn-border: rgba(255,214,10,.24);
+  --warn-text: #ffd60a;
+  --glass: rgba(255,255,255,.055);
+  --glass-2: rgba(255,255,255,.05);
   --glass-strong: rgba(255,255,255,.09);
-  --glass-border: rgba(255,255,255,.1);
+  --glass-border: rgba(255,255,255,.09);
   --glass-border-2: rgba(255,255,255,.13);
   --sep: rgba(255,255,255,.07);
   --sep-2: rgba(255,255,255,.08);
@@ -38,7 +37,7 @@
   --seg-off-fg: rgba(255,255,255,.55);
   --bar-bg: rgba(22,24,30,.62);
   --bar-border: rgba(255,255,255,.12);
-  --bar-active: #7fa2ff;
+  --bar-active: #4c9fff;
   --bar-inactive: rgba(255,255,255,.42);
   --side-bg: rgba(255,255,255,.04);
   --side-border: rgba(255,255,255,.09);
@@ -48,10 +47,13 @@
   --input-border: rgba(255,255,255,.1);
   --btn-secondary: rgba(255,255,255,.08);
   --btn-secondary-border: rgba(255,255,255,.13);
-  --insight-bg: linear-gradient(140deg, rgba(47,107,255,.2), rgba(140,90,255,.12));
-  --insight-border: rgba(130,160,255,.24);
+  --insight-bg: rgba(10,132,255,.12);
+  --insight-border: rgba(10,132,255,.28);
   --icon-bg: rgba(255,255,255,.09);
-  --donut-hole: #0c0e13;
+  --donut-hole: #15161a;
+  --menu-bg: rgba(30,31,36,.92);
+  --menu-border: rgba(255,255,255,.12);
+  --menu-shadow: 0 18px 44px rgba(0,0,0,.55), 0 1px 0 rgba(255,255,255,.06) inset;
   color-scheme: dark;
 
   /* Движение (по .claude/skills/emil-design-eng и apple-design): UI-анимации < 300 мс, ease-out на появление,
@@ -65,21 +67,22 @@
 }
 
 [data-theme="light"] {
-  --bg: #f3f3f6;
-  --bg-gradient: radial-gradient(110% 70% at 15% -5%, rgba(47,107,255,.16), transparent 60%),
-                 radial-gradient(90% 60% at 95% 10%, rgba(160,110,255,.14), transparent 60%),
-                 radial-gradient(120% 80% at 40% 105%, rgba(0,180,160,.12), transparent 60%);
-  --text: #14161a;
-  --text-2: rgba(0,0,0,.62);
-  --muted: rgba(0,0,0,.42);
-  --faint: rgba(0,0,0,.35);
-  --link: #2f6bff;
-  --accent-soft: rgba(47,107,255,.12);
-  --pos: oklch(.55 .15 150);
-  --neg: oklch(.55 .19 25);
-  --warn-bg: rgba(255,193,7,.16);
-  --warn-border: rgba(230,160,0,.3);
-  --warn-text: rgba(150,100,0,.9);
+  /* Светлая тема: systemGroupedBackground, белые карточки, systemBlue */
+  --bg: #f2f2f7;
+  --bg-gradient: none;
+  --text: #1c1c1e;
+  --text-2: rgba(60,60,67,.7);
+  --muted: rgba(60,60,67,.5);
+  --faint: rgba(60,60,67,.36);
+  --link: #007aff;
+  --accent: #007aff;
+  --accent-soft: rgba(0,122,255,.12);
+  --accent-grad: linear-gradient(150deg, #2b93ff, #007aff);
+  --pos: #248a3d;
+  --neg: #d70015;
+  --warn-bg: rgba(255,204,0,.16);
+  --warn-border: rgba(200,150,0,.32);
+  --warn-text: #8a6100;
   --glass: rgba(255,255,255,.72);
   --glass-2: rgba(255,255,255,.72);
   --glass-strong: rgba(255,255,255,.85);
@@ -99,7 +102,7 @@
   --seg-off-fg: rgba(0,0,0,.5);
   --bar-bg: rgba(255,255,255,.7);
   --bar-border: rgba(0,0,0,.07);
-  --bar-active: #2f6bff;
+  --bar-active: #007aff;
   --bar-inactive: rgba(0,0,0,.4);
   --side-bg: rgba(255,255,255,.55);
   --side-border: rgba(0,0,0,.06);
@@ -109,10 +112,13 @@
   --input-border: rgba(0,0,0,.08);
   --btn-secondary: rgba(0,0,0,.05);
   --btn-secondary-border: rgba(0,0,0,.08);
-  --insight-bg: linear-gradient(140deg, rgba(47,107,255,.12), rgba(140,90,255,.08));
-  --insight-border: rgba(47,107,255,.16);
+  --insight-bg: rgba(0,122,255,.08);
+  --insight-border: rgba(0,122,255,.18);
   --icon-bg: rgba(0,0,0,.06);
-  --donut-hole: #fbfbfd;
+  --donut-hole: #ffffff;
+  --menu-bg: rgba(255,255,255,.94);
+  --menu-border: rgba(0,0,0,.08);
+  --menu-shadow: 0 18px 44px rgba(20,30,60,.18);
   color-scheme: light;
 }
 
@@ -122,8 +128,7 @@ html, body { margin: 0; min-height: 100%; }
 body {
   font-family: -apple-system, "SF Pro Display", "SF Pro Text", "Helvetica Neue", system-ui, Roboto, sans-serif;
   font-size: 14px; color: var(--text);
-  background: var(--bg-gradient), var(--bg);
-  background-attachment: fixed;
+  background: var(--bg);
   -webkit-font-smoothing: antialiased;
 }
 a { color: var(--link); text-decoration: none; }
@@ -212,7 +217,9 @@ button.link { background: none; border: none; color: var(--link); cursor: pointe
 }
 .card { padding: 16px 18px; }
 .card.hero { padding: 18px 18px 16px; box-shadow: var(--shadow-hero); }
-.card.tight { padding: 0; overflow: hidden; }
+.card.tight { padding: 0; }
+.card.tight > .list > :first-child, .card.tight > .section:first-child, .card.tight > .head:first-child { border-top-left-radius: 24px; border-top-right-radius: 24px; }
+.card.tight > .list > :last-child, .card.tight > :last-child { border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; }
 .card.stale { border-color: rgba(255,152,0,.3); }
 .card.danger { border-color: rgba(183,28,28,.3); }
 .card.dashed { background: rgba(255,255,255,.04); border: 1px dashed rgba(255,255,255,.16); box-shadow: none; }
@@ -322,15 +329,15 @@ input, select, textarea {
   font: inherit; color: var(--text); padding: 9px 12px; border: 1px solid var(--input-border); border-radius: 12px; background: var(--input-bg);
   outline: none; min-width: 0;
 }
-input:focus, select:focus, textarea:focus { border-color: rgba(47,107,255,.7); box-shadow: 0 0 0 3.5px rgba(47,107,255,.32); transition: box-shadow var(--t-fast) ease, border-color var(--t-fast) ease; }
-:focus-visible { outline: 2px solid rgba(47,107,255,.7); outline-offset: 2px; }
+input:focus, select:focus, textarea:focus { border-color: rgba(10,132,255,.7); box-shadow: 0 0 0 3.5px rgba(10,132,255,.32); transition: box-shadow var(--t-fast) ease, border-color var(--t-fast) ease; }
+:focus-visible { outline: 2px solid rgba(10,132,255,.7); outline-offset: 2px; }
 button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline: none; }
 select option { color: #14161a; }
 input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); padding: 0; }
 input[type="file"] { padding: 6px 0; background: transparent; border: none; }
 button, .btn { font: inherit; padding: 9px 15px; border-radius: 999px; border: 1px solid var(--btn-secondary-border); background: var(--btn-secondary); color: var(--text); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; line-height: 1.2; }
 button:disabled { opacity: .5; cursor: default; }
-button.primary, .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; box-shadow: 0 12px 30px rgba(47,107,255,.3); }
+button.primary, .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; box-shadow: 0 12px 30px rgba(10,132,255,.3); }
 button.white { background: rgba(255,255,255,.92); color: #0b0d12; border-color: transparent; font-weight: 600; }
 button.small, .btn.small { padding: 5px 11px; font-size: 12.5px; }
 button.wide { width: 100%; padding: 14px; font-size: 16px; }
@@ -467,12 +474,12 @@ button, .btn { height: 36px; padding: 0 16px; font-size: 13.5px; font-weight: 56
 button.small, .btn.small { height: 30px; padding: 0 12px; font-size: 12.5px; }
 button.wide, .btn.wide { height: 48px; font-size: 16px; font-weight: 600; }
 button.link { height: auto; padding: 0; font-weight: 500; }
-button.primary, .btn.primary { box-shadow: 0 8px 20px rgba(47,107,255,.28), inset 0 1px 0 rgba(255,255,255,.18); }
+button.primary, .btn.primary { box-shadow: 0 8px 20px rgba(10,132,255,.28), inset 0 1px 0 rgba(255,255,255,.18); }
 button.white { box-shadow: 0 1px 2px rgba(0,0,0,.18); }
 button:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
 button:disabled:active { transform: none; }
 @media (hover: hover) and (pointer: fine) {
-  button.primary:not(:disabled):hover { filter: brightness(1.08); box-shadow: 0 10px 24px rgba(47,107,255,.36), inset 0 1px 0 rgba(255,255,255,.2); }
+  button.primary:not(:disabled):hover { filter: brightness(1.08); box-shadow: 0 10px 24px rgba(10,132,255,.36), inset 0 1px 0 rgba(255,255,255,.2); }
   button:not(.primary):not(.link):not(:disabled):hover { background: var(--glass-border-2); }
 }
 /* Иконочная кнопка 32×32 вместо мелких ✎ и ✕: круглая, нейтральная, заметна при наведении */
@@ -546,3 +553,45 @@ tbody tr { transition: background-color var(--t-fast) ease; }
   .bar-track > div, .bars > div, .bar-stack > div, .donut { transition: none; }
   .kpi .value, .big-number, .stats .value { animation: none; }
 }
+
+/* ---------- Dropdown: своё меню вместо нативного select (нативное всплывало белым в тёмной теме) ---------- */
+.dd { position: relative; display: inline-flex; min-width: 0; }
+.dd.grow { flex: 1; }
+.dd.block { display: flex; width: 100%; }
+.dd-trigger { display: inline-flex; align-items: center; gap: 8px; height: 38px; min-width: 0; width: 100%; padding: 0 10px 0 12px; border-radius: 12px;
+  background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text); font: inherit; font-weight: 500; text-align: left; cursor: pointer;
+  transition: border-color var(--t-fast) ease, background-color var(--t-fast) ease, transform var(--t-press) var(--ease-out), box-shadow var(--t-fast) ease; }
+.dd-trigger.pill { height: 34px; border-radius: 999px; background: var(--glass-strong); border-color: var(--glass-border-2); font-size: 13px; color: var(--text-2); width: auto; }
+.dd-trigger:active:not(:disabled) { transform: scale(0.98); }
+.dd.open .dd-trigger { border-color: rgba(10,132,255,.7); box-shadow: 0 0 0 3.5px rgba(10,132,255,.28); }
+.dd-trigger:disabled { opacity: .45; cursor: not-allowed; }
+.dd-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dd-label.placeholder { color: var(--faint); font-weight: 400; }
+.dd-prefix { color: var(--muted); }
+.dd-chev { color: var(--faint); transform: rotate(90deg); transition: transform var(--t-ui) var(--ease-out); flex-shrink: 0; }
+.dd.open .dd-chev { transform: rotate(-90deg); }
+.dd-backdrop { position: fixed; inset: 0; z-index: 49; }
+.dd-menu { position: absolute; z-index: 50; top: calc(100% + 6px); left: 0; min-width: 100%; width: max-content; max-width: min(360px, 90vw);
+  background: var(--menu-bg); border: 1px solid var(--menu-border); border-radius: 16px; box-shadow: var(--menu-shadow);
+  backdrop-filter: blur(30px) saturate(170%); -webkit-backdrop-filter: blur(30px) saturate(170%);
+  transform-origin: top left; animation: dd-in 160ms var(--ease-out) both; overflow: hidden; }
+.dd-menu.closing { animation: dd-out 110ms var(--ease-out) both; pointer-events: none; }
+@keyframes dd-in { from { opacity: 0; transform: translateY(-4px) scale(.96); } }
+@keyframes dd-out { to { opacity: 0; transform: translateY(-3px) scale(.98); } }
+.dd-search { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: .5px solid var(--sep-2); color: var(--faint); }
+.dd-search input { flex: 1; min-height: 30px; height: 30px; background: transparent; border: none; padding: 0; border-radius: 0; }
+.dd-search input:focus { box-shadow: none; }
+.dd-list { max-height: 300px; overflow-y: auto; padding: 6px; overscroll-behavior: contain; }
+.dd-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; font-size: 13.5px; cursor: pointer; color: var(--text); user-select: none;
+  transition: background-color 80ms ease; }
+.dd-item.hl { background: var(--glass-strong); }
+.dd-item.on { color: var(--link); }
+.dd-item:active { transform: scale(0.99); }
+.dd-ico { width: 20px; text-align: center; }
+.dd-group { padding: 8px 10px 4px; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+.dd-empty { padding: 14px 10px; color: var(--faint); font-size: 13px; text-align: center; }
+@media (max-width: 900px) { .dd-menu { max-width: calc(100vw - 32px); } }
+@media (prefers-reduced-motion: reduce) { .dd-menu, .dd-menu.closing { animation: none; } .dd-chev { transition: none; } }
+/* Меню у правого края (встроенный выбор категории в строке) раскрывается влево от триггера */
+.dd.dd-inline .dd-menu { left: auto; right: 0; transform-origin: top right; }
+.dd-search input:focus-visible { outline: none; }

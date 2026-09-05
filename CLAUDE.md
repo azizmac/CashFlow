@@ -15,7 +15,7 @@
 | Парсеры выписок | PdfPig (PDF), ClosedXML (XLSX), 1CClientBankExchange (txt), CSV — проект `CashFlow.Connectors.Statements` |
 | Интеграции банков | OAuth (PKCE) коннекторы Сбер / Т-Банк / Альфа в `CashFlow.Connectors.*` |
 | Безопасность | AES-GCM шифрование полей (`Encryption:MasterKey`), маскирование номеров и телефонов в DTO |
-| UI-дизайн | Дизайн-система «сдержанное жидкое стекло» из `docs/design/cashflow-ai-ui-mockups/project/CashFlow AI.dc.html`; токены — CSS-переменные в `src/CashFlow.UI/wwwroot/app.css`; тёмная тема базовая, светлая через `[data-theme=light]` |
+| UI-дизайн | Дизайн-система «сдержанное жидкое стекло» по макетам `docs/design/cashflow-ai-ui-mockups/project/CashFlow AI.dc.html`, палитра — системные цвета Apple (фон графит `#0e0f12` без градиентов, акцент `#0a84ff`/`#007aff`, `#30d158`, `#ff453a`); токены — CSS-переменные в `src/CashFlow.UI/wwwroot/app.css`; тёмная тема базовая, светлая через `[data-theme=light]`; вместо нативных `<select>` — компонент `Dropdown` |
 | Инфраструктура | Docker Compose (`web` на 8080, `db` PostgreSQL на `127.0.0.1:55432`), Docker MCP `tools/docker-mcp`; установщик Windows — Inno Setup (`installer/windows`, `tools/publish-desktop.ps1`) |
 | Тесты | xUnit: `tests/CashFlow.Domain.Tests` (домен, парсеры) и `tests/CashFlow.Api.Tests` (интеграционные, PostgreSQL на 55432, база на прогон) |
 | Утилиты | `tools/StatementProbe` — прогон реальных выписок через парсеры и БД |
@@ -36,7 +36,7 @@
 ## Конвенции
 
 - Отвечать и комментировать код по-русски; идентификаторы и термины — как есть. Тексты ошибок для пользователя — по-русски (`RussianIdentityErrorDescriber`, переводы в `ApiClient`).
-- Перед изменением UI сверяться с макетом `.dc.html` и токенами `app.css`; новые экраны рисовать в той же системе (glass-карточки radius 24, акцент `#2f6bff`, eyebrow-лейблы, tabular-nums).
+- Перед изменением UI сверяться с макетом `.dc.html` и токенами `app.css`; новые экраны рисовать в той же системе (glass-карточки radius 24, акцент `#0a84ff`, eyebrow-лейблы, tabular-nums, выпадающие списки только через `Components/Dropdown.razor`, иконки через `Components/Icon.razor`).
 - Для UI и анимаций обязательны скиллы в `.claude/skills` (репозиторий emilkowalski/skills, «Apple-дизайн»): `apple-design` (материалы, пружины, жесты, типографика, reduced motion), `emil-design-eng` (решения по анимации, отклик на нажатие, кривые), `animate`, `review-animations`, `improve-animations`, `find-animation-opportunities`, `animation-vocabulary`, `prototype`, `pick-ui-library`. Токены движения уже заданы в `app.css` (`--ease-out`, `--ease-in-out`, `--ease-drawer`, `--t-press/--t-fast/--t-ui`). Для дизайн-задач также плагин `design` (`design:design-system`, `design:design-handoff`, `design:design-critique`) и skill `design` (Claude Design canvas).
 - План работ и статусы задач — `docs/ROADMAP.md` (ссылаться на номера R-xx, обновлять статус после выполнения).
 - После правок: `dotnet build` затронутых хостов, `dotnet test tests/CashFlow.Domain.Tests`, при изменении сервера — `docker compose up -d --build web`, при изменении MAUI — сборка `-f net9.0-windows10.0.19041.0`.

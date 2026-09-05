@@ -1,0 +1,103 @@
+@* Выпадающий список в стиле приложения вместо нативного <select>: тёмный/светлый по теме, меню появляется из триггера
+   (transform-origin сверху), 160 мс ease-out, закрывается быстрее (110 мс); поиск при длинных списках; клавиатура: ↑ ↓ Enter Esc. *@
+@implements IDisposable
+
+<div class="dd @Class @(open ? "open" : "")" @onkeydown="OnKey" @onkeydown:preventDefault="@(open && IsNavKey)">
+    <button type="button" class="dd-trigger @(Pill ? "pill" : "")" @onclick="Toggle" disabled="@Disabled" aria-haspopup="listbox" aria-expanded="@open">
+        @if (!string.IsNullOrEmpty(Prefix)) { <span class="dd-prefix">@Prefix</span> }
+        <span class="dd-label @(Current is null ? "placeholder" : "")">@(Current?.Label ?? Placeholder)</span>
+        <Icon Name="chevron" Size="14" Class="dd-chev" />
+    </button>
+    @if (open || closing)
+    {
+        <div class="dd-backdrop" @onclick="Close"></div>
+        <div class="dd-menu @(closing ? "closing" : "")" role="listbox">
+            @if (Searchable)
+            {
+                <div class="dd-search"><Icon Name="search" Size="14" /><input @ref="searchBox" placeholder="Поиск" value="@query" @oninput="e => { query = e.Value?.ToString() ?? string.Empty; highlight = 0; }" /></div>
+            }
+            <div class="dd-list">
+                @{ var idx = 0; string? lastGroup = null; }
+                @foreach (var it in Visible)
+                {
+                    if (it.Group is not null && it.Group != lastGroup) { lastGroup = it.Group; <div class="dd-group">@it.Group</div> }
+                    var i = idx++;
+                    <div class="dd-item @(it.Value == Value ? "on" : "") @(i == highlight ? "hl" : "")" role="option" aria-selected="@(it.Value == Value)"
+                         @onclick="() => Pick(it)" @onmouseenter="() => highlight = i">
+                        @if (it.Icon is not null) { <span class="dd-ico">@it.Icon</span> }
+                        <span class="grow">@it.Label</span>
+                        @if (it.Value == Value) { <Icon Name="check" Size="14" /> }
+                    </div>
+                }
+                @if (!Visible.Any()) { <div class="dd-empty">Ничего не найдено</div> }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    public sealed record Item(string Value, string Label, string? Icon = null, string? Group = null);
+
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public IReadOnlyList<Item> Items { get; set; } = [];
+    [Parameter] public string Placeholder { get; set; } = "Выбрать";
+    [Parameter] public string? Prefix { get; set; }
+    [Parameter] public bool Pill { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public bool? Search { get; set; }
+    [Parameter] public string Class { get; set; } = "";
+
+    bool open, closing;
+    string query = "";
+    int highlight;
+    ElementReference searchBox;
+    CancellationTokenSource? closeCts;
+
+    Item? Current => Items.FirstOrDefault(i => i.Value == (Value ?? ""));
+    bool Searchable => Search ?? Items.Count > 8;
+    IEnumerable<Item> Visible => string.IsNullOrWhiteSpace(query) ? Items : Items.Where(i => i.Label.Contains(query, StringComparison.OrdinalIgnoreCase));
+    bool IsNavKey => true;
+
+    async Task Toggle()
+    {
+        if (open) { await Close(); return; }
+        closeCts?.Cancel(); closing = false; open = true; query = "";
+        highlight = Math.Max(0, Items.ToList().FindIndex(i => i.Value == (Value ?? "")));
+        await Task.Yield();
+        if (Searchable) { try { await searchBox.FocusAsync(); } catch { } }
+    }
+
+    async Task Close()
+    {
+        if (!open) return;
+        open = false; closing = true;
+        closeCts = new CancellationTokenSource();
+        try { await Task.Delay(120, closeCts.Token); closing = false; StateHasChanged(); } catch (TaskCanceledException) { }
+    }
+
+    async Task Pick(Item it)
+    {
+        if (it.Value != Value) await ValueChanged.InvokeAsync(it.Value);
+        await Close();
+    }
+
+    async Task OnKey(KeyboardEventArgs e)
+    {
+        if (!open)
+        {
+            if (e.Key is "Enter" or " " or "ArrowDown") await Toggle();
+            return;
+        }
+        var list = Visible.ToList();
+        switch (e.Key)
+        {
+            case "Escape": await Close(); break;
+            case "ArrowDown": highlight = Math.Min(list.Count - 1, highlight + 1); break;
+            case "ArrowUp": highlight = Math.Max(0, highlight - 1); break;
+            case "Enter": if (highlight >= 0 && highlight < list.Count) await Pick(list[highlight]); break;
+        }
+    }
+
+    public void Dispose() => closeCts?.Cancel();
+}

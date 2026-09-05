@@ -40,7 +40,7 @@
                     <div class="icon">+</div>
                     <div class="grow row" style="flex-wrap:wrap">
                         <input @bind="name" placeholder="Новый профиль, напр. ИП Иванов" class="grow" />
-                        <select @bind="kind"><option value="@ProfileKind.Individual">Физлицо</option><option value="@ProfileKind.SoleProprietor">ИП</option><option value="@ProfileKind.Company">Компания</option></select>
+                        <Dropdown Value="@kind.ToString()" ValueChanged="v => kind = Enum.Parse<ProfileKind>(v!)" Items="@(new List<Dropdown.Item> { new(nameof(ProfileKind.Individual), "Физлицо"), new(nameof(ProfileKind.SoleProprietor), "ИП"), new(nameof(ProfileKind.Company), "Компания") })" />
                         <input @bind="inn" placeholder="ИНН" maxlength="12" style="width:130px" />
                         <button class="small primary" @onclick="Add" disabled="@string.IsNullOrWhiteSpace(name)">Добавить</button>
                     </div>

@@ -9,12 +9,7 @@
     <Tools>
         @if (profiles is { Count: > 1 })
         {
-            <label class="select-pill">◈
-                <select @bind="profileId" @bind:after="Reload">
-                    <option value="">Все профили</option>
-                    @foreach (var p in profiles) { <option value="@p.Id">@p.Name</option> }
-                </select>
-            </label>
+            <Dropdown Pill Prefix="Профиль" Value="@(profileId ?? "")" ValueChanged="async v => { profileId = string.IsNullOrEmpty(v) ? null : v; await Reload(); }" Items="@(new List<Dropdown.Item> { new("", "Все профили") }.Concat(profiles.Select(p => new Dropdown.Item(p.Id.ToString(), p.Name))).ToList())" />
         }
     </Tools>
 </PageHead>

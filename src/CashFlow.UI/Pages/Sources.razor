@@ -22,9 +22,9 @@
             <div class="wrap" style="margin-bottom:10px">
                 @if (profiles.Count > 1)
                 {
-                    <label class="select-pill">◈ <select @bind="profileId">@foreach (var p in profiles) { <option value="@p.Id">@p.Name (@Kind(p.Kind))</option> }</select></label>
+                    <Dropdown Pill Prefix="Профиль" Value="@profileId" ValueChanged="v => profileId = v ?? string.Empty" Items="@profiles.Select(p => new Dropdown.Item(p.Id.ToString(), $"{p.Name} ({Kind(p.Kind)})")).ToList()" />
                 }
-                <label class="select-pill">⌂ <select @bind="bank"><option value="">банк по файлу</option>@foreach (var f in Importer.Formats.DistinctBy(f => f.BankCode)) { <option value="@f.BankCode">@f.DisplayName</option> }</select></label>
+                <Dropdown Pill Prefix="Банк" Value="@bank" ValueChanged="v => bank = v ?? string.Empty" Items="@(new List<Dropdown.Item> { new("", "определить по файлу") }.Concat(Importer.Formats.DistinctBy(f => f.BankCode).Select(f => new Dropdown.Item(f.BankCode, f.DisplayName))).ToList())" />
             </div>
         }
         <label class="dropzone">
