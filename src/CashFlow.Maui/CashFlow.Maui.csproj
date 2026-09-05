@@ -8,6 +8,7 @@
         <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">net9.0-windows10.0.19041.0</TargetFrameworks>
         <TargetFrameworks Condition="'$(MobileTargets)' == 'true'">net9.0-android;net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0</TargetFrameworks>
         <TargetFrameworks Condition="!$([MSBuild]::IsOSPlatform('windows')) And '$(MobileTargets)' != 'true'">net9.0-android;net9.0-ios;net9.0-maccatalyst</TargetFrameworks>
+        <!-- Tizen не поддерживаем: папка Platforms/Tizen удалена, иначе Rider требует воркод maui-tizen -->
 
         <OutputType>Exe</OutputType>
         <RootNamespace>CashFlow.Maui</RootNamespace>
