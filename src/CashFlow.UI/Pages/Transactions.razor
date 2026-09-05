@@ -5,69 +5,105 @@
 @inject ILedgerCommands Commands
 
 <PageTitle>Операции — CashFlow</PageTitle>
-<h1>Операции</h1>
+
+<PageHead Eyebrow="Transactions" Title="Операции">
+    <Tools>
+        <button class="small" @onclick="() => showFilters = !showFilters">@(showFilters ? "Скрыть фильтры" : "Фильтры")</button>
+    </Tools>
+</PageHead>
 
 @if (profiles is null) { <p class="muted">Загрузка…</p> return; }
 
-<div class="toolbar">
-    <select @bind="profileId" @bind:after="Reload"><option value="">Все профили</option>@foreach (var p in profiles) { <option value="@p.Id">@p.Name</option> }</select>
-    <select @bind="accountId" @bind:after="Reload"><option value="">Все счета</option>@foreach (var a in accounts) { <option value="@a.Id">@a.Name</option> }</select>
-    <select @bind="categoryId" @bind:after="Reload"><option value="">Все категории</option>@foreach (var c in categories) { <option value="@c.Id">@c.Label</option> }</select>
-    <input type="date" @bind="from" @bind:after="Reload" />
-    <input type="date" @bind="to" @bind:after="Reload" />
-    <input placeholder="Поиск по описанию / контрагенту" @bind="search" @bind:after="Reload" style="min-width:240px" />
-    <label><input type="checkbox" @bind="onlyUncategorized" @bind:after="Reload" /> только без категории</label>
-    <label><input type="checkbox" @bind="includeTransfers" @bind:after="Reload" /> показывать переводы</label>
+<div class="chips" style="margin-bottom:12px">
+    <span class="chip @(mode == "all" ? "on" : "")" @onclick='() => SetMode("all")'>Все</span>
+    <span class="chip @(mode == "uncat" ? "on" : "")" @onclick='() => SetMode("uncat")'>Без категории@(uncatCount > 0 ? $" · {uncatCount}" : "")</span>
+    <span class="chip @(mode == "transfers" ? "on" : "")" @onclick='() => SetMode("transfers")'>Переводы</span>
+    <span class="chip @(mode == "income" ? "on" : "")" @onclick='() => SetMode("income")'>Доходы</span>
+    <span class="chip @(mode == "expense" ? "on" : "")" @onclick='() => SetMode("expense")'>Расходы</span>
 </div>
 
-@if (cp is not null) { <div class="alert info">Фильтр по контрагенту: <b>@cp.DisplayName</b> <a href="/transactions">сбросить</a></div> }
+<div class="search" style="margin-bottom:12px">
+    <span>⌕</span>
+    <input placeholder="Поиск по описанию, контрагенту, назначению" @bind="search" @bind:after="Reload" />
+</div>
 
-<p class="muted">@rows.Count операций · доходы +@rows.Where(r => r.IsIncome).Sum(r => r.Amount).ToString("N0") · расходы −@rows.Where(r => r.IsExpense).Sum(r => -r.Amount).ToString("N0")</p>
+@if (showFilters)
+{
+    <div class="card" style="margin-bottom:14px">
+        <div class="wrap">
+            <label class="select-pill"><select @bind="profileId" @bind:after="Reload"><option value="">Все профили</option>@foreach (var p in profiles) { <option value="@p.Id">@p.Name</option> }</select></label>
+            <label class="select-pill"><select @bind="accountId" @bind:after="Reload"><option value="">Все счета</option>@foreach (var a in accounts) { <option value="@a.Id">@a.Name</option> }</select></label>
+            <label class="select-pill"><select @bind="categoryId" @bind:after="Reload"><option value="">Все категории</option>@foreach (var c in categories) { <option value="@c.Id">@c.Label</option> }</select></label>
+            <input type="date" @bind="from" @bind:after="Reload" />
+            <input type="date" @bind="to" @bind:after="Reload" />
+        </div>
+    </div>
+}
 
-<table>
-    <thead><tr><th>Дата</th><th>Кто / кому</th><th>Описание</th><th>Категория</th><th>Счёт</th><th class="num">Сумма</th></tr></thead>
-    <tbody>
-    @foreach (var r in rows)
-    {
-        <tr>
-            <td style="white-space:nowrap"><a href="/transactions/@r.Id" title="Открыть операцию">@r.PostedAt.Local().ToString("dd.MM.yy HH:mm")</a></td>
-            <td>
-                @if (r.CounterpartyId is { } cid) { <a href="/transactions?cp=@cid">@r.CounterpartyName</a> }
-                else { <span class="muted">—</span> }
-                @if (r.IsTransfer) { <span class="pill">перевод</span> }
-                @if (r.Status == TransactionStatus.Pending) { <span class="pill warn">в обработке</span> }
-            </td>
-            <td>
-                <div><a href="/transactions/@r.Id" class="plain">@r.Description</a></div>
-                @if (!string.IsNullOrEmpty(r.Purpose) && r.Purpose != r.Description) { <div class="muted" style="font-size:12px">@r.Purpose</div> }
-                @if (r.Mcc is not null) { <span class="muted" style="font-size:11px">MCC @r.Mcc</span> }
-            </td>
-            <td>
-                <select value="@(r.CategoryId?.ToString() ?? "")" @onchange="e => SetCategory(r, e.Value?.ToString())" style="max-width:200px">
-                    <option value="">— без категории —</option>
-                    @foreach (var c in categories.Where(c => c.Kind == (r.IsIncome ? CategoryKind.Income : CategoryKind.Expense) || c.Kind == CategoryKind.Transfer || c.Kind == CategoryKind.Investment))
-                    { <option value="@c.Id">@c.Label</option> }
-                </select>
-                @if (r.CategoryId is null && r.ProposedCategoryId is not null)
-                {
-                    <div style="font-size:12px">предложено: @r.ProposedCategoryLabel <button class="small" @onclick="() => Accept(r)">✓</button></div>
-                }
-                else if (r.CategoryId is not null)
-                {
-                    <div class="muted" style="font-size:11px">@Src(r.CategorySource)</div>
-                }
-            </td>
-            <td class="muted">@r.AccountName</td>
-            <td class="num @(r.IsIncome ? "pos" : "neg")">@(r.IsIncome ? "+" : "")@r.Amount.ToString("N2") @r.Currency</td>
-        </tr>
-    }
-    </tbody>
-</table>
+@if (cp is not null)
+{
+    <div class="alert info row"><span class="grow">Контрагент: <b>@cp.DisplayName</b></span><a href="/transactions">сбросить</a></div>
+}
+
+<div class="muted" style="font-size:12.5px;margin-bottom:4px">
+    @rows.Count @Home.Plural(rows.Count, "операция", "операции", "операций") · <span class="pos">+@Ui.N0(rows.Where(r => r.IsIncome && !r.IsTransfer).Sum(r => r.Amount))</span> · <span class="neg">−@Ui.N0(rows.Where(r => r.IsExpense && !r.IsTransfer).Sum(r => -r.Amount))</span>
+</div>
+
+@if (rows.Count == 0)
+{
+    <div class="card"><p class="muted" style="margin:0">Ничего не найдено. Измените фильтры или <a href="/sources">загрузите выписку</a>.</p></div>
+}
+
+@foreach (var day in rows.GroupBy(r => DateOnly.FromDateTime(r.PostedAt.Local().DateTime)))
+{
+    <div class="day-label">@Ui.DayLabel(day.Key)</div>
+    <div class="card tight">
+        <div class="list">
+            @foreach (var r in day)
+            {
+                var cat = r.CategoryId is { } cid ? categories.FirstOrDefault(c => c.Id == cid) : null;
+                <div class="item @(r.CategoryId is null && !r.IsTransfer ? "hl" : "")">
+                    <a href="/transactions/@r.Id" class="icon plain" style="background:@(r.IsTransfer ? "var(--icon-bg)" : Ui.CategoryTint(cat?.Color, cat is null ? 0 : Math.Abs(cat.Name.GetHashCode()) % 7))">@(r.IsTransfer ? "⇄" : cat?.Icon ?? "?")</a>
+                    <a href="/transactions/@r.Id" class="grow plain">
+                        <div class="ttl">@(r.CounterpartyName ?? r.Description)</div>
+                        <div class="sub">
+                            @if (r.IsTransfer) { <span>Перевод</span> }
+                            else if (cat is not null) { <span>@cat.Name</span> }
+                            else if (r.ProposedCategoryId is not null) { <span class="pill accent" style="padding:1px 7px">✦ @r.ProposedCategoryLabel</span> }
+                            else { <span class="muted">Без категории</span> }
+                            @if (r.CounterpartyName is not null && r.Description != r.CounterpartyName) { <span> · @r.Description</span> }
+                            <span> · @r.AccountName</span>
+                            @if (r.Status == TransactionStatus.Pending) { <span class="pill warn" style="padding:1px 7px">в обработке</span> }
+                        </div>
+                    </a>
+                    @if (r.CategoryId is null && r.ProposedCategoryId is not null && !r.IsTransfer)
+                    {
+                        <button class="small white" title="Принять предложение ИИ" @onclick="() => Accept(r)">✓</button>
+                    }
+                    else if (editId == r.Id)
+                    {
+                        <select value="@(r.CategoryId?.ToString() ?? "")" @onchange="e => SetCategory(r, e.Value?.ToString())" style="max-width:180px">
+                            <option value="">— без категории —</option>
+                            @foreach (var c in categories.Where(c => c.Kind == (r.IsIncome ? CategoryKind.Income : CategoryKind.Expense) || c.Kind == CategoryKind.Transfer || c.Kind == CategoryKind.Investment))
+                            { <option value="@c.Id">@c.Label</option> }
+                        </select>
+                    }
+                    else
+                    {
+                        <button class="small" title="Изменить категорию" @onclick="() => editId = r.Id" style="padding:4px 9px">✎</button>
+                    }
+                    <a href="/transactions/@r.Id" class="amt num plain @(r.IsTransfer ? "muted" : r.IsIncome ? "pos" : "")">@(r.IsIncome ? "+" : "−")@Ui.N0(Math.Abs(r.Amount))</a>
+                </div>
+            }
+        </div>
+    </div>
+}
 
 @code {
     [SupplyParameterFromQuery(Name = "cp")] public Guid? CpId { get; set; }
     [SupplyParameterFromQuery(Name = "uncategorized")] public int? Uncat { get; set; }
     [SupplyParameterFromQuery(Name = "account")] public Guid? AccountQ { get; set; }
+    [SupplyParameterFromQuery(Name = "category")] public Guid? CategoryQ { get; set; }
     [SupplyParameterFromQuery(Name = "from")] public string? FromQ { get; set; }
     [SupplyParameterFromQuery(Name = "to")] public string? ToQ { get; set; }
     [SupplyParameterFromQuery(Name = "transfers")] public int? TransfersQ { get; set; }
@@ -78,8 +114,11 @@
     IReadOnlyList<TransactionDto> rows = [];
     CounterpartyDto? cp;
     string? profileId, accountId, categoryId, search;
+    string mode = "all";
+    int uncatCount;
+    bool showFilters;
+    Guid? editId;
     DateOnly from = DateOnly.FromDateTime(DateTime.Today).AddMonths(-3), to = DateOnly.FromDateTime(DateTime.Today);
-    bool onlyUncategorized, includeTransfers;
     string uid = "";
 
     protected override async Task OnInitializedAsync()
@@ -88,19 +127,32 @@
         profiles = await Me.ProfilesAsync();
         accounts = await Q.AccountsAsync(uid);
         categories = await Q.CategoriesAsync(uid);
-        onlyUncategorized = Uncat == 1;
-        includeTransfers = TransfersQ == 1;
-        if (AccountQ is { } aq) { accountId = aq.ToString(); from = from.AddMonths(-9); }
+        if (Uncat == 1) mode = "uncat";
+        if (TransfersQ == 1) mode = "transfers";
+        if (AccountQ is { } aq) { accountId = aq.ToString(); from = from.AddMonths(-9); showFilters = true; }
+        if (CategoryQ is { } cq) { categoryId = cq.ToString(); showFilters = true; }
         if (DateOnly.TryParse(FromQ, out var fq)) from = fq;
         if (DateOnly.TryParse(ToQ, out var tq)) to = tq;
         if (CpId is { } id) { cp = await Q.CounterpartyAsync(uid, id); from = from.AddMonths(-9); }
         await Reload();
     }
 
+    Task SetMode(string m) { mode = m; return Reload(); }
+
     async Task Reload()
     {
-        var f = new TransactionFilter(G(profileId), G(accountId), G(categoryId), CpId, from, to, search, onlyUncategorized, includeTransfers);
-        rows = await Q.TransactionsAsync(uid, f);
+        editId = null;
+        var includeTransfers = mode is "transfers" or "all" && accountId is not null;
+        var f = new TransactionFilter(G(profileId), G(accountId), G(categoryId), CpId, from, to, search, mode == "uncat", includeTransfers || mode == "transfers");
+        var all = await Q.TransactionsAsync(uid, f);
+        rows = mode switch
+        {
+            "transfers" => all.Where(r => r.IsTransfer).ToList(),
+            "income" => all.Where(r => r.IsIncome && !r.IsTransfer).ToList(),
+            "expense" => all.Where(r => r.IsExpense && !r.IsTransfer).ToList(),
+            _ => all
+        };
+        uncatCount = mode == "uncat" ? rows.Count : (await Q.TransactionsAsync(uid, f with { OnlyUncategorized = true, IncludeTransfers = false })).Count;
     }
 
     static Guid? G(string? s) => Guid.TryParse(s, out var g) ? g : null;
@@ -112,6 +164,4 @@
     }
 
     async Task Accept(TransactionDto r) { await Commands.AcceptProposalAsync(uid, r.Id); await Reload(); }
-
-    static string Src(CategorySource s) => s switch { CategorySource.User => "вручную", CategorySource.Rule => "правило", CategorySource.Mcc => "по MCC", CategorySource.Ai => "ИИ", CategorySource.Counterparty => "по контрагенту", _ => "" };
 }

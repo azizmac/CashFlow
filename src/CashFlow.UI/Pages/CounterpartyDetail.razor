@@ -1,0 +1,133 @@
+@page "/counterparties/{Id:guid}"
+@attribute [Authorize]
+@inject ICurrentUser Me
+@inject ILedgerQueries Q
+@inject ILedgerCommands Commands
+
+<PageTitle>Контрагент — CashFlow</PageTitle>
+
+@if (cp is null) { <p class="muted">@(loaded ? "Контрагент не найден." : "Загрузка…")</p> return; }
+
+<div class="crumbs"><a href="/counterparties">Контрагенты</a> › @cp.DisplayName</div>
+
+<div class="stack">
+    <div class="card hero">
+        <div class="row" style="gap:16px;align-items:flex-start">
+            <Avatar Name="@cp.DisplayName" Size="lg" />
+            <div class="grow">
+                @if (editing)
+                {
+                    <div class="row"><input @bind="editName" class="grow" /><button class="small primary" @onclick="SaveName">Сохранить</button><button class="small" @onclick="() => editing = false">Отмена</button></div>
+                }
+                else
+                {
+                    <div class="row"><h1 style="font-size:24px">@cp.DisplayName</h1><button class="small" @onclick="() => { editing = true; editName = cp.DisplayName; }">✎</button></div>
+                }
+                <div class="wrap" style="margin-top:8px">
+                    <label class="select-pill" style="height:28px;font-size:12px">
+                        <select value="@cp.Kind" @onchange="e => SetKind(e.Value?.ToString())">
+                            @foreach (var k in Enum.GetValues<CounterpartyKind>()) { <option value="@k">@Ui.KindLabel(k)</option> }
+                        </select>
+                    </label>
+                    @if (cp.Inn is not null) { <span class="pill">ИНН @cp.Inn</span> }
+                    @if (cp.Kpp is not null) { <span class="pill">КПП @cp.Kpp</span> }
+                    @foreach (var a in cp.AccountsMasked) { <span class="pill">счёт @a</span> }
+                    @foreach (var p in cp.PhonesMasked) { <span class="pill">@p</span> }
+                </div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div><div class="eyebrow">Year</div><div class="value num @(yearNet < 0 ? "" : "pos")">@Ui.Signed(yearNet)</div></div>
+            <div><div class="eyebrow">Avg / мес</div><div class="value num">@Ui.N0(avgMonth)</div></div>
+            <div><div class="eyebrow">Trend</div><div class="value num @(trend > 0 ? "neg" : trend < 0 ? "pos" : "")">@(trend == 0 ? "—" : (trend > 0 ? "+" : "−") + Math.Abs(trend).ToString("0") + "%")</div></div>
+        </div>
+
+        @if (months.Any(m => m.Total > 0))
+        {
+            <div class="bars">
+                @{ var max = months.Max(m => m.Total); }
+                @foreach (var m in months)
+                {
+                    <div class="@(m.Month == months[^1].Month ? "cur" : "")" style="height:@(max > 0 ? Math.Max(3, (int)(m.Total / max * 100)) : 3)%" title="@m.Month.ToString("MMMM yyyy", Ru): @Ui.Rub(m.Total)"></div>
+                }
+            </div>
+            <div class="axis"><span>@months[0].Month.ToString("MMM", Ru)</span><span>@months[^1].Month.ToString("MMM", Ru)</span></div>
+        }
+    </div>
+
+    <div class="card">
+        <div class="head"><h3>Категория по умолчанию</h3></div>
+        <div class="row">
+            <label class="select-pill grow">
+                <select class="grow" value="@(cp.DefaultCategoryId?.ToString() ?? "")" @onchange="e => SetDefaultCategory(e.Value?.ToString())">
+                    <option value="">— не задана —</option>
+                    @foreach (var cat in categories) { <option value="@cat.Id">@cat.Label</option> }
+                </select>
+            </label>
+        </div>
+        <div class="small-note" style="margin-top:8px">Применяется ко всем будущим и ещё не разобранным операциям этого контрагента.</div>
+        @if (cp.Aliases.Count > 1) { <div class="small-note" style="margin-top:6px">Также встречается как: @string.Join(", ", cp.Aliases.Where(a => a != TextNormalizer.Normalize(cp.DisplayName)).Take(5))</div> }
+    </div>
+
+    <div class="card tight">
+        <div class="head" style="padding:16px 18px 6px"><h3>Операции</h3><a href="/transactions?cp=@Id" class="muted" style="font-size:12.5px">Все · @tx.Count</a></div>
+        <div class="list">
+            @foreach (var r in tx.Take(30))
+            {
+                <a class="item clickable" href="/transactions/@r.Id">
+                    <div class="grow">
+                        <div class="ttl">@r.Description</div>
+                        <div class="sub">@r.PostedAt.Local().ToString("d MMM yyyy", Ru) · @(r.CategoryLabel ?? "без категории") · @r.AccountName</div>
+                    </div>
+                    <div class="amt num @(r.IsIncome ? "pos" : "")">@(r.IsIncome ? "+" : "−")@Ui.N0(Math.Abs(r.Amount))</div>
+                </a>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+    static readonly System.Globalization.CultureInfo Ru = System.Globalization.CultureInfo.GetCultureInfo("ru-RU");
+
+    CounterpartyDto? cp;
+    IReadOnlyList<CategoryDto> categories = [];
+    IReadOnlyList<TransactionDto> tx = [];
+    List<(DateOnly Month, decimal Total)> months = [];
+    decimal yearNet, avgMonth; double trend;
+    bool loaded, editing; string editName = "", uid = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        uid = await Me.IdAsync();
+        categories = await Q.CategoriesAsync(uid);
+        await Load();
+    }
+
+    async Task Load()
+    {
+        cp = await Q.CounterpartyAsync(uid, Id);
+        loaded = true;
+        if (cp is null) return;
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var from = new DateOnly(today.Year, today.Month, 1).AddMonths(-11);
+        tx = await Q.TransactionsAsync(uid, new TransactionFilter(null, null, null, Id, from, today, null, false, true, 2000));
+        months = Enumerable.Range(0, 12).Select(i => from.AddMonths(i))
+            .Select(m => (m, tx.Where(t => !t.IsTransfer && t.IsExpense && Same(t, m)).Sum(t => -t.Amount))).ToList();
+        var outSum = tx.Where(t => !t.IsTransfer && t.IsExpense).Sum(t => t.Amount);
+        var inSum = tx.Where(t => !t.IsTransfer && t.IsIncome).Sum(t => t.Amount);
+        yearNet = inSum + outSum;
+        var active = months.Count(m => m.Total > 0);
+        avgMonth = active == 0 ? 0 : months.Sum(m => m.Total) / active;
+        var last3 = months.TakeLast(3).Sum(m => m.Total) / 3m;
+        var prev3 = months.Skip(6).Take(3).Sum(m => m.Total) / 3m;
+        trend = prev3 == 0 ? 0 : (double)((last3 - prev3) / prev3 * 100);
+    }
+
+    static bool Same(TransactionDto t, DateOnly m) { var d = t.PostedAt.Local(); return d.Year == m.Year && d.Month == m.Month; }
+
+    async Task SetKind(string? v) { if (Enum.TryParse<CounterpartyKind>(v, out var k)) { await Commands.SetCounterpartyKindAsync(uid, Id, k); await Load(); } }
+    async Task SetDefaultCategory(string? v) { await Commands.SetCounterpartyDefaultCategoryAsync(uid, Id, Guid.TryParse(v, out var g) ? g : null); await Load(); }
+    async Task SaveName() { if (!string.IsNullOrWhiteSpace(editName)) await Commands.RenameCounterpartyAsync(uid, Id, editName.Trim()); editing = false; await Load(); }
+}

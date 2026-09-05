@@ -1,48 +1,101 @@
+@page "/settings"
 @page "/profiles"
 @attribute [Authorize]
 @inject ICurrentUser Me
 @inject IProfileService Svc
+@inject IAppShell Shell
+@inject ThemeService Theme
 
-<PageTitle>Профили — CashFlow</PageTitle>
-<h1>Финансовые профили</h1>
-<p class="muted">Физлицо и ИП — отдельные профили одного пользователя. ИНН нужен, чтобы переводы «с р/с ИП на свою карту» автоматически распознавались как перевод самому себе, а не доход. ИНН хранится в зашифрованном виде.</p>
+<PageTitle>Настройки — CashFlow</PageTitle>
+
+<PageHead Eyebrow="Settings" Title="Настройки" />
 
 @if (profiles is null) { <p class="muted">Загрузка…</p> return; }
 
-<table>
-    <thead><tr><th>Название</th><th>Тип</th><th>ИНН</th></tr></thead>
-    <tbody>
-    @foreach (var p in profiles)
-    {
-        <tr>
-            <td><input value="@p.Name" @onchange="e => Rename(p, e.Value?.ToString())" /></td>
-            <td class="muted">@Kind(p.Kind)</td>
-            <td><input value="@p.Inn" placeholder="ИНН" maxlength="12" @onchange="e => SetInn(p, e.Value?.ToString())" /></td>
-        </tr>
-    }
-    </tbody>
-</table>
+<div class="stack">
+    <div class="card">
+        <div class="row">
+            <Avatar Name="@(displayName ?? "?")" Size="md" />
+            <div class="grow"><div style="font-weight:640">@displayName</div><div class="muted" style="font-size:12px">данные хранятся на вашем сервере · только чтение из банков</div></div>
+            @if (Shell.IsBrowserHosted) { <a class="btn small" href="Account/Manage">Аккаунт</a> }
+            else { <button class="small" @onclick="Shell.LogoutAsync">Выйти</button> }
+        </div>
+    </div>
 
-<h2>Добавить профиль</h2>
-<div class="form">
-    <label>Название <input @bind="name" placeholder="напр. ИП Иванов" /></label>
-    <label>Тип <select @bind="kind"><option value="@ProfileKind.Individual">Физлицо</option><option value="@ProfileKind.SoleProprietor">ИП</option><option value="@ProfileKind.Company">Компания</option></select></label>
-    <label>ИНН <input @bind="inn" maxlength="12" /></label>
-    <button class="primary" @onclick="Add" disabled="@string.IsNullOrWhiteSpace(name)">Добавить</button>
+    <div>
+        <h2>Profiles</h2>
+        <div class="card tight">
+            <div class="list">
+                @foreach (var p in profiles)
+                {
+                    <div class="item">
+                        <div class="icon">@(p.Kind == ProfileKind.Individual ? "◯" : p.Kind == ProfileKind.SoleProprietor ? "ИП" : "◫")</div>
+                        <div class="grow">
+                            <input value="@p.Name" @onchange="e => Rename(p, e.Value?.ToString())" style="width:100%;background:transparent;border:none;padding:0;font-size:14.5px;border-radius:0" />
+                            <div class="sub row" style="gap:6px">@Kind(p.Kind) · ИНН <input value="@p.Inn" placeholder="не задан" maxlength="12" @onchange="e => SetInn(p, e.Value?.ToString())" style="background:transparent;border:none;padding:0;font-size:11.5px;width:130px;border-radius:0;color:var(--text-2)" /></div>
+                        </div>
+                    </div>
+                }
+                <div class="item">
+                    <div class="icon">+</div>
+                    <div class="grow row" style="flex-wrap:wrap">
+                        <input @bind="name" placeholder="Новый профиль, напр. ИП Иванов" class="grow" />
+                        <select @bind="kind"><option value="@ProfileKind.Individual">Физлицо</option><option value="@ProfileKind.SoleProprietor">ИП</option><option value="@ProfileKind.Company">Компания</option></select>
+                        <input @bind="inn" placeholder="ИНН" maxlength="12" style="width:130px" />
+                        <button class="small primary" @onclick="Add" disabled="@string.IsNullOrWhiteSpace(name)">Добавить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="small-note" style="margin-top:8px">Физлицо и ИП — отдельные профили одного пользователя. ИНН нужен, чтобы переводы с р/с ИП на свою карту распознавались как перевод себе, а не доход. ИНН хранится зашифрованным.</div>
+    </div>
+
+    <div>
+        <h2>Appearance</h2>
+        <div class="card">
+            <div class="seg">
+                <button class="@(Theme.Current == ThemeService.Dark ? "on" : "")" @onclick="() => Theme.SetAsync(ThemeService.Dark)">Тёмная</button>
+                <button class="@(Theme.Current == ThemeService.Light ? "on" : "")" @onclick="() => Theme.SetAsync(ThemeService.Light)">Светлая</button>
+                <button class="@(Theme.Current == ThemeService.System ? "on" : "")" @onclick="() => Theme.SetAsync(ThemeService.System)">Система</button>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <h2>Privacy & Security</h2>
+        <div class="card tight">
+            <div class="list">
+                <div class="item"><div class="icon">⛨</div><div class="grow"><div class="ttl">Данные не покидают ваш сервер</div><div class="sub">выписки разбираются локально, банковские токены зашифрованы AES-GCM</div></div></div>
+                <div class="item"><div class="icon">◔</div><div class="grow"><div class="ttl">Доступ к банкам — только чтение</div><div class="sub">никаких платежей и переводов, только счета и выписки</div></div></div>
+                @if (Shell.IsBrowserHosted)
+                {
+                    <a class="item clickable" href="Account/Manage/ChangePassword"><div class="icon">⚿</div><div class="grow"><div class="ttl">Пароль</div><div class="sub">сменить пароль входа</div></div><span class="chev">›</span></a>
+                    <a class="item clickable" href="Account/Manage/TwoFactorAuthentication"><div class="icon">✓</div><div class="grow"><div class="ttl">Двухфакторная аутентификация</div><div class="sub">приложение-аутентификатор</div></div><span class="chev">›</span></a>
+                }
+            </div>
+        </div>
+    </div>
 </div>
 
 @code {
     IReadOnlyList<ProfileDto>? profiles;
+    string? displayName;
     string uid = "", name = "", inn = ""; ProfileKind kind = ProfileKind.SoleProprietor;
 
-    protected override async Task OnInitializedAsync() { uid = await Me.IdAsync(); profiles = await Svc.ListAsync(uid); }
+    protected override async Task OnInitializedAsync()
+    {
+        uid = await Me.IdAsync();
+        displayName = await Me.DisplayNameAsync();
+        profiles = await Svc.ListAsync(uid);
+        Theme.Changed += StateHasChanged;
+    }
 
     async Task Rename(ProfileDto p, string? v) { if (!string.IsNullOrWhiteSpace(v)) { await Svc.RenameAsync(uid, p.Id, v); profiles = await Svc.ListAsync(uid); } }
-    async Task SetInn(ProfileDto p, string? v) { await Svc.SetInnAsync(uid, p.Id, v); profiles = await Svc.ListAsync(uid); }
+    async Task SetInn(ProfileDto p, string? v) { await Svc.SetInnAsync(uid, p.Id, string.IsNullOrWhiteSpace(v) ? null : v); profiles = await Svc.ListAsync(uid); }
 
     async Task Add()
     {
-        await Svc.CreateAsync(uid, kind, name, inn);
+        await Svc.CreateAsync(uid, kind, name, string.IsNullOrWhiteSpace(inn) ? null : inn);
         name = ""; inn = "";
         profiles = await Svc.ListAsync(uid);
     }

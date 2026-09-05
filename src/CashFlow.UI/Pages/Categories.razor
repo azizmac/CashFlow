@@ -2,77 +2,184 @@
 @attribute [Authorize]
 @inject ICurrentUser Me
 @inject ICategoryService Svc
+@inject ILedgerQueries Q
 
 <PageTitle>Категории — CashFlow</PageTitle>
-<h1>Категории и правила</h1>
+
+<PageHead Eyebrow="Categories" Title="Категории">
+    <Tools><button class="small" @onclick="() => showRules = !showRules">@(showRules ? "Скрыть правила" : "Правила")</button></Tools>
+</PageHead>
 
 @if (err is not null) { <div class="alert err">@err</div> }
 
-<div class="grid2">
-    <div>
-        <h2>Категории</h2>
-        <table>
-            <thead><tr><th>Категория</th><th>Тип</th><th></th></tr></thead>
-            <tbody>
-            @foreach (var c in categories)
+<div class="seg" style="margin-bottom:14px">
+    <button class="@(months == 1 ? "on" : "")" @onclick="() => SetPeriod(1)">Месяц</button>
+    <button class="@(months == 3 ? "on" : "")" @onclick="() => SetPeriod(3)">3 месяца</button>
+    <button class="@(months == 12 ? "on" : "")" @onclick="() => SetPeriod(12)">Год</button>
+</div>
+
+<div class="stack">
+    @if (summary is not null)
+    {
+        <div class="card hero">
+            <div class="row" style="gap:18px">
+                <div class="donut" style="background:@Conic">
+                    <div class="hole"><div class="eyebrow">Расходы</div><div class="value num">@Ui.N0(summary.Expense)</div></div>
+                </div>
+                <div class="grow stack-sm" style="gap:6px">
+                    @{ var i = 0; }
+                    @foreach (var c in Expenses.Take(5))
+                    {
+                        var cat = Cat(c.CategoryId);
+                        <div class="kv-line"><span><span class="dot" style="display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:8px;background:@Ui.CategoryBar(cat?.Color, i)"></span>@(cat?.Name ?? c.Label)</span><span class="num">@((summary.Expense > 0 ? c.Total / summary.Expense : 0).ToString("P0"))</span></div>
+                        i++;
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="card tight">
+            <div class="section">Расходы · @Ui.N0(summary.Expense) ₽</div>
+            <div class="list">
+                @{ var j = 0; }
+                @foreach (var c in Expenses)
+                {
+                    var cat = Cat(c.CategoryId);
+                    var prev = prevSummary?.ByCategory.FirstOrDefault(p => p.CategoryId == c.CategoryId)?.Total ?? 0;
+                    var delta = prev == 0 ? (double?)null : (double)((c.Total - prev) / prev * 100);
+                    <a class="item clickable" href="@(c.CategoryId is null ? "/transactions?uncategorized=1" : $"/transactions?category={c.CategoryId}")">
+                        <div class="icon" style="background:@Ui.CategoryTint(cat?.Color, j)">@(cat?.Icon ?? "?")</div>
+                        <div class="grow">
+                            <div class="ttl">@(cat?.Name ?? c.Label)</div>
+                            <div class="sub">@c.Count @Home.Plural(c.Count, "операция", "операции", "операций")@(delta is { } d ? $" · {(d >= 0 ? "+" : "−")}{Math.Abs(d):0}% к прошлому периоду" : "")</div>
+                        </div>
+                        <div class="amt num">@Ui.N0(c.Total)</div>
+                        <span class="chev">›</span>
+                    </a>
+                    j++;
+                }
+            </div>
+        </div>
+    }
+
+    <div class="card tight">
+        <div class="section row"><span class="grow">Все категории</span><button class="link" style="text-transform:none;letter-spacing:0;font-size:12px" @onclick="() => showAdd = !showAdd">+ своя</button></div>
+        @if (showAdd)
+        {
+            <div style="padding:12px 16px;border-bottom:.5px solid var(--sep)" class="row">
+                <input @bind="newIcon" maxlength="2" style="width:54px;text-align:center" />
+                <input @bind="newName" placeholder="Название" class="grow" />
+                <select @bind="newKind"><option value="@CategoryKind.Expense">Расход</option><option value="@CategoryKind.Income">Доход</option></select>
+                <button class="small primary" @onclick="Add" disabled="@string.IsNullOrWhiteSpace(newName)">Добавить</button>
+            </div>
+        }
+        <div class="list">
+            @foreach (var g in categories.GroupBy(c => c.Kind).OrderBy(g => g.Key))
             {
-                <tr><td>@c.Label @(c.IsSystem ? "" : "·")</td><td class="muted">@Kind(c.Kind)</td><td>@if (!c.IsSystem) { <button class="small" @onclick="() => Remove(c)">удалить</button> }</td></tr>
+                <div class="section">@Kind(g.Key)</div>
+                @foreach (var c in g)
+                {
+                    <div class="item">
+                        <div class="icon sm">@(c.Icon ?? "•")</div>
+                        <a class="grow plain" href="/transactions?category=@c.Id"><div class="ttl">@c.Name</div></a>
+                        @if (!c.IsSystem) { <button class="link muted" @onclick="() => Remove(c)" title="Удалить">✕</button> }
+                    </div>
+                }
             }
-            </tbody>
-        </table>
-        <h2>Своя категория</h2>
-        <div class="form">
-            <label>Название <input @bind="newName" /></label>
-            <label>Иконка <input @bind="newIcon" maxlength="2" style="width:60px" /></label>
-            <label>Тип <select @bind="newKind"><option value="@CategoryKind.Expense">Расход</option><option value="@CategoryKind.Income">Доход</option></select></label>
-            <button class="primary" @onclick="Add" disabled="@string.IsNullOrWhiteSpace(newName)">Добавить</button>
         </div>
     </div>
-    <div>
-        <h2>Мои правила</h2>
-        <p class="muted">Правила применяются к новым операциям по убыванию приоритета. Выученные — создаются автоматически после 2+ одинаковых ручных исправлений.</p>
-        <table>
-            <thead><tr><th>Поле</th><th>Условие</th><th>Шаблон</th><th>Категория</th><th class="num">Срабат.</th><th></th></tr></thead>
-            <tbody>
-            @foreach (var r in rules)
-            {
-                <tr>
-                    <td class="muted">@r.Field</td><td class="muted">@r.Match</td><td><code>@r.Pattern</code></td>
-                    <td>@(categories.FirstOrDefault(c => c.Id == r.CategoryId)?.Name)</td>
-                    <td class="num">@r.HitCount</td>
-                    <td><span class="pill">@r.Origin</span> <button class="small" @onclick="() => RemoveRule(r)">×</button></td>
-                </tr>
-            }
-            </tbody>
-        </table>
-        <h2>Новое правило</h2>
-        <div class="form">
-            <label>Поле <select @bind="rField"><option value="@RuleField.Description">Описание</option><option value="@RuleField.CounterpartyName">Имя контрагента</option><option value="@RuleField.CounterpartyInn">ИНН контрагента</option><option value="@RuleField.Mcc">MCC</option></select></label>
-            <label>Условие <select @bind="rMatch"><option value="@RuleMatch.Contains">содержит</option><option value="@RuleMatch.Equals">равно</option><option value="@RuleMatch.StartsWith">начинается с</option><option value="@RuleMatch.Regex">regex</option></select></label>
-            <label>Шаблон <input @bind="rPattern" /></label>
-            <label>Категория <select @bind="rCategory"><option value="">—</option>@foreach (var c in categories) { <option value="@c.Id">@c.Label</option> }</select></label>
-            <button class="primary" @onclick="AddRule" disabled="@(string.IsNullOrWhiteSpace(rPattern) || string.IsNullOrEmpty(rCategory))">Добавить правило</button>
+
+    @if (showRules)
+    {
+        <div class="card">
+            <div class="head"><h3>Правила категоризации</h3><span class="muted" style="font-size:12px">по убыванию приоритета</span></div>
+            <p class="small-note">Правила применяются к новым операциям. Выученные создаются автоматически после двух одинаковых ручных исправлений.</p>
+            @if (rules.Count == 0) { <p class="muted">Правил пока нет.</p> }
+            <div class="list">
+                @foreach (var r in rules)
+                {
+                    <div class="item" style="padding-left:0;padding-right:0">
+                        <div class="grow">
+                            <div class="ttl">@Field(r.Field) @Match(r.Match) <code>@r.Pattern</code></div>
+                            <div class="sub">→ @(categories.FirstOrDefault(c => c.Id == r.CategoryId)?.Label) · сработало @r.HitCount · <span class="pill" style="padding:0 7px">@r.Origin</span></div>
+                        </div>
+                        <button class="link muted" @onclick="() => RemoveRule(r)">✕</button>
+                    </div>
+                }
+            </div>
+            <div class="form" style="margin-top:12px">
+                <div class="row">
+                    <select @bind="rField"><option value="@RuleField.Description">Описание</option><option value="@RuleField.CounterpartyName">Имя контрагента</option><option value="@RuleField.CounterpartyInn">ИНН контрагента</option><option value="@RuleField.Mcc">MCC</option></select>
+                    <select @bind="rMatch"><option value="@RuleMatch.Contains">содержит</option><option value="@RuleMatch.Equals">равно</option><option value="@RuleMatch.StartsWith">начинается с</option><option value="@RuleMatch.Regex">regex</option></select>
+                </div>
+                <input @bind="rPattern" placeholder="Шаблон" />
+                <div class="row">
+                    <select class="grow" @bind="rCategory"><option value="">— категория —</option>@foreach (var c in categories) { <option value="@c.Id">@c.Label</option> }</select>
+                    <button class="primary" @onclick="AddRule" disabled="@(string.IsNullOrWhiteSpace(rPattern) || string.IsNullOrEmpty(rCategory))">Добавить</button>
+                </div>
+            </div>
         </div>
-    </div>
+    }
 </div>
 
 @code {
     IReadOnlyList<CategoryDto> categories = [];
     IReadOnlyList<RuleDto> rules = [];
+    SummaryDto? summary, prevSummary;
+    int months = 1;
     string uid = "";
     string? err;
+    bool showRules, showAdd;
     string newName = "", newIcon = "🏷️"; CategoryKind newKind = CategoryKind.Expense;
     RuleField rField = RuleField.Description; RuleMatch rMatch = RuleMatch.Contains; string rPattern = "", rCategory = "";
 
+    IEnumerable<CategoryTotalDto> Expenses => summary?.ByCategory ?? [];
+    CategoryDto? Cat(Guid? id) => id is { } g ? categories.FirstOrDefault(c => c.Id == g) : null;
+
+    string Conic
+    {
+        get
+        {
+            if (summary is null || summary.Expense == 0) return "var(--track)";
+            var parts = new List<string>(); double acc = 0; var i = 0;
+            foreach (var c in Expenses.Take(6))
+            {
+                var share = (double)(c.Total / summary.Expense) * 100;
+                parts.Add($"{Ui.CategoryBar(Cat(c.CategoryId)?.Color, i)} {acc:0.#}% {acc + share:0.#}%");
+                acc += share; i++;
+            }
+            parts.Add($"var(--track) {acc:0.#}% 100%");
+            return "conic-gradient(" + string.Join(", ", parts) + ")";
+        }
+    }
+
     protected override async Task OnInitializedAsync() { uid = await Me.IdAsync(); await Load(); }
-    async Task Load() { categories = await Svc.ListAsync(uid); rules = await Svc.RulesAsync(uid); }
+
+    async Task Load()
+    {
+        categories = await Svc.ListAsync(uid);
+        rules = await Svc.RulesAsync(uid);
+        await LoadSummary();
+    }
+
+    Task SetPeriod(int m) { months = m; return LoadSummary(); }
+
+    async Task LoadSummary()
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var from = months == 1 ? new DateOnly(today.Year, today.Month, 1) : today.AddMonths(-months);
+        summary = await Q.SummaryAsync(uid, null, from, today);
+        prevSummary = await Q.SummaryAsync(uid, null, from.AddMonths(-months), from.AddDays(-1));
+    }
 
     async Task Run(Func<Task> action) { err = null; try { await action(); await Load(); } catch (Exception ex) { err = ex.Message; } }
 
-    Task Add() => Run(async () => { await Svc.CreateAsync(uid, newName, newKind, newIcon); newName = ""; });
+    Task Add() => Run(async () => { await Svc.CreateAsync(uid, newName, newKind, newIcon); newName = ""; showAdd = false; });
     Task Remove(CategoryDto c) => Run(() => Svc.DeleteAsync(uid, c.Id));
     Task AddRule() => Run(async () => { await Svc.AddRuleAsync(uid, rField, rMatch, rPattern, Guid.Parse(rCategory)); rPattern = ""; });
     Task RemoveRule(RuleDto r) => Run(() => Svc.DeleteRuleAsync(uid, r.Id));
 
-    static string Kind(CategoryKind k) => k switch { CategoryKind.Income => "доход", CategoryKind.Expense => "расход", CategoryKind.Transfer => "перевод", _ => "инвестиции" };
+    static string Kind(CategoryKind k) => k switch { CategoryKind.Income => "Доходы", CategoryKind.Expense => "Расходы", CategoryKind.Transfer => "Переводы", _ => "Инвестиции" };
+    static string Field(RuleField f) => f switch { RuleField.Description => "описание", RuleField.CounterpartyName => "контрагент", RuleField.CounterpartyInn => "ИНН", RuleField.Mcc => "MCC", _ => f.ToString() };
+    static string Match(RuleMatch m) => m switch { RuleMatch.Contains => "содержит", RuleMatch.Equals => "=", RuleMatch.StartsWith => "начинается с", RuleMatch.Regex => "~", _ => m.ToString() };
 }

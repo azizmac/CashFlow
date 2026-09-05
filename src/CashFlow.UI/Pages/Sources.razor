@@ -7,136 +7,161 @@
 @inject IImportService Importer
 @inject IAppShell Shell
 
-<PageTitle>Источники данных — CashFlow</PageTitle>
-<h1>Источники данных</h1>
-<p class="muted">Одно место, чтобы понять, по каким счетам данные свежие, а куда пора догрузить выписку. Файлы обрабатываются на вашем сервере; повторная загрузка того же периода безопасна — операции дедуплицируются.</p>
+<PageTitle>Импорт выписки — CashFlow</PageTitle>
+
+<PageHead Eyebrow="Import" Title="Импорт выписки">
+    <Sub>Файл разбирается на вашем сервере. Повторная загрузка того же периода безопасна: операции дедуплицируются, а контрагенты дополняются.</Sub>
+</PageHead>
 
 @if (profiles is null) { <p class="muted">Загрузка…</p> return; }
 
-@* ---------- Загрузка ---------- *@
-<div class="upload-panel">
-    <div class="toolbar">
-        <label>Профиль <select @bind="profileId">@foreach (var p in profiles) { <option value="@p.Id">@p.Name (@Kind(p.Kind))</option> }</select></label>
-        <label>Банк <select @bind="bank"><option value="">определить по файлу</option>@foreach (var f in Importer.Formats.DistinctBy(f => f.BankCode)) { <option value="@f.BankCode">@f.DisplayName</option> }</select></label>
+<div class="stack">
+    <div>
+        @if (profiles.Count > 1 || Importer.Formats.Count > 0)
+        {
+            <div class="wrap" style="margin-bottom:10px">
+                @if (profiles.Count > 1)
+                {
+                    <label class="select-pill">◈ <select @bind="profileId">@foreach (var p in profiles) { <option value="@p.Id">@p.Name (@Kind(p.Kind))</option> }</select></label>
+                }
+                <label class="select-pill">⌂ <select @bind="bank"><option value="">банк по файлу</option>@foreach (var f in Importer.Formats.DistinctBy(f => f.BankCode)) { <option value="@f.BankCode">@f.DisplayName</option> }</select></label>
+            </div>
+        }
+        <label class="dropzone">
+            <div class="dz-ico">⇪</div>
+            <div class="dz-title">Перетащите выписку сюда</div>
+            <div class="dz-sub">PDF, XLSX, CSV или TXT (1С) · Сбер, СберБизнес, Т-Банк, любой банк с экспортом в 1С · до 20 файлов</div>
+            <InputFile OnChange="OnFiles" multiple accept=".pdf,.xlsx,.csv,.txt" />
+        </label>
     </div>
-    <label class="dropzone">
-        <InputFile OnChange="OnFiles" multiple accept=".pdf,.xlsx,.csv,.txt" />
-        <div class="dz-title">Перетащите выписки сюда или нажмите, чтобы выбрать</div>
-        <div class="muted">PDF, XLSX, CSV, TXT (1С) · Сбер, СберБизнес, Т-Банк, любой банк с экспортом в 1С · до 20 файлов за раз</div>
-        @if (files.Count > 0) { <div class="dz-files">@string.Join(", ", files.Select(f => f.Name))</div> }
-    </label>
-    <button class="primary" @onclick="Run" disabled="@(files.Count == 0 || busy)">@(busy ? $"Импортирую… {done}/{files.Count}" : files.Count == 0 ? "Импортировать" : $"Импортировать ({files.Count})")</button>
-</div>
 
-@foreach (var m in messages)
-{
-    <div class="alert @m.Css">@((MarkupString)m.Text)</div>
-}
-
-@* ---------- Покрытие ---------- *@
-<h2>Покрытие данными по счетам</h2>
-@if (coverage.Count == 0)
-{
-    <div class="alert info">Счетов пока нет — загрузите первую выписку выше, счёт создастся автоматически.</div>
-}
-else
-{
-    <div class="cards cover">
-    @foreach (var c in coverage)
+    @if (files.Count > 0)
     {
-        <div class="card @(c.IsStale ? "stale" : "")">
-            <div class="label">@c.Account.ProfileName · @c.Account.BankName · @Accounts.Type(c.Account.Type)</div>
-            <div class="title"><a href="/transactions?account=@c.Account.Id&transfers=1">@c.Account.Name</a> <span class="muted">@c.Account.NumberMasked</span></div>
-            @if (c.Count == 0)
-            {
-                <div class="pill err">операций нет</div>
-            }
-            else
-            {
-                <div>операции с <b>@c.First?.ToString("dd.MM.yyyy")</b> по <b>@c.Last?.ToString("dd.MM.yyyy")</b> · @c.Count шт.</div>
-                @if (c.StaleDays > 30) { <div class="pill warn">последняя операция @c.StaleDays дн. назад</div> }
-                else { <div class="pill ok">свежие данные</div> }
-            }
-            @if (c.Account.Balance is { } bal) { <div class="muted">остаток @bal.ToString("N2") @c.Account.Currency на @c.Account.BalanceAt?.Local().ToString("dd.MM.yyyy")</div> }
-            <div class="muted" style="font-size:12px">источники: @(c.Sources.Count == 0 ? "—" : string.Join("; ", c.Sources))@(c.LastImportAt is { } li ? $" · загружено {li.Local():dd.MM.yyyy HH:mm}" : "")</div>
-            @if (c.IsStale && c.Last is { } last)
-            {
-                <div class="hint">Догрузите выписку за период с @last.AddDays(1).ToString("dd.MM.yyyy") по сегодня — @HowTo(c.Account)</div>
-            }
+        <div class="card tight">
+            <div class="list">
+                @foreach (var f in files)
+                {
+                    <div class="item">
+                        <div class="icon">@Ext(f.Name)</div>
+                        <div class="grow"><div class="ttl">@f.Name</div><div class="sub">@((f.Size / 1024.0).ToString("0.#")) КБ · @(busy && done < files.Count && files[done] == f ? "разбираю…" : "готов к импорту")</div></div>
+                        @if (!busy) { <button class="link muted" @onclick="() => files.Remove(f)">✕</button> }
+                    </div>
+                }
+            </div>
+        </div>
+        <button class="primary wide" @onclick="Run" disabled="@busy">@(busy ? $"Импортирую… {done}/{files.Count}" : files.Count == 1 ? "Импортировать выписку" : $"Импортировать {files.Count} файла(ов)")</button>
+    }
+
+    @foreach (var r in results)
+    {
+        <div class="card">
+            <div class="head"><h3>@r.FileName</h3><span class="pill ok">разобрано</span></div>
+            <div class="kv-line"><span>Счёт</span><span>@r.AccountName</span></div>
+            <div class="kv-line"><span>Период</span><span>@(r.PeriodFrom is { } pf && r.PeriodTo is { } pt ? $"{pf:dd.MM.yyyy} — {pt:dd.MM.yyyy}" : "не определён")</span></div>
+            <div class="kv-line"><span>Новых операций</span><span class="pos">+@r.Imported</span></div>
+            <div class="kv-line"><span>Обновлено · дубликатов</span><span>@r.Updated · @r.SkippedDuplicates</span></div>
+            <div class="kv-line"><span>Контрагентов · переводов · с категорией</span><span>+@r.CounterpartiesCreated · @r.TransfersLinked · @r.Categorized</span></div>
+            @foreach (var w in r.Warnings) { <div class="small-note" style="margin-top:6px">⚠ @w</div> }
+            <div style="margin-top:12px" class="wrap">
+                <a class="btn small" href="@Link(r)">Посмотреть операции</a>
+                <span class="muted" style="font-size:12px">формат: @r.ParserName · подключение «@r.ConnectionName»</span>
+            </div>
         </div>
     }
-    </div>
-}
+    @foreach (var e in errors) { <div class="alert err"><b>@e.File</b>: @e.Message</div> }
+    @foreach (var m in messages) { <div class="alert @m.Css">@m.Text</div> }
 
-@* ---------- Автоматические подключения ---------- *@
-<h2>Автоматические подключения</h2>
-@if (connections.Count == 0)
-{
-    <p class="muted">Пока нет подключений по API.</p>
-}
-else
-{
-    <table>
-        <thead><tr><th>Подключение</th><th>Статус</th><th>Последняя синхронизация</th><th></th></tr></thead>
-        <tbody>
-        @foreach (var c in connections)
+    <div>
+        <h2>Источники данных</h2>
+        @if (coverage.Count == 0 && connections.Count == 0)
         {
-            <tr>
-                <td>@c.Name<div class="muted" style="font-size:11px">@c.ProfileName</div></td>
-                <td><span class="pill @(c.Status == ConnectionStatus.Active ? "ok" : "err")">@c.Status</span>@if (c.LastError is not null) { <div class="muted" style="font-size:11px;max-width:320px">@c.LastError</div> }</td>
-                <td class="muted">@(c.LastSyncAt?.Local().ToString("dd.MM.yy HH:mm") ?? "—")</td>
-                <td><button class="small primary" @onclick="() => Sync(c)" disabled="@(busyId == c.Id)">@(busyId == c.Id ? "…" : "Синхронизировать")</button></td>
-            </tr>
+            <div class="insight"><div class="eyebrow">Начало</div><p>Счетов пока нет. Загрузите первую выписку — счёт и подключение создадутся автоматически.</p></div>
         }
-        </tbody>
-    </table>
-}
-<p>
-    @foreach (var oc in oauth)
-    {
-        <button class="primary" @onclick="() => StartOAuth(oc)">Подключить через @oc.ProviderDisplayName</button>
-    }
-    <a href="/connections">Подключение по токену (T-Invest, T-API, Sber API)…</a>
-</p>
+        <div class="grid3">
+            @foreach (var c in connections)
+            {
+                <div class="card @(c.Status != ConnectionStatus.Active ? "stale" : "")">
+                    <div class="row" style="align-items:flex-start">
+                        <div class="icon lg">@BankGlyph(c.Type)</div>
+                        <div class="grow"><div style="font-weight:640">@c.Name</div><div class="sub muted" style="font-size:12px">@c.ProfileName · @Label(c.Type)</div></div>
+                        <span class="pill @(c.Status == ConnectionStatus.Active ? "ok" : "warn")">@(c.Status == ConnectionStatus.Active ? "активно" : c.Status == ConnectionStatus.NeedsReauth ? "нужен вход" : "ошибка")</span>
+                    </div>
+                    <div class="small-note" style="margin-top:10px">последняя синхронизация: @(c.LastSyncAt?.Local().ToString("dd.MM.yyyy HH:mm") ?? "ещё не было")@(c.LastError is not null ? $" · {c.LastError}" : "")</div>
+                    <div style="margin-top:10px"><button class="small" @onclick="() => Sync(c)" disabled="@(busyId == c.Id)">@(busyId == c.Id ? "синхронизирую…" : "Синхронизировать")</button></div>
+                </div>
+            }
+            @foreach (var c in coverage)
+            {
+                <div class="card @(c.IsStale ? "stale" : "")">
+                    <div class="row" style="align-items:flex-start">
+                        <div class="icon lg">@Ui.Initial(c.Account.BankName)</div>
+                        <div class="grow">
+                            <a class="plain" href="/transactions?account=@c.Account.Id&transfers=1" style="font-weight:640">@c.Account.Name</a>
+                            <div class="muted" style="font-size:12px">@c.Account.BankName · @Ui.AccountTypeLabel(c.Account.Type) · @c.Account.ProfileName</div>
+                        </div>
+                        @if (c.Count == 0) { <span class="pill err">нет данных</span> }
+                        else if (c.StaleDays > 30) { <span class="pill warn">@c.StaleDays дн.</span> }
+                        else { <span class="pill ok">свежие</span> }
+                    </div>
+                    @if (c.Count > 0)
+                    {
+                        <div class="small-note" style="margin-top:10px">операции @c.First?.ToString("dd.MM.yy") — @c.Last?.ToString("dd.MM.yy") · @c.Count шт. · @(c.Sources.Count == 0 ? "—" : string.Join(", ", c.Sources))</div>
+                    }
+                    @if (c.IsStale && c.Last is { } last)
+                    {
+                        <div class="small-note" style="margin-top:6px">Догрузите выписку с @last.AddDays(1).ToString("dd.MM.yyyy") — @HowTo(c.Account)</div>
+                    }
+                </div>
+            }
+            <a class="card dashed plain" href="/connections" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:120px">
+                <div class="icon lg" style="margin-bottom:8px">+</div>
+                <div style="font-weight:640">Add source</div>
+                <div class="muted" style="font-size:12px;margin-top:4px">подключение банка по авторизации или токену</div>
+            </a>
+        </div>
+    </div>
 
-@* ---------- Как выгрузить ---------- *@
-<h2>Как выгрузить выписку из банка</h2>
-<details open="@NoAccounts">
-    <summary>СберБизнес (р/с ИП или ООО) — лучший вариант: экспорт в 1С</summary>
-    <ol class="steps">
-        <li>СберБизнес → Счета и платежи → Выписки → выберите счёт и период.</li>
-        <li>Кнопка «Экспорт» → формат <b>1С</b> (файл <code>kl_to_1c.txt</code>) — в нём есть контрагенты, ИНН и назначение платежа.</li>
-        <li>Подойдёт и раздел <b>Операции → Экспорт в XLSX</b> (файл «СберБизнес_Операции_за_…xlsx»): есть контрагенты и назначение, нет ИНН и остатков.</li>
-        <li>«Выписка операций по лицевому счёту» в XLSX/PDF читается тоже, но там нет названий контрагентов — они появятся как «Организация (поступление) · 0123». Загрузите поверх 1С или экспорт операций за тот же период: дублей не будет, операции и контрагенты дополнятся.</li>
-    </ol>
-</details>
-<details>
-    <summary>Сбер, карта физлица — PDF из СберБанк Онлайн</summary>
-    <ol class="steps">
-        <li>СберБанк Онлайн → счёт карты → «Выписки и справки» → «Выписка по счёту дебетовой карты».</li>
-        <li>Выберите период (можно год) и получите PDF — загрузите его сюда.</li>
-    </ol>
-</details>
-<details>
-    <summary>Т-Банк, карта физлица — XLSX/CSV из личного кабинета</summary>
-    <ol class="steps">
-        <li>tbank.ru → Операции → фильтр по периоду → «Выгрузить операции» → XLSX или CSV.</li>
-    </ol>
-</details>
-<details>
-    <summary>Т-Бизнес, Альфа, ВТБ и другие р/с — экспорт в 1С</summary>
-    <ol class="steps">
-        <li>В интернет-банке откройте выписку по счёту и выберите экспорт в 1С (1CClientBankExchange, txt). Банк определится по содержимому файла.</li>
-        <li>Для Т-Бизнеса можно вместо файлов подключить T-API по токену — данные будут обновляться сами.</li>
-    </ol>
-</details>
+    <div>
+        <h2>Как выгрузить выписку из банка</h2>
+        <div class="card">
+            <details open="@NoAccounts">
+                <summary>СберБизнес (р/с ИП или ООО) — лучший вариант: экспорт в 1С</summary>
+                <ol class="steps">
+                    <li>СберБизнес → Счета и платежи → Выписки → выберите счёт и период.</li>
+                    <li>Кнопка «Экспорт» → формат <b>1С</b> (файл <code>kl_to_1c.txt</code>) — в нём есть контрагенты, ИНН и назначение платежа.</li>
+                    <li>Подойдёт и раздел <b>Операции → Экспорт в XLSX</b> (файл «СберБизнес_Операции_за_…xlsx»): есть контрагенты и назначение, нет ИНН и остатков.</li>
+                    <li>«Выписка операций по лицевому счёту» в XLSX/PDF читается тоже, но без названий контрагентов. Загрузите поверх 1С или экспорт операций за тот же период: дублей не будет, данные дополнятся.</li>
+                </ol>
+            </details>
+            <details>
+                <summary>Сбер, карта физлица — PDF из СберБанк Онлайн</summary>
+                <ol class="steps">
+                    <li>СберБанк Онлайн → счёт карты → «Выписки и справки» → «Выписка по счёту дебетовой карты».</li>
+                    <li>Выберите период (можно год) и получите PDF — загрузите его сюда.</li>
+                </ol>
+            </details>
+            <details>
+                <summary>Т-Банк, карта физлица — XLSX/CSV из личного кабинета</summary>
+                <ol class="steps"><li>tbank.ru → Операции → фильтр по периоду → «Выгрузить операции» → XLSX или CSV.</li></ol>
+            </details>
+            <details>
+                <summary>Т-Бизнес, Альфа, ВТБ и другие р/с — экспорт в 1С</summary>
+                <ol class="steps">
+                    <li>В интернет-банке откройте выписку по счёту и выберите экспорт в 1С (1CClientBankExchange, txt). Банк определится по содержимому файла.</li>
+                    <li>Для Т-Бизнеса можно вместо файлов подключить T-API по токену — данные будут обновляться сами.</li>
+                </ol>
+            </details>
+        </div>
+    </div>
+</div>
 
 @code {
     IReadOnlyList<ProfileDto>? profiles;
     IReadOnlyList<AccountCoverageDto> coverage = [];
     IReadOnlyList<ConnectionDto> connections = [];
-    List<ConnectorInfoDto> oauth = [];
     List<IBrowserFile> files = [];
+    List<ImportResultDto> results = [];
+    List<(string File, string Message)> errors = [];
     List<(string Css, string Text)> messages = [];
     string profileId = "", bank = "", uid = "";
     bool busy; int done; Guid? busyId;
@@ -147,7 +172,6 @@ else
         uid = await Me.IdAsync();
         profiles = await Me.ProfilesAsync();
         profileId = profiles[0].Id.ToString();
-        oauth = Connections.Connectors().Where(c => c.SupportsOAuth && c.OAuthConfigured).ToList();
         await Reload();
     }
 
@@ -157,32 +181,25 @@ else
         connections = (await Connections.ListAsync(uid)).Where(c => !c.IsStatementImport && c.Status != ConnectionStatus.Disabled).ToList();
     }
 
-    void OnFiles(InputFileChangeEventArgs e) => files = e.GetMultipleFiles(20).ToList();
+    void OnFiles(InputFileChangeEventArgs e) { files = e.GetMultipleFiles(20).ToList(); results.Clear(); errors.Clear(); }
 
-    Task StartOAuth(ConnectorInfoDto oc) => Shell.StartBankOAuthAsync(oc.OAuthProviderKey!, Guid.Parse(profileId), null);
+    static string Ext(string name) => Path.GetExtension(name).TrimStart('.').ToUpperInvariant() switch { "PDF" => "PDF", "XLSX" => "XLS", "CSV" => "CSV", "TXT" => "1С", var x => x };
 
-    static string H(string? s) => System.Net.WebUtility.HtmlEncode(s ?? "");
+    static string Link(ImportResultDto r) => r.PeriodFrom is { } lf && r.PeriodTo is { } lt
+        ? $"/transactions?account={r.AccountId}&from={lf:yyyy-MM-dd}&to={lt:yyyy-MM-dd}&transfers=1"
+        : $"/transactions?account={r.AccountId}&transfers=1";
 
     async Task Run()
     {
-        busy = true; done = 0; messages.Clear();
-        foreach (var f in files)
+        busy = true; done = 0; results.Clear(); errors.Clear(); messages.Clear();
+        foreach (var f in files.ToList())
         {
             try
             {
                 await using var s = f.OpenReadStream(50 * 1024 * 1024);
-                var r = await Importer.ImportAsync(uid, Guid.Parse(profileId), s, f.Name, string.IsNullOrEmpty(bank) ? null : bank);
-                var period = r.PeriodFrom is { } pf && r.PeriodTo is { } pt ? $"{pf:dd.MM.yyyy} — {pt:dd.MM.yyyy}" : "период не определён";
-                var link = r.PeriodFrom is { } lf && r.PeriodTo is { } lt ? $"/transactions?account={r.AccountId}&from={lf:yyyy-MM-dd}&to={lt:yyyy-MM-dd}&transfers=1" : $"/transactions?account={r.AccountId}&transfers=1";
-                var w = r.Warnings.Count > 0 ? $"<br/><small>{H(r.Warnings[0])}</small>" : "";
-                messages.Add((r.Imported > 0 || r.Updated > 0 ? "ok" : "info",
-                    $"<b>{H(f.Name)}</b> → счёт «{H(r.AccountName)}», {period}: новых {r.Imported}, обновлено {r.Updated}, дубликатов {r.SkippedDuplicates}, контрагентов +{r.CounterpartiesCreated}, переводов {r.TransfersLinked}, категоризировано {r.Categorized}. " +
-                    $"<a href=\"{link}\">Посмотреть операции</a> · подключение «{H(r.ConnectionName)}»{w}"));
+                results.Add(await Importer.ImportAsync(uid, Guid.Parse(profileId), s, f.Name, string.IsNullOrEmpty(bank) ? null : bank));
             }
-            catch (Exception ex)
-            {
-                messages.Add(("err", $"<b>{H(f.Name)}</b>: {H(ex.Message)}"));
-            }
+            catch (Exception ex) { errors.Add((f.Name, ex.Message)); }
             done++;
             StateHasChanged();
         }
@@ -197,12 +214,15 @@ else
         try
         {
             var run = await Connections.SyncAsync(uid, c.Id, 365);
-            messages.Add((run.Error is null ? "ok" : "err", run.Error is null ? $"«{H(c.Name)}»: новых операций {run.Imported}, дубликатов {run.Skipped}" : $"«{H(c.Name)}»: {H(run.Error)}"));
+            messages.Add((run.Error is null ? "ok" : "err", run.Error is null ? $"«{c.Name}»: новых операций {run.Imported}, дубликатов {run.Skipped}" : $"«{c.Name}»: {run.Error}"));
         }
-        catch (Exception ex) { messages.Add(("err", H(ex.Message))); }
+        catch (Exception ex) { messages.Add(("err", ex.Message)); }
         busyId = null;
         await Reload();
     }
+
+    static string Label(ConnectorType t) => CashFlow.Application.Connections.ConnectionsService.Label(t);
+    static string BankGlyph(ConnectorType t) => t switch { ConnectorType.SberBusiness => "С", ConnectorType.TBankBusiness or ConnectorType.TInvest => "Т", ConnectorType.AlfaBusiness => "А", _ => "⟳" };
 
     static string HowTo(AccountDto a) => (a.BankCode, a.Type) switch
     {

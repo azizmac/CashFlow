@@ -1,15 +1,8 @@
-/* Дополнения к общему app.css для MAUI: безопасная зона, экран входа, мобильная боковая панель */
+/* Дополнения к общему app.css для MAUI: безопасные зоны устройства */
 .status-bar-safe-area { display: none; }
 @supports (-webkit-touch-callout: none) {
-    .status-bar-safe-area { display: flex; position: sticky; top: 0; height: env(safe-area-inset-top); background: var(--side); width: 100%; z-index: 1; }
+    .status-bar-safe-area { display: block; position: sticky; top: 0; height: env(safe-area-inset-top); width: 100%; z-index: 1; }
+    .main { padding-top: calc(14px + env(safe-area-inset-top)); }
 }
-.login { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); padding: 16px; }
-.login-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; width: 100%; max-width: 420px; }
-.login-card .brand { font-weight: 700; font-size: 18px; margin-bottom: 8px; }
-@media (max-width: 900px) {
-    .side nav { flex-direction: row; flex-wrap: wrap; gap: 4px; }
-    .side nav a { padding: 6px 10px; font-size: 13px; }
-    .side .user { margin-top: 8px; }
-    .main { padding: 16px; }
-    table { display: block; overflow-x: auto; }
-}
+html, body { overscroll-behavior: none; -webkit-user-select: none; user-select: none; }
+input, textarea { -webkit-user-select: text; user-select: text; }

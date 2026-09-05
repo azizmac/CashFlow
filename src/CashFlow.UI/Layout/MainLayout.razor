@@ -1,23 +1,24 @@
 @inherits LayoutComponentBase
 @inject IAppShell Shell
+@inject ThemeService Theme
 
-<div class="shell">
-    <aside class="side">
-        <div class="brand">💸 CashFlow AI</div>
-        <AuthorizeView>
-            <Authorized>
+<AuthorizeView>
+    <Authorized>
+        <div class="shell">
+            <aside class="side">
+                <div class="brand">CashFlow AI</div>
                 <nav>
-                    <NavLink href="/" Match="NavLinkMatch.All">Обзор</NavLink>
-                    <NavLink href="/transactions">Операции</NavLink>
-                    <NavLink href="/counterparties">Контрагенты</NavLink>
-                    <NavLink href="/accounts">Счета</NavLink>
-                    <NavLink href="/sources">Источники данных</NavLink>
-                    <NavLink href="/connections">Подключения API</NavLink>
-                    <NavLink href="/categories">Категории</NavLink>
-                    <NavLink href="/profiles">Профили</NavLink>
+                    <NavLink href="/" Match="NavLinkMatch.All"><span class="ico">◍</span>Обзор</NavLink>
+                    <NavLink href="/transactions"><span class="ico">≡</span>Операции</NavLink>
+                    <NavLink href="/categories"><span class="ico">◑</span>Категории</NavLink>
+                    <NavLink href="/counterparties"><span class="ico">◇</span>Контрагенты</NavLink>
+                    <NavLink href="/accounts"><span class="ico">◫</span>Счета</NavLink>
+                    <NavLink href="/sources"><span class="ico">⇪</span>Импорт</NavLink>
+                    <NavLink href="/connections"><span class="ico">⟳</span>Подключения</NavLink>
+                    <NavLink href="/settings"><span class="ico">⚙</span>Настройки</NavLink>
                 </nav>
                 <div class="user">
-                    <span>@context.User.Identity?.Name</span>
+                    <span class="who" title="@context.User.Identity?.Name">@context.User.Identity?.Name</span>
                     @if (Shell.IsBrowserHosted)
                     {
                         <form action="Account/Logout" method="post">
@@ -31,17 +32,31 @@
                         <button class="link" @onclick="Shell.LogoutAsync">Выйти</button>
                     }
                 </div>
-            </Authorized>
-            <NotAuthorized>
-                <nav>
-                    <NavLink href="Account/Login">Войти</NavLink>
-                    <NavLink href="Account/Register">Регистрация</NavLink>
-                </nav>
-            </NotAuthorized>
-        </AuthorizeView>
-        <div class="foot">только чтение · данные не покидают ваш сервер</div>
-    </aside>
-    <main class="main">
-        @Body
-    </main>
-</div>
+                <div class="foot">только чтение · данные не покидают ваш сервер</div>
+            </aside>
+            <main class="main">
+                @Body
+            </main>
+        </div>
+        <nav class="tabbar">
+            <NavLink href="/" Match="NavLinkMatch.All"><span class="ico">◍</span>Обзор</NavLink>
+            <NavLink href="/transactions"><span class="ico">≡</span>Операции</NavLink>
+            <NavLink href="/sources" class="fab" title="Загрузить выписку"><span class="ico">⇪</span></NavLink>
+            <NavLink href="/accounts"><span class="ico">◫</span>Счета</NavLink>
+            <NavLink href="/settings"><span class="ico">⚙</span>Ещё</NavLink>
+        </nav>
+    </Authorized>
+    <NotAuthorized>
+        @* Экран входа/регистрации: без навигации, по центру, как в онбординге макета *@
+        <main class="main auth">
+            @Body
+        </main>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) await Theme.ApplyStoredAsync();
+    }
+}

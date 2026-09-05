@@ -10,58 +10,27 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Log in</PageTitle>
+<PageTitle>Вход — CashFlow</PageTitle>
 
-<h1>Log in</h1>
-<div class="row">
-    <div class="col-lg-6">
-        <section>
-            <StatusMessage Message="@errorMessage" />
-            <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
-                <DataAnnotationsValidator />
-                <h2>Use a local account to log in.</h2>
-                <hr />
-                <ValidationSummary class="text-danger" role="alert" />
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                    <label for="Input.Email" class="form-label">Email</label>
-                    <ValidationMessage For="() => Input.Email" class="text-danger" />
-                </div>
-                <div class="form-floating mb-3">
-                    <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
-                    <label for="Input.Password" class="form-label">Password</label>
-                    <ValidationMessage For="() => Input.Password" class="text-danger" />
-                </div>
-                <div class="checkbox mb-3">
-                    <label class="form-label">
-                        <InputCheckbox @bind-Value="Input.RememberMe" class="darker-border-checkbox form-check-input" />
-                        Remember me
-                    </label>
-                </div>
-                <div>
-                    <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-                </div>
-                <div>
-                    <p>
-                        <a href="Account/ForgotPassword">Forgot your password?</a>
-                    </p>
-                    <p>
-                        <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Register as a new user</a>
-                    </p>
-                    <p>
-                        <a href="Account/ResendEmailConfirmation">Resend email confirmation</a>
-                    </p>
-                </div>
-            </EditForm>
-        </section>
-    </div>
-    <div class="col-lg-4 col-lg-offset-2">
-        <section>
-            <h3>Use another service to log in.</h3>
-            <hr />
-            <ExternalLoginPicker />
-        </section>
-    </div>
+<div class="login">
+    <div class="logo">₽</div>
+    <h1>С возвращением</h1>
+    <p class="lead">Войдите в свой сервер CashFlow. Данные не покидают ваш сервер, приложение только читает выписки и счета.</p>
+    <StatusMessage Message="@errorMessage" />
+    <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
+        <DataAnnotationsValidator />
+        <ValidationSummary class="alert err" role="alert" />
+        <div class="glass-form">
+            <div class="fld"><label for="Input.Email">Email</label><InputText @bind-Value="Input.Email" id="Input.Email" autocomplete="username" aria-required="true" placeholder="you@example.com" /></div>
+            <div class="fld"><label for="Input.Password">Пароль</label><InputText type="password" @bind-Value="Input.Password" id="Input.Password" autocomplete="current-password" aria-required="true" placeholder="••••••••••" /></div>
+        </div>
+        <label class="row" style="margin:12px 2px 0;font-size:13.5px;color:var(--text-2)"><InputCheckbox @bind-Value="Input.RememberMe" /> Запомнить меня</label>
+        <div class="actions">
+            <button type="submit" class="primary wide">Войти</button>
+            <div class="foot">Нет аккаунта? <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Зарегистрироваться</a></div>
+            <div class="foot"><a href="Account/ForgotPassword">Забыли пароль?</a></div>
+        </div>
+    </EditForm>
 </div>
 
 @code {
@@ -108,17 +77,17 @@
         }
         else
         {
-            errorMessage = "Error: Invalid login attempt.";
+            errorMessage = "Error: неверный e-mail или пароль.";
         }
     }
 
     private sealed class InputModel
     {
-        [Required]
-        [EmailAddress]
+        [Required(ErrorMessage = "Обязательное поле")]
+        [EmailAddress(ErrorMessage = "Введите корректный e-mail")]
         public string Email { get; set; } = "";
 
-        [Required]
+        [Required(ErrorMessage = "Обязательное поле")]
         [DataType(DataType.Password)]
         public string Password { get; set; } = "";
 

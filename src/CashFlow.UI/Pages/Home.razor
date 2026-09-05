@@ -4,91 +4,154 @@
 @inject ILedgerQueries Q
 
 <PageTitle>Обзор — CashFlow</PageTitle>
-<h1>Обзор</h1>
+
+<PageHead Eyebrow="Overview" Title="Обзор">
+    <Tools>
+        @if (profiles is { Count: > 1 })
+        {
+            <label class="select-pill">◈
+                <select @bind="profileId" @bind:after="Reload">
+                    <option value="">Все профили</option>
+                    @foreach (var p in profiles) { <option value="@p.Id">@p.Name</option> }
+                </select>
+            </label>
+        }
+    </Tools>
+</PageHead>
 
 @if (profiles is null || summary is null) { <p class="muted">Загрузка…</p> return; }
 
-<div class="toolbar">
-    <select @bind="profileId" @bind:after="Reload">
-        <option value="">Все профили (сводно)</option>
-        @foreach (var p in profiles) { <option value="@p.Id">@p.Name</option> }
-    </select>
-    <select @bind="months" @bind:after="Reload">
-        <option value="1">Текущий месяц</option>
-        <option value="3">3 месяца</option>
-        <option value="6">6 месяцев</option>
-        <option value="12">12 месяцев</option>
-    </select>
-    <span class="muted">@from.ToString("dd.MM.yyyy") — @to.ToString("dd.MM.yyyy")</span>
+<div class="seg" style="margin-bottom:14px">
+    <button class="@(months == 1 ? "on" : "")" @onclick="() => SetPeriod(1)">Месяц</button>
+    <button class="@(months == 3 ? "on" : "")" @onclick="() => SetPeriod(3)">3 месяца</button>
+    <button class="@(months == 12 ? "on" : "")" @onclick="() => SetPeriod(12)">Год</button>
 </div>
 
-<div class="cards">
-    <div class="card"><div class="label">Доходы</div><div class="value pos">+@summary.Income.ToString("N0") ₽</div></div>
-    <div class="card"><div class="label">Расходы</div><div class="value neg">−@summary.Expense.ToString("N0") ₽</div></div>
-    <div class="card"><div class="label">Сальдо</div><div class="value @((summary.Income - summary.Expense) >= 0 ? "pos" : "neg")">@((summary.Income - summary.Expense).ToString("N0")) ₽</div></div>
-    <div class="card"><div class="label">Чистые активы (по остаткам)</div><div class="value">@summary.NetWorth.ToString("N0") ₽</div></div>
-</div>
-
-@if (summary.Income == 0 && summary.Expense == 0)
-{
-    <div class="alert info">Данных пока нет. <a href="/sources">Загрузите выписку</a> или <a href="/connections">подключите API</a>.</div>
-}
-@if (stale.Count > 0)
-{
-    <div class="alert warn">Данные устарели: @string.Join("; ", stale.Take(3).Select(s => $"«{s.Account.Name}» — последняя операция {s.Last:dd.MM.yyyy}"))@(stale.Count > 3 ? $" и ещё {stale.Count - 3}" : ""). <a href="/sources">Догрузить выписки</a></div>
-}
-
-<div class="grid2">
-    <div>
-        <h2>Куда уходят деньги</h2>
-        <table>
-            <thead><tr><th>Категория</th><th class="num">Сумма</th><th class="num">Опер.</th><th style="width:30%"></th></tr></thead>
-            <tbody>
-            @foreach (var c in summary.ByCategory.Take(15))
-            {
-                <tr>
-                    <td>@c.Label @if (c.CategoryId is null) { <a class="small" href="/transactions?uncategorized=1"> → разобрать</a> }</td>
-                    <td class="num">@c.Total.ToString("N0")</td>
-                    <td class="num muted">@c.Count</td>
-                    <td><div class="bar"><div style="width:@(summary.Expense > 0 ? (int)(c.Total / summary.Expense * 100) : 0)%"></div></div></td>
-                </tr>
-            }
-            </tbody>
-        </table>
+<div class="stack">
+    <div class="card hero">
+        <div class="eyebrow">Net worth · @PeriodLabel</div>
+        <div class="big-number num">@Ui.Rub(summary.NetWorth)</div>
+        <div class="muted" style="font-size:12.5px">по остаткам счетов, включённых в активы</div>
+        <div class="stats" style="margin-top:14px">
+            <div><div class="eyebrow">Income</div><div class="value pos num">+@Ui.N0(summary.Income)</div></div>
+            <div><div class="eyebrow">Expense</div><div class="value neg num">−@Ui.N0(summary.Expense)</div></div>
+        </div>
+        <div class="saldo">
+            <span class="label">Сальдо за период</span>
+            <span class="value num @(Saldo >= 0 ? "pos" : "neg")">@Ui.Signed(Saldo) ₽</span>
+        </div>
     </div>
-    <div>
-        <h2>Кому уходят деньги</h2>
-        <table>
-            <thead><tr><th>Контрагент</th><th class="num">Сумма</th><th class="num">Опер.</th></tr></thead>
-            <tbody>
-            @foreach (var c in summary.ByCounterparty)
-            {
-                <tr>
-                    <td><a href="/transactions?cp=@c.CounterpartyId">@c.Name</a> <span class="pill">@Kind(c.Kind)</span></td>
-                    <td class="num">@c.Total.ToString("N0")</td>
-                    <td class="num muted">@c.Count</td>
-                </tr>
-            }
-            </tbody>
-        </table>
+
+    @if (summary.Income == 0 && summary.Expense == 0)
+    {
+        <div class="insight">
+            <div class="eyebrow">Начало</div>
+            <p>Данных пока нет. <a href="/sources">Загрузите выписку</a> или <a href="/connections">подключите банк</a> — обзор соберётся автоматически.</p>
+        </div>
+    }
+    else
+    {
+        <div class="insight">
+            <div class="eyebrow">Insight</div>
+            <p>@Insight</p>
+        </div>
+    }
+
+    @if (uncategorized > 0)
+    {
+        <a class="callout plain" href="/transactions?uncategorized=1" style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+            <div><div class="eyebrow">Needs review</div><div style="margin-top:4px">@uncategorized @Plural(uncategorized, "операция", "операции", "операций") без категории</div></div>
+            <span class="pill warn">разобрать →</span>
+        </a>
+    }
+
+    @if (stale.Count > 0)
+    {
+        <a class="callout plain" href="/sources" style="display:block">
+            <div class="eyebrow">Данные устарели</div>
+            <div style="margin-top:4px">@string.Join("; ", stale.Take(3).Select(s => $"«{s.Account.Name}» — последняя операция {s.Last:dd.MM.yyyy}"))@(stale.Count > 3 ? $" и ещё {stale.Count - 3}" : ""). Догрузить выписки →</div>
+        </a>
+    }
+
+    <div class="grid2">
+        <div class="card">
+            <div class="head"><h3>Куда уходят деньги</h3><a href="/categories" class="muted" style="font-size:12.5px">Все</a></div>
+            @if (summary.ByCategory.Count == 0) { <p class="muted" style="margin:0">Расходов за период нет.</p> }
+            <div class="stack-sm">
+                @{ var i = 0; }
+                @foreach (var c in summary.ByCategory.Take(8))
+                {
+                    var cat = c.CategoryId is { } cid ? categories.FirstOrDefault(x => x.Id == cid) : null;
+                    var share = summary.Expense > 0 ? (double)(c.Total / summary.Expense) : 0;
+                    <a class="bar-row plain" href="@(c.CategoryId is null ? "/transactions?uncategorized=1" : $"/transactions?category={c.CategoryId}")">
+                        <div class="icon" style="background:@Ui.CategoryTint(cat?.Color, i)">@(cat?.Icon ?? (c.CategoryId is null ? "?" : "•"))</div>
+                        <div class="grow">
+                            <div class="line"><span>@(cat?.Name ?? c.Label)</span><span class="num">@Ui.N0(c.Total) ₽ <span class="muted">· @share.ToString("P0")</span></span></div>
+                            <div class="bar-track"><div style="width:@((int)(share * 100))%;background:@Ui.CategoryBar(cat?.Color, i)"></div></div>
+                        </div>
+                    </a>
+                    i++;
+                }
+            </div>
+        </div>
+        <div class="card tight">
+            <div class="head" style="padding:16px 18px 6px"><h3>Кому уходят деньги</h3><a href="/counterparties" class="muted" style="font-size:12.5px">Все</a></div>
+            @if (summary.ByCounterparty.Count == 0) { <p class="muted" style="padding:0 18px 16px;margin:0">Пока нет данных.</p> }
+            <div class="list">
+                @foreach (var c in summary.ByCounterparty.Take(8))
+                {
+                    <a class="item clickable" href="/counterparties/@c.CounterpartyId">
+                        <Avatar Name="@c.Name" />
+                        <div class="grow">
+                            <div class="ttl">@c.Name</div>
+                            <div class="sub">@Ui.KindLabel(c.Kind) · @c.Count @Plural(c.Count, "операция", "операции", "операций")</div>
+                        </div>
+                        <div class="amt num">−@Ui.N0(c.Total)</div>
+                        <span class="chev">›</span>
+                    </a>
+                }
+            </div>
+        </div>
     </div>
 </div>
 
 @code {
     IReadOnlyList<ProfileDto>? profiles;
+    IReadOnlyList<CategoryDto> categories = [];
     SummaryDto? summary;
     List<AccountCoverageDto> stale = [];
+    int uncategorized;
     string? profileId;
     int months = 1;
     DateOnly from, to;
     string uid = "";
 
+    decimal Saldo => summary is null ? 0 : summary.Income - summary.Expense;
+    string PeriodLabel => months == 1 ? from.ToString("MMMM yyyy", System.Globalization.CultureInfo.GetCultureInfo("ru-RU")) : $"{from:dd.MM.yyyy} — {to:dd.MM.yyyy}";
+
+    string Insight
+    {
+        get
+        {
+            if (summary is null) return "";
+            var top = summary.ByCategory.FirstOrDefault(c => c.CategoryId is not null);
+            if (top is null || summary.Expense == 0) return $"Доходы за период — {Ui.Rub(summary.Income)}, расходов нет.";
+            var share = top.Total / summary.Expense;
+            var cat = categories.FirstOrDefault(x => x.Id == top.CategoryId)?.Name ?? top.Label;
+            var lead = Saldo >= 0 ? $"Вы в плюсе на {Ui.Rub(Saldo)}." : $"Расходы превысили доходы на {Ui.Rub(-Saldo)}.";
+            return $"{lead} Больше всего уходит на «{cat}»: {Ui.Rub(top.Total)}, это {share:P0} всех расходов.";
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         uid = await Me.IdAsync();
         profiles = await Me.ProfilesAsync();
+        categories = await Q.CategoriesAsync(uid);
         await Reload();
     }
+
+    Task SetPeriod(int m) { months = m; return Reload(); }
 
     async Task Reload()
     {
@@ -98,11 +161,14 @@
         Guid? pid = Guid.TryParse(profileId, out var g) ? g : null;
         summary = await Q.SummaryAsync(uid, pid, from, to);
         stale = (await Q.CoverageAsync(uid, pid)).Where(c => c.Count > 0 && c.StaleDays > 30 && c.Account.IncludeInCashFlow).ToList();
+        uncategorized = (await Q.TransactionsAsync(uid, new TransactionFilter(pid, null, null, null, from, to, null, OnlyUncategorized: true, IncludeTransfers: false, Take: 1000))).Count;
     }
 
-    static string Kind(CounterpartyKind k) => k switch
+    public static string Plural(int n, string one, string few, string many)
     {
-        CounterpartyKind.Person => "человек", CounterpartyKind.Company => "компания", CounterpartyKind.SoleProprietor => "ИП",
-        CounterpartyKind.Bank => "банк", CounterpartyKind.Government => "гос.", CounterpartyKind.Merchant => "магазин", CounterpartyKind.Self => "я", _ => "?"
-    };
+        var m10 = n % 10; var m100 = n % 100;
+        if (m10 == 1 && m100 != 11) return one;
+        if (m10 is >= 2 and <= 4 && m100 is < 12 or > 14) return few;
+        return many;
+    }
 }

@@ -1,0 +1,16 @@
+@* Заголовок страницы по макету: eyebrow латиницей, крупный заголовок, справа — инструменты *@
+<div class="page-head">
+    <div class="titles">
+        @if (!string.IsNullOrEmpty(Eyebrow)) { <div class="eyebrow">@Eyebrow</div> }
+        <h1>@Title</h1>
+        @if (Sub is not null) { <div class="sub">@Sub</div> }
+    </div>
+    @if (Tools is not null) { <div class="tools">@Tools</div> }
+</div>
+
+@code {
+    [Parameter] public string? Eyebrow { get; set; }
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public RenderFragment? Sub { get; set; }
+    [Parameter] public RenderFragment? Tools { get; set; }
+}

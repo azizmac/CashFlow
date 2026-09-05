@@ -2,84 +2,66 @@
 @attribute [Authorize]
 @inject ICurrentUser Me
 @inject ILedgerQueries Q
-@inject ILedgerCommands Commands
 
 <PageTitle>Контрагенты — CashFlow</PageTitle>
-<h1>Контрагенты</h1>
-<p class="muted">Кто присылает деньги и кому они уходят. Категория по умолчанию применяется ко всем будущим (и неразобранным прошлым) операциям контрагента.</p>
 
-<div class="toolbar">
-    <input placeholder="Поиск" @bind="search" @bind:after="Reload" style="min-width:240px" />
-    <select @bind="kind" @bind:after="Reload">
-        <option value="">Все типы</option>
-        @foreach (var k in Enum.GetValues<CounterpartyKind>()) { <option value="@k">@Kind(k)</option> }
-    </select>
+<PageHead Eyebrow="Counterparties" Title="Контрагенты" />
+
+<div class="search" style="margin-bottom:12px">
+    <span>⌕</span>
+    <input placeholder="Название, ИНН" @bind="search" @bind:after="Reload" />
 </div>
 
-<table>
-    <thead><tr><th>Название</th><th>Тип</th><th>ИНН</th><th>Категория по умолчанию</th><th class="num">Операций</th><th class="num">Ушло</th><th class="num">Пришло</th><th></th></tr></thead>
-    <tbody>
-    @foreach (var c in rows)
+<div class="chips" style="margin-bottom:14px">
+    <span class="chip @(kind is null ? "on" : "")" @onclick="() => SetKind(null)">Все</span>
+    @foreach (var k in new[] { CounterpartyKind.Merchant, CounterpartyKind.Company, CounterpartyKind.SoleProprietor, CounterpartyKind.Person, CounterpartyKind.Government, CounterpartyKind.Bank, CounterpartyKind.Self })
     {
-        <tr>
-            <td>
-                @if (editId == c.Counterparty.Id)
-                {
-                    <input @bind="editName" style="width:100%" />
-                }
-                else
-                {
-                    <a href="/transactions?cp=@c.Counterparty.Id">@c.Counterparty.DisplayName</a>
-                    @if (c.Counterparty.Aliases.Count > 1) { <div class="muted" style="font-size:11px">также: @string.Join(", ", c.Counterparty.Aliases.Where(a => a != TextNormalizer.Normalize(c.Counterparty.DisplayName)).Take(3))</div> }
-                }
-            </td>
-            <td>
-                <select value="@c.Counterparty.Kind" @onchange="e => SetKind(c.Counterparty, e.Value?.ToString())">
-                    @foreach (var k in Enum.GetValues<CounterpartyKind>()) { <option value="@k">@Kind(k)</option> }
-                </select>
-            </td>
-            <td class="muted">@c.Counterparty.Inn</td>
-            <td>
-                <select value="@(c.Counterparty.DefaultCategoryId?.ToString() ?? "")" @onchange="e => SetDefaultCategory(c.Counterparty, e.Value?.ToString())" style="max-width:200px">
-                    <option value="">—</option>
-                    @foreach (var cat in categories) { <option value="@cat.Id">@cat.Label</option> }
-                </select>
-            </td>
-            <td class="num">@c.Count</td>
-            <td class="num neg">@(c.Out > 0 ? c.Out.ToString("N0") : "")</td>
-            <td class="num pos">@(c.In > 0 ? c.In.ToString("N0") : "")</td>
-            <td style="white-space:nowrap">
-                @if (editId == c.Counterparty.Id) { <button class="small primary" @onclick="() => SaveName(c.Counterparty)">Сохранить</button> }
-                else { <button class="small" @onclick="() => { editId = c.Counterparty.Id; editName = c.Counterparty.DisplayName; }">✎</button> }
-            </td>
-        </tr>
+        <span class="chip @(kind == k ? "on" : "")" @onclick="() => SetKind(k)">@Label(k)</span>
     }
-    </tbody>
-</table>
+</div>
+
+@if (rows.Count == 0)
+{
+    <div class="card"><p class="muted" style="margin:0">Контрагентов пока нет — они появятся после загрузки выписки.</p></div>
+}
+else
+{
+    <div class="card tight">
+        <div class="section">Top by spend</div>
+        <div class="list">
+            @foreach (var c in rows.OrderByDescending(c => c.Out).ThenByDescending(c => c.In))
+            {
+                <a class="item clickable" href="/counterparties/@c.Counterparty.Id">
+                    <Avatar Name="@c.Counterparty.DisplayName" />
+                    <div class="grow">
+                        <div class="ttl">@c.Counterparty.DisplayName @if (c.Counterparty.IsFavorite) { <span>★</span> }</div>
+                        <div class="sub">@Ui.KindLabel(c.Counterparty.Kind)@(c.Counterparty.Inn is not null ? $" · ИНН {c.Counterparty.Inn}" : "") · @c.Count @Home.Plural(c.Count, "операция", "операции", "операций")</div>
+                    </div>
+                    <div class="right">
+                        @if (c.Out > 0) { <div class="amt num">−@Ui.N0(c.Out)</div> }
+                        @if (c.In > 0) { <div class="@(c.Out > 0 ? "sub" : "amt") pos num">+@Ui.N0(c.In)</div> }
+                    </div>
+                    <span class="chev">›</span>
+                </a>
+            }
+        </div>
+    </div>
+}
 
 @code {
     IReadOnlyList<CounterpartyStatsDto> rows = [];
-    IReadOnlyList<CategoryDto> categories = [];
-    string? search, kind;
-    Guid? editId; string editName = "";
+    string? search;
+    CounterpartyKind? kind;
     string uid = "";
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync() { uid = await Me.IdAsync(); await Reload(); }
+
+    Task SetKind(CounterpartyKind? k) { kind = k; return Reload(); }
+    async Task Reload() => rows = await Q.CounterpartiesAsync(uid, search, kind);
+
+    public static string Label(CounterpartyKind k) => k switch
     {
-        uid = await Me.IdAsync();
-        categories = await Q.CategoriesAsync(uid);
-        await Reload();
-    }
-
-    async Task Reload() => rows = await Q.CounterpartiesAsync(uid, search, Enum.TryParse<CounterpartyKind>(kind, out var k) ? k : null);
-
-    async Task SetKind(CounterpartyDto c, string? v) { if (Enum.TryParse<CounterpartyKind>(v, out var k)) { await Commands.SetCounterpartyKindAsync(uid, c.Id, k); await Reload(); } }
-    async Task SetDefaultCategory(CounterpartyDto c, string? v) { await Commands.SetCounterpartyDefaultCategoryAsync(uid, c.Id, Guid.TryParse(v, out var g) ? g : null); await Reload(); }
-    async Task SaveName(CounterpartyDto c) { await Commands.RenameCounterpartyAsync(uid, c.Id, editName); editId = null; await Reload(); }
-
-    public static string Kind(CounterpartyKind k) => k switch
-    {
-        CounterpartyKind.Person => "Человек", CounterpartyKind.Company => "Компания", CounterpartyKind.SoleProprietor => "ИП",
-        CounterpartyKind.Bank => "Банк", CounterpartyKind.Government => "Государство", CounterpartyKind.Merchant => "Магазин/сервис", CounterpartyKind.Self => "Я (свои счета)", _ => "Не определён"
+        CounterpartyKind.Person => "Люди", CounterpartyKind.Company => "Компании", CounterpartyKind.SoleProprietor => "ИП",
+        CounterpartyKind.Bank => "Банки", CounterpartyKind.Government => "Государство", CounterpartyKind.Merchant => "Магазины", CounterpartyKind.Self => "Свои счета", _ => "Не определён"
     };
 }

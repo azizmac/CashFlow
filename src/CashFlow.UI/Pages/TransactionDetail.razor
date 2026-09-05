@@ -8,137 +8,154 @@
 
 @if (d is null) { <p class="muted">@(loaded ? "Операция не найдена." : "Загрузка…")</p> return; }
 
-<div class="crumbs"><a href="/transactions">Операции</a> › <a href="/transactions?account=@d.Transaction.AccountId">@d.Transaction.AccountName</a> › @d.Transaction.PostedAt.Local().ToString("dd.MM.yyyy")</div>
+<div class="crumbs"><a href="/transactions">Операции</a> › <a href="/transactions?account=@d.Transaction.AccountId&transfers=1">@d.Transaction.AccountName</a> › @d.Transaction.PostedAt.Local().ToString("dd.MM.yyyy")</div>
 
-<div class="detail-head">
-    <div>
-        <div class="amount @(d.Transaction.IsIncome ? "pos" : "neg")">@(d.Transaction.IsIncome ? "+" : "−")@Math.Abs(d.Transaction.Amount).ToString("N2") @d.Transaction.Currency</div>
-        <h1 style="margin:4px 0">@d.Transaction.Description</h1>
-        <div class="muted">
-            @d.Transaction.PostedAt.Local().ToString("dd.MM.yyyy HH:mm")
-            @if (d.Transaction.BookedAt is { } b && b.Date != d.Transaction.PostedAt.Date) { <span> · проведено @b.Local().ToString("dd.MM.yyyy")</span> }
-            @if (d.Transaction.IsTransfer) { <span class="pill">перевод между своими счетами</span> }
-            @if (d.Transaction.Status == TransactionStatus.Pending) { <span class="pill warn">в обработке</span> }
-            @if (d.Transaction.Status == TransactionStatus.Cancelled) { <span class="pill err">отменена</span> }
+<div class="stack">
+    <div class="card hero detail-head">
+        <div class="row" style="align-items:flex-start;gap:14px">
+            <div class="icon lg" style="background:@(d.Transaction.IsTransfer ? "var(--icon-bg)" : Ui.CategoryTint(Cat?.Color, 0))">@(d.Transaction.IsTransfer ? "⇄" : Cat?.Icon ?? "?")</div>
+            <div class="grow">
+                <div class="amount num @(d.Transaction.IsTransfer ? "" : d.Transaction.IsIncome ? "pos" : "neg")">@(d.Transaction.IsIncome ? "+" : "−")@Ui.N2(Math.Abs(d.Transaction.Amount)) @d.Transaction.Currency</div>
+                <div style="font-size:17px;font-weight:640;margin-top:4px">@d.Transaction.Description</div>
+                <div class="muted" style="font-size:12.5px;margin-top:4px">
+                    @d.Transaction.PostedAt.Local().ToString("d MMMM yyyy, HH:mm", Ru)
+                    @if (d.Transaction.BookedAt is { } b && b.Date != d.Transaction.PostedAt.Date) { <span> · проведено @b.Local().ToString("dd.MM.yyyy")</span> }
+                </div>
+                <div class="wrap" style="margin-top:8px">
+                    @if (d.Transaction.IsTransfer) { <span class="pill">перевод между своими счетами</span> }
+                    @if (d.Transaction.Status == TransactionStatus.Pending) { <span class="pill warn">в обработке</span> }
+                    @if (d.Transaction.Status == TransactionStatus.Cancelled) { <span class="pill err">отменена</span> }
+                    @if (d.Transaction.Mcc is not null) { <span class="pill">MCC @d.Transaction.Mcc</span> }
+                    @foreach (var t in d.Transaction.Tags) { <span class="pill accent">#@t</span> }
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-@if (msg is not null) { <div class="alert ok">@msg</div> }
+    @if (msg is not null) { <div class="alert ok">@msg</div> }
 
-<div class="grid2">
-    <div>
-        <h2>Категория</h2>
-        <div class="form">
-            <label>Категория
-                <select value="@(d.Transaction.CategoryId?.ToString() ?? "")" @onchange="e => SetCategory(e.Value?.ToString())">
+    <div class="grid2">
+        <div class="stack">
+            <div class="card">
+                <div class="head"><h3>Категория</h3>
+                    @if (d.Transaction.CategoryId is not null) { <span class="muted" style="font-size:12px">@Ui.SourceLabel(d.Transaction.CategorySource)@(d.Transaction.CategoryConfidence is { } cf && d.Transaction.CategorySource != CategorySource.User ? $" · {cf:P0}" : "")</span> }
+                </div>
+                @if (d.Transaction.CategoryId is null && d.Transaction.ProposedCategoryId is not null)
+                {
+                    <div class="insight" style="margin-bottom:12px;padding:12px 14px" >
+                        <div class="row"><div class="grow"><div class="eyebrow">✦ Предложение</div><div style="margin-top:3px">@d.Transaction.ProposedCategoryLabel</div></div><button class="small white" @onclick="Accept">✓ Принять</button></div>
+                    </div>
+                }
+                <select style="width:100%" value="@(d.Transaction.CategoryId?.ToString() ?? "")" @onchange="e => SetCategory(e.Value?.ToString())">
                     <option value="">— без категории —</option>
                     @foreach (var c in categories.Where(c => c.Kind == (d.Transaction.IsIncome ? CategoryKind.Income : CategoryKind.Expense) || c.Kind == CategoryKind.Transfer || c.Kind == CategoryKind.Investment))
                     { <option value="@c.Id">@c.Label</option> }
                 </select>
-            </label>
-            @if (d.Transaction.CategoryId is not null) { <div class="muted" style="font-size:12px">источник: @Src(d.Transaction.CategorySource)@(d.Transaction.CategoryConfidence is { } cf && d.Transaction.CategorySource != CategorySource.User ? $", уверенность {cf:P0}" : "")</div> }
-            @if (d.Transaction.CategoryId is null && d.Transaction.ProposedCategoryId is not null)
-            {
-                <div>Предложено: @d.Transaction.ProposedCategoryLabel <button class="small primary" @onclick="Accept">Принять</button></div>
-            }
-            @if (d.Counterparty is not null)
-            {
-                <label style="flex-direction:row;align-items:center;gap:6px;display:flex"><input type="checkbox" @bind="applyToCounterparty" /> применять эту категорию ко всем операциям контрагента «@d.Counterparty.DisplayName»</label>
-            }
-        </div>
-
-        <h2>Контрагент</h2>
-        @if (d.Counterparty is not null)
-        {
-            <table class="kv">
-                <tr><th>Кто</th><td><a href="/transactions?cp=@d.Counterparty.Id">@d.Counterparty.DisplayName</a> <span class="pill">@Counterparties.Kind(d.Counterparty.Kind)</span></td></tr>
-                @if (d.Counterparty.Inn is not null) { <tr><th>ИНН</th><td>@d.Counterparty.Inn@(d.Counterparty.Kpp is not null ? $" / КПП {d.Counterparty.Kpp}" : "")</td></tr> }
-                @if (d.Counterparty.AccountsMasked.Count > 0) { <tr><th>Счета</th><td class="muted">@string.Join(", ", d.Counterparty.AccountsMasked)</td></tr> }
-                @if (d.Counterparty.PhonesMasked.Count > 0) { <tr><th>Телефоны</th><td class="muted">@string.Join(", ", d.Counterparty.PhonesMasked)</td></tr> }
-                @if (d.Counterparty.DefaultCategoryId is { } dc && categories.FirstOrDefault(c => c.Id == dc) is { } dcat) { <tr><th>Категория по умолчанию</th><td>@dcat.Label</td></tr> }
-            </table>
-        }
-        else { <p class="muted">Контрагент не определён.</p> }
-
-        @if (!d.Raw.IsEmpty)
-        {
-            <details>
-                <summary class="muted">Реквизиты из выписки</summary>
-                <table class="kv">
-                    @if (d.Raw.Name is not null) { <tr><th>Название</th><td>@d.Raw.Name</td></tr> }
-                    @if (d.Raw.Inn is not null) { <tr><th>ИНН</th><td>@d.Raw.Inn</td></tr> }
-                    @if (d.Raw.AccountMasked is not null) { <tr><th>Счёт</th><td>@d.Raw.AccountMasked</td></tr> }
-                    @if (d.Raw.Bik is not null) { <tr><th>БИК</th><td>@d.Raw.Bik @d.Raw.BankName</td></tr> }
-                    @if (d.Raw.PhoneMasked is not null) { <tr><th>Телефон</th><td>@d.Raw.PhoneMasked</td></tr> }
-                </table>
-            </details>
-        }
-
-        <h2>Заметка и теги</h2>
-        <div class="form">
-            <label>Заметка <textarea rows="2" @bind="note"></textarea></label>
-            <label>Теги (через запятую) <input @bind="tags" placeholder="напр. налоги, аренда" /></label>
-            <div><button class="primary" @onclick="SaveNote">Сохранить</button></div>
-        </div>
-    </div>
-
-    <div>
-        <h2>Детали</h2>
-        <table class="kv">
-            <tr><th>Счёт</th><td><a href="/transactions?account=@d.Transaction.AccountId">@d.Transaction.AccountName</a> <span class="muted">@d.AccountNumberMasked</span></td></tr>
-            <tr><th>Профиль / банк</th><td>@d.ProfileName · @d.BankName</td></tr>
-            @if (!string.IsNullOrWhiteSpace(d.Transaction.Purpose) && d.Transaction.Purpose != d.Transaction.Description) { <tr><th>Назначение платежа</th><td>@d.Transaction.Purpose</td></tr> }
-            @if (d.Transaction.Mcc is not null) { <tr><th>MCC</th><td>@d.Transaction.Mcc</td></tr> }
-            @if (d.Pair is not null)
-            {
-                <tr><th>Парная операция</th><td><a href="/transactions/@d.Pair.Id">@d.Pair.AccountName: @(d.Pair.IsIncome ? "+" : "−")@Math.Abs(d.Pair.Amount).ToString("N2") @d.Pair.PostedAt.Local().ToString("dd.MM.yyyy")</a></td></tr>
-            }
-        </table>
-
-        <h2>Откуда эти данные</h2>
-        <table class="kv">
-            <tr><th>Источник</th><td>@SourceLabel(d.Source.Source)</td></tr>
-            @if (d.Source.ConnectionName is not null) { <tr><th>Подключение</th><td><a href="/sources">@d.Source.ConnectionName</a>@(d.Source.SourceCode is not null ? $" · {d.Source.SourceCode}" : "")</td></tr> }
-            @if (d.Source.FileName is not null) { <tr><th>Файл</th><td>@d.Source.FileName</td></tr> }
-            @if (d.Source.LoadedAt is { } la) { <tr><th>Загружено</th><td>@la.Local().ToString("dd.MM.yyyy HH:mm")</td></tr> }
-            @if (d.Source.ExternalId is not null) { <tr><th>Внешний ID</th><td class="muted">@d.Source.ExternalId</td></tr> }
-            <tr><th>Импортировано</th><td class="muted">@d.Source.ImportedAt.Local().ToString("dd.MM.yyyy HH:mm")</td></tr>
-        </table>
-        @if (d.Source.RawPayload is not null)
-        {
-            <details><summary class="muted">Сырая запись из выписки</summary><pre class="raw">@d.Source.RawPayload</pre></details>
-        }
-
-        @if (d.Similar.Count > 0)
-        {
-            <h2>Похожие операции</h2>
-            <table>
-                <thead><tr><th>Дата</th><th>Описание</th><th>Категория</th><th class="num">Сумма</th></tr></thead>
-                <tbody>
-                @foreach (var r in d.Similar)
+                @if (d.Counterparty is not null)
                 {
-                    <tr>
-                        <td style="white-space:nowrap"><a href="/transactions/@r.Id">@r.PostedAt.Local().ToString("dd.MM.yy")</a></td>
-                        <td>@r.Description</td>
-                        <td class="muted">@(r.CategoryLabel ?? "—")</td>
-                        <td class="num @(r.IsIncome ? "pos" : "neg")">@(r.IsIncome ? "+" : "")@r.Amount.ToString("N2")</td>
-                    </tr>
+                    <label class="row" style="margin-top:10px;font-size:13px;color:var(--text-2)"><input type="checkbox" @bind="applyToCounterparty" /> применять ко всем операциям «@d.Counterparty.DisplayName»</label>
                 }
-                </tbody>
-            </table>
-        }
+            </div>
+
+            <div class="card tight">
+                <div class="head" style="padding:16px 18px 6px"><h3>Контрагент</h3></div>
+                @if (d.Counterparty is not null)
+                {
+                    <a class="item clickable list" href="/counterparties/@d.Counterparty.Id" style="display:flex">
+                        <Avatar Name="@d.Counterparty.DisplayName" />
+                        <div class="grow">
+                            <div class="ttl">@d.Counterparty.DisplayName</div>
+                            <div class="sub">@Ui.KindLabel(d.Counterparty.Kind)@(d.Counterparty.Inn is not null ? $" · ИНН {d.Counterparty.Inn}" : "")@(d.Counterparty.Kpp is not null ? $" / КПП {d.Counterparty.Kpp}" : "")</div>
+                            @if (d.Counterparty.AccountsMasked.Count > 0 || d.Counterparty.PhonesMasked.Count > 0) { <div class="sub">@string.Join(", ", d.Counterparty.AccountsMasked.Concat(d.Counterparty.PhonesMasked))</div> }
+                        </div>
+                        <span class="chev">›</span>
+                    </a>
+                }
+                else { <p class="muted" style="padding:0 18px 16px;margin:0">Контрагент не определён.</p> }
+                @if (!d.Raw.IsEmpty)
+                {
+                    <details style="padding:4px 18px 12px">
+                        <summary class="muted" style="font-size:12.5px">Реквизиты из выписки</summary>
+                        <div class="stack-sm" style="gap:4px;margin-top:6px;font-size:13px">
+                            @if (d.Raw.Name is not null) { <div class="kv-line"><span>Название</span><span>@d.Raw.Name</span></div> }
+                            @if (d.Raw.Inn is not null) { <div class="kv-line"><span>ИНН</span><span>@d.Raw.Inn</span></div> }
+                            @if (d.Raw.AccountMasked is not null) { <div class="kv-line"><span>Счёт</span><span>@d.Raw.AccountMasked</span></div> }
+                            @if (d.Raw.Bik is not null) { <div class="kv-line"><span>Банк</span><span>@d.Raw.Bik @d.Raw.BankName</span></div> }
+                            @if (d.Raw.PhoneMasked is not null) { <div class="kv-line"><span>Телефон</span><span>@d.Raw.PhoneMasked</span></div> }
+                        </div>
+                    </details>
+                }
+            </div>
+
+            <div class="card">
+                <div class="head"><h3>Заметка и теги</h3></div>
+                <div class="form">
+                    <textarea rows="2" @bind="note" placeholder="Заметка"></textarea>
+                    <div class="row"><input class="grow" @bind="tags" placeholder="Теги через запятую: налоги, аренда" /><button class="small primary" @onclick="SaveNote">Сохранить</button></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stack">
+            <div class="card">
+                <div class="head"><h3>Детали</h3></div>
+                <div class="stack-sm" style="gap:8px">
+                    <div class="kv-line"><span>Счёт</span><a href="/transactions?account=@d.Transaction.AccountId&transfers=1">@d.Transaction.AccountName <span class="muted">@d.AccountNumberMasked</span></a></div>
+                    <div class="kv-line"><span>Профиль · банк</span><span>@d.ProfileName · @d.BankName</span></div>
+                    @if (!string.IsNullOrWhiteSpace(d.Transaction.Purpose) && d.Transaction.Purpose != d.Transaction.Description) { <div><div class="eyebrow" style="margin-bottom:3px">Назначение платежа</div><div style="font-size:13.5px;line-height:1.45">@d.Transaction.Purpose</div></div> }
+                    @if (d.Pair is not null)
+                    {
+                        <div class="kv-line"><span>Парная операция</span><a href="/transactions/@d.Pair.Id">@d.Pair.AccountName: @(d.Pair.IsIncome ? "+" : "−")@Ui.N2(Math.Abs(d.Pair.Amount)) · @d.Pair.PostedAt.Local().ToString("dd.MM.yyyy")</a></div>
+                    }
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="head"><h3>Откуда эти данные</h3></div>
+                <div class="stack-sm" style="gap:8px">
+                    <div class="kv-line"><span>Источник</span><span>@SourceLabel(d.Source.Source)</span></div>
+                    @if (d.Source.ConnectionName is not null) { <div class="kv-line"><span>Подключение</span><a href="/connections">@d.Source.ConnectionName@(d.Source.SourceCode is not null ? $" · {d.Source.SourceCode}" : "")</a></div> }
+                    @if (d.Source.FileName is not null) { <div class="kv-line"><span>Файл</span><span style="word-break:break-all;text-align:right">@d.Source.FileName</span></div> }
+                    @if (d.Source.LoadedAt is { } la) { <div class="kv-line"><span>Загружено</span><span>@la.Local().ToString("dd.MM.yyyy HH:mm")</span></div> }
+                    @if (d.Source.ExternalId is not null) { <div class="kv-line"><span>Внешний ID</span><span class="muted" style="font-weight:400;word-break:break-all;text-align:right">@d.Source.ExternalId</span></div> }
+                    <div class="kv-line"><span>Импортировано</span><span class="muted" style="font-weight:400">@d.Source.ImportedAt.Local().ToString("dd.MM.yyyy HH:mm")</span></div>
+                </div>
+                @if (d.Source.RawPayload is not null)
+                {
+                    <details style="margin-top:8px"><summary class="muted" style="font-size:12.5px">Сырая запись из выписки</summary><pre class="raw">@d.Source.RawPayload</pre></details>
+                }
+            </div>
+
+            @if (d.Similar.Count > 0)
+            {
+                <div class="card tight">
+                    <div class="head" style="padding:16px 18px 6px"><h3>Похожие операции</h3></div>
+                    <div class="list">
+                        @foreach (var r in d.Similar)
+                        {
+                            <a class="item clickable" href="/transactions/@r.Id">
+                                <div class="grow"><div class="ttl">@r.Description</div><div class="sub">@r.PostedAt.Local().ToString("d MMM yyyy", Ru) · @(r.CategoryLabel ?? "без категории")</div></div>
+                                <div class="amt num @(r.IsIncome ? "pos" : "")">@(r.IsIncome ? "+" : "−")@Ui.N0(Math.Abs(r.Amount))</div>
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
     </div>
 </div>
 
 @code {
     [Parameter] public Guid Id { get; set; }
+    static readonly System.Globalization.CultureInfo Ru = System.Globalization.CultureInfo.GetCultureInfo("ru-RU");
 
     TransactionDetailDto? d;
     IReadOnlyList<CategoryDto> categories = [];
     bool loaded, applyToCounterparty;
     string uid = "", note = "", tags = "";
     string? msg;
+
+    CategoryDto? Cat => d?.Transaction.CategoryId is { } c ? categories.FirstOrDefault(x => x.Id == c) : null;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -166,12 +183,11 @@
 
     async Task SaveNote()
     {
-        await Commands.SetNoteAsync(uid, Id, note, tags.Split(',', StringSplitOptions.RemoveEmptyEntries));
+        await Commands.SetNoteAsync(uid, Id, note, tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
         msg = "Заметка сохранена.";
         await Load();
     }
 
-    static string Src(CategorySource s) => s switch { CategorySource.User => "вручную", CategorySource.Rule => "правило", CategorySource.Mcc => "по MCC", CategorySource.Ai => "ИИ", CategorySource.Counterparty => "по контрагенту", _ => "" };
     static string SourceLabel(ConnectorType t) => t switch
     {
         ConnectorType.StatementImport => "файл выписки", ConnectorType.Manual => "введено вручную", ConnectorType.TInvest => "T-Invest API",

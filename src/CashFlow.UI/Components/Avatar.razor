@@ -1,0 +1,10 @@
+@* Круглый аватар с первой буквой и устойчивым цветом по имени (как в макете контрагентов) *@
+<div class="avatar @Size" style="@Style">@Ui.Initial(Name)</div>
+
+@code {
+    [Parameter] public string? Name { get; set; }
+    /// <summary>"" | "md" | "lg"</summary>
+    [Parameter] public string Size { get; set; } = "";
+
+    string Style => "background:" + Ui.HueColor(Name) + (Ui.IsLightHue(Name) ? ";color:#1a1400" : "");
+}

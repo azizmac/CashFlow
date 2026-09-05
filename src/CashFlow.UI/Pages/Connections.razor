@@ -5,87 +5,114 @@
 @inject IAppShell Shell
 
 <PageTitle>Подключения — CashFlow</PageTitle>
-<h1>Подключения</h1>
-<p class="muted">Только чтение. Токены шифруются и хранятся на вашем сервере. Запрашивайте у банка доступ с минимальными правами (T-Invest — «только чтение», T-API — «счета и выписки», Sber API — «информация о счетах» и «выписки»).</p>
+
+<PageHead Eyebrow="Connections" Title="Подключения">
+    <Sub>Только чтение. Токены шифруются и хранятся на вашем сервере. Запрашивайте у банка доступ с минимальными правами: счета и выписки.</Sub>
+</PageHead>
 
 @if (profiles is null) { <p class="muted">Загрузка…</p> return; }
 
 @if (msg is not null) { <div class="alert @msgCss">@msg</div> }
 
-<table>
-    <thead><tr><th>Название</th><th>Тип</th><th>Статус</th><th>Последняя синхронизация</th><th></th></tr></thead>
-    <tbody>
-    @foreach (var c in connections)
+<div class="stack">
+    @if (connections.Count > 0)
     {
-        <tr>
-            <td>@c.Name<div class="muted" style="font-size:11px">@c.ProfileName@(c.SourceCode is not null ? $" · формат {c.SourceCode}" : "")</div></td>
-            <td>@TypeLabel(c.Type)</td>
-            <td>
-                <span class="pill @(c.Status == ConnectionStatus.Active ? "ok" : c.Status == ConnectionStatus.Disabled ? "" : "err")">@c.Status</span>
-                @if (c.LastError is not null) { <div class="muted" style="font-size:11px;max-width:320px">@c.LastError</div> }
-            </td>
-            <td class="muted">@(c.LastSyncAt?.Local().ToString("dd.MM.yy HH:mm") ?? "—")@(c.SyncCursor is not null && c.IsStatementImport ? $" (данные по {c.SyncCursor})" : "")</td>
-            <td style="white-space:nowrap">
-                @if (c.IsStatementImport)
-                {
-                    <a class="small" href="/sources">Загрузить ещё</a>
-                }
-                else if (c.Status != ConnectionStatus.Disabled)
-                {
-                    <button class="small primary" @onclick="() => Sync(c)" disabled="@(busyId == c.Id)">@(busyId == c.Id ? "…" : "Синхронизировать")</button>
-                    <button class="small" @onclick="() => Delete(c)">Удалить</button>
-                }
-            </td>
-        </tr>
+        <div class="grid3">
+            @foreach (var c in connections)
+            {
+                <div class="card @(c.Status == ConnectionStatus.Error || c.Status == ConnectionStatus.NeedsReauth ? "stale" : "")">
+                    <div class="row" style="align-items:flex-start">
+                        <div class="icon lg">@Glyph(c)</div>
+                        <div class="grow">
+                            <div style="font-weight:640">@c.Name</div>
+                            <div class="muted" style="font-size:12px">@c.ProfileName · @TypeLabel(c.Type)@(c.SourceCode is not null ? $" · {c.SourceCode}" : "")</div>
+                        </div>
+                        <span class="pill @(c.Status == ConnectionStatus.Active ? "ok" : c.Status == ConnectionStatus.Disabled ? "" : "warn")">@Status(c.Status)</span>
+                    </div>
+                    <div class="small-note" style="margin-top:10px">
+                        @(c.IsStatementImport ? "последняя загрузка" : "последняя синхронизация"): @(c.LastSyncAt?.Local().ToString("dd.MM.yyyy HH:mm") ?? "—")
+                        @if (c.SyncCursor is not null && c.IsStatementImport) { <span> · данные по @c.SyncCursor</span> }
+                        @if (c.LastError is not null) { <div style="margin-top:4px">@c.LastError</div> }
+                    </div>
+                    <div class="wrap" style="margin-top:10px">
+                        @if (c.IsStatementImport)
+                        {
+                            <a class="btn small" href="/sources">Загрузить ещё</a>
+                        }
+                        else if (c.Status != ConnectionStatus.Disabled)
+                        {
+                            <button class="small primary" @onclick="() => Sync(c)" disabled="@(busyId == c.Id)">@(busyId == c.Id ? "…" : "Синхронизировать")</button>
+                            <button class="small" @onclick="() => Delete(c)">Удалить</button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
     }
-    </tbody>
-</table>
 
-@if (oauth.Count > 0)
-{
-    <h2>Подключить через авторизацию в банке</h2>
-    <p class="muted">Вы войдёте на странице банка и подтвердите доступ только к счетам и выпискам. Токены получит сервер, вводить их вручную не нужно.</p>
-    <div class="form">
-        <label>Профиль <select @bind="oauthProfileId">@foreach (var p in profiles) { <option value="@p.Id">@p.Name</option> }</select></label>
-        <label>Название (необязательно) <input @bind="oauthName" placeholder="напр. Р/с ИП в Сбере" /></label>
-        @foreach (var oc in oauth)
-        {
-            <div>
-                <button class="primary" @onclick="() => StartOAuth(oc)">Подключить через @oc.ProviderDisplayName</button>
-                <div class="muted" style="font-size:11px;max-width:640px">@oc.SetupHint</div>
+    <div>
+        <h2>Подключите банк</h2>
+        <div class="grid3">
+            @foreach (var oc in oauth)
+            {
+                <div class="card">
+                    <div class="row"><div class="icon lg">@Ui.Initial(oc.ProviderDisplayName)</div><div class="grow"><div style="font-weight:640">@oc.ProviderDisplayName</div><div class="muted" style="font-size:12px">вход на странице банка, токены получит сервер</div></div></div>
+                    <div class="small-note" style="margin-top:10px">@oc.SetupHint</div>
+                    <div style="margin-top:12px"><button class="primary small" @onclick="() => StartOAuth(oc)">Подключить</button></div>
+                </div>
+            }
+            @if (oauth.Count == 0)
+            {
+                <div class="card dashed">
+                    <div style="font-weight:640">Через авторизацию в банке</div>
+                    <div class="small-note" style="margin-top:6px">СберБизнес ID и T-Business ID появятся здесь, когда в конфигурации сервера заданы реквизиты приложения банка — см. README, раздел «Интеграции через OAuth».</div>
+                </div>
+            }
+            <div class="card">
+                <div class="row"><div class="icon lg">⌘</div><div class="grow"><div style="font-weight:640">По токену</div><div class="muted" style="font-size:12px">T-Invest, T-API, Sber API</div></div></div>
+                <div style="margin-top:12px"><button class="small" @onclick="() => showToken = !showToken">@(showToken ? "Скрыть" : "Настроить")</button></div>
             </div>
-        }
+        </div>
     </div>
-}
-else
-{
-    <p class="muted">Подключение «через авторизацию» (СберБизнес ID, T-Business ID, Alfa ID) появится, когда в конфигурации сервера заданы реквизиты приложения банка — см. README, раздел «Интеграции через OAuth».</p>
-}
 
-<h2>Новое подключение по токену</h2>
-<div class="form">
-    <label>Тип
-        <select @bind="type" @bind:after="() => secrets.Clear()">
-            @foreach (var c in connectors) { <option value="@c.Type">@c.Label</option> }
-        </select>
-    </label>
-    <label>Профиль <select @bind="profileId">@foreach (var p in profiles) { <option value="@p.Id">@p.Name</option> }</select></label>
-    <label>Название <input @bind="name" placeholder="напр. Брокерский Т-Инвестиции" /></label>
-    @foreach (var key in Connector?.RequiredSecrets ?? [])
+    @if (oauth.Count > 0 && profiles.Count > 1)
     {
-        <label>@Label(key)
-            @if (key.Contains("pfx"))
-            {
-                <InputFile OnChange="e => LoadPfx(e, key)" accept=".pfx,.p12" />
-            }
-            else
-            {
-                <input type="@(key.Contains("password") || key.Contains("secret") || key.Contains("token") ? "password" : "text")" value="@secrets.GetValueOrDefault(key)" @onchange="e => secrets[key] = e.Value?.ToString() ?? string.Empty" />
-            }
-        </label>
+        <div class="wrap">
+            <label class="select-pill">◈ <select @bind="oauthProfileId">@foreach (var p in profiles) { <option value="@p.Id">@p.Name</option> }</select></label>
+            <input @bind="oauthName" placeholder="Название подключения (необязательно)" style="max-width:280px" />
+        </div>
     }
-    <label>Глубина первой загрузки, дней <input type="number" @bind="initialDays" /></label>
-    <button class="primary" @onclick="Create" disabled="@(busyId is not null || string.IsNullOrWhiteSpace(name) || Connector is null)">Подключить и синхронизировать</button>
+
+    @if (showToken)
+    {
+        <div class="card">
+            <div class="head"><h3>Новое подключение по токену</h3></div>
+            <div class="form">
+                <label class="field">Тип
+                    <select @bind="type" @bind:after="() => secrets.Clear()">
+                        @foreach (var c in connectors) { <option value="@c.Type">@c.Label</option> }
+                    </select>
+                </label>
+                <label class="field">Профиль <select @bind="profileId">@foreach (var p in profiles) { <option value="@p.Id">@p.Name</option> }</select></label>
+                <label class="field">Название <input @bind="name" placeholder="напр. Брокерский Т-Инвестиции" /></label>
+                @foreach (var key in Connector?.RequiredSecrets ?? [])
+                {
+                    <label class="field">@Label(key)
+                        @if (key.Contains("pfx"))
+                        {
+                            <InputFile OnChange="e => LoadPfx(e, key)" accept=".pfx,.p12" />
+                        }
+                        else
+                        {
+                            <input type="@(key.Contains("password") || key.Contains("secret") || key.Contains("token") ? "password" : "text")" value="@secrets.GetValueOrDefault(key)" @onchange="e => secrets[key] = e.Value?.ToString() ?? string.Empty" />
+                        }
+                    </label>
+                }
+                <label class="field">Глубина первой загрузки, дней <input type="number" @bind="initialDays" /></label>
+                <div><button class="primary" @onclick="Create" disabled="@(busyId is not null || string.IsNullOrWhiteSpace(name) || Connector is null)">Подключить и синхронизировать</button></div>
+            </div>
+        </div>
+    }
 </div>
 
 @code {
@@ -100,6 +127,7 @@ else
     ConnectorType type = ConnectorType.TInvest;
     string profileId = "", name = "", oauthProfileId = "", oauthName = "";
     int initialDays = 365;
+    bool showToken;
     Dictionary<string, string> secrets = new();
     Guid? busyId; string? msg, msgCss;
     string uid = "";
@@ -115,16 +143,10 @@ else
         oauth = connectors.Where(c => c.SupportsOAuth && c.OAuthConfigured).ToList();
         await Reload();
 
-        // Возврат из банка после OAuth: ?connected=<id> или ?oauth=error&msg=...
-        if (OAuthQ == "error")
-        {
-            msg = "Не удалось подключить: " + MsgQ;
-            msgCss = "err";
-        }
+        if (OAuthQ == "error") { msg = "Не удалось подключить: " + MsgQ; msgCss = "err"; }
         else if (ConnectedQ is { } id && connections.FirstOrDefault(x => x.Id == id) is { } c)
         {
-            msg = $"Подключение «{c.Name}» создано, запускаю первую синхронизацию…";
-            msgCss = "ok";
+            msg = $"Подключение «{c.Name}» создано, запускаю первую синхронизацию…"; msgCss = "ok";
             await Sync(c);
         }
     }
@@ -146,7 +168,7 @@ else
         try
         {
             var c = await Svc.CreateAsync(uid, Guid.Parse(profileId), type, name.Trim(), secrets);
-            secrets.Clear(); name = "";
+            secrets.Clear(); name = ""; showToken = false;
             await Reload();
             await Sync(c);
         }
@@ -170,6 +192,8 @@ else
     async Task Delete(ConnectionDto c) { await Svc.DeleteAsync(uid, c.Id); await Reload(); }
 
     static string TypeLabel(ConnectorType t) => CashFlow.Application.Connections.ConnectionsService.Label(t);
+    static string Status(ConnectionStatus s) => s switch { ConnectionStatus.Active => "активно", ConnectionStatus.NeedsReauth => "нужен вход", ConnectionStatus.Error => "ошибка", ConnectionStatus.Disabled => "выключено", _ => s.ToString() };
+    static string Glyph(ConnectionDto c) => c.Type switch { ConnectorType.StatementImport => "⇪", ConnectorType.SberBusiness => "С", ConnectorType.TBankBusiness or ConnectorType.TInvest => "Т", ConnectorType.AlfaBusiness => "А", _ => "⟳" };
 
     static string Label(string key) => key switch
     {
