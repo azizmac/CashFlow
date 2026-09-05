@@ -111,6 +111,29 @@ public sealed class ApiTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task OAuth_start_requires_configured_provider_and_callback_rejects_unknown_state()
+    {
+        var a = await _f.UserClientAsync("oauth@example.com");
+        var profile = (await a.GetFromJsonAsync<List<ProfileDto>>("/api/profiles", ApiFactory.Json))![0];
+
+        // Реквизиты приложения банка в тестовом сервере не заданы → понятная ошибка, а не редирект
+        var start = await a.PostAsJsonAsync("/api/oauth/sberbusiness/start", new { profileId = profile.Id, name = "Тест" }, ApiFactory.Json);
+        Assert.Equal(HttpStatusCode.BadRequest, start.StatusCode);
+        Assert.Contains("не заданы на сервере", await start.Content.ReadAsStringAsync());
+
+        var unknown = await a.PostAsJsonAsync("/api/oauth/nosuchbank/start", new { profileId = profile.Id }, ApiFactory.Json);
+        Assert.Equal(HttpStatusCode.BadRequest, unknown.StatusCode);
+
+        // Без токена старт недоступен, а callback анонимный: чужой state не проходит
+        var anon = _f.CreateClient();
+        Assert.Equal(HttpStatusCode.Unauthorized, (await anon.PostAsJsonAsync("/api/oauth/sberbusiness/start", new { profileId = profile.Id }, ApiFactory.Json)).StatusCode);
+        var noRedirect = new HttpClient(_f.Server.CreateHandler()) { BaseAddress = anon.BaseAddress };
+        var cb = await noRedirect.GetAsync("/oauth/sberbusiness/callback?state=fake&code=fake");
+        Assert.Equal(HttpStatusCode.Redirect, cb.StatusCode);
+        Assert.Contains("oauth=error", cb.Headers.Location!.ToString());
+    }
+
+    [Fact]
     public async Task Register_validation_errors_are_in_russian()
     {
         var anon = _f.CreateClient();

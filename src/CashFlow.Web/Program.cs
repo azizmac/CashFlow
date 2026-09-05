@@ -43,8 +43,7 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddAdditionalAssemblies(typeof(CashFlow.UI.Layout.MainLayout).Assembly); // страницы общей библиотеки CashFlow.UI
 app.MapAdditionalIdentityEndpoints();
-app.MapBankOAuth(); // /oauth/{provider}/start|callback — подключение банка через авторизацию
-app.MapCashFlowServerApi(); // /api/auth + /api/* — единственный вход для мобильного и настольного клиента
+app.MapCashFlowServerApi(); // /api/auth + /api/* + /oauth/* — общий вход для веба, мобильного и настольного клиента
 app.MapDemoWebLogin(); // /dev/login — вход демо-пользователя, работает только при заданных Demo__Email / Demo__Password
 
 app.Run();

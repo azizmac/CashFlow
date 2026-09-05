@@ -153,7 +153,35 @@
 
     async Task Reload() => connections = await Svc.ListAsync(uid);
 
-    Task StartOAuth(ConnectorInfoDto oc) => Shell.StartBankOAuthAsync(oc.OAuthProviderKey!, Guid.Parse(oauthProfileId), oauthName.Trim());
+    /// <summary>Веб уходит на страницу банка и вернётся на /connections?connected=…; приложение открывает системный браузер и ждёт появления подключения.</summary>
+    async Task StartOAuth(ConnectorInfoDto oc)
+    {
+        msg = null;
+        try
+        {
+            var before = connections.Select(c => c.Id).ToHashSet();
+            await Shell.StartBankOAuthAsync(oc.OAuthProviderKey!, Guid.Parse(oauthProfileId), oauthName.Trim());
+            if (Shell.IsBrowserHosted) return;
+            msg = $"Открыт браузер: войдите в {oc.ProviderDisplayName} и подтвердите доступ. Жду возврата…"; msgCss = "info";
+            var created = await WaitForNewConnectionAsync(before);
+            if (created is null) { msg = "Подтверждение из банка не пришло за 5 минут. Попробуйте ещё раз."; msgCss = "warn"; return; }
+            msg = $"Подключение «{created.Name}» создано, запускаю первую синхронизацию…"; msgCss = "ok";
+            await Sync(created);
+        }
+        catch (Exception ex) { msg = ex.Message; msgCss = "err"; }
+    }
+
+    async Task<ConnectionDto?> WaitForNewConnectionAsync(HashSet<Guid> before)
+    {
+        for (var i = 0; i < 100; i++)
+        {
+            await Task.Delay(3000);
+            await Reload();
+            StateHasChanged();
+            if (connections.FirstOrDefault(c => !before.Contains(c.Id) && !c.IsStatementImport) is { } fresh) return fresh;
+        }
+        return null;
+    }
 
     async Task LoadPfx(InputFileChangeEventArgs e, string key)
     {

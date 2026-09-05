@@ -33,6 +33,15 @@ public sealed class EmbeddedServer
         public string? TimeZone { get; set; }
     }
 
+    private static readonly (string Key, string Env)[] IntegrationKeys =
+    [
+        ("Integrations:PublicBaseUrl", "PUBLIC_BASE_URL"),
+        ("Integrations:Sber:ClientId", "SBER_CLIENT_ID"), ("Integrations:Sber:ClientSecret", "SBER_CLIENT_SECRET"),
+        ("Integrations:Sber:CertPfxPath", "SBER_CERT_PFX_PATH"), ("Integrations:Sber:CertPassword", "SBER_CERT_PASSWORD"),
+        ("Integrations:Alfa:ClientId", "ALFA_CLIENT_ID"), ("Integrations:Alfa:ClientSecret", "ALFA_CLIENT_SECRET"),
+        ("Integrations:TBank:ClientId", "TBANK_CLIENT_ID"), ("Integrations:TBank:ClientSecret", "TBANK_CLIENT_SECRET"),
+    ];
+
     private readonly TaskCompletionSource _started = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private WebApplication? _app;
 
@@ -84,6 +93,9 @@ public sealed class EmbeddedServer
             var env = ReadDotEnv();
             config["Demo:Email"] = Environment.GetEnvironmentVariable("DEMO_EMAIL") ?? env.GetValueOrDefault("DEMO_EMAIL");
             config["Demo:Password"] = Environment.GetEnvironmentVariable("DEMO_PASSWORD") ?? env.GetValueOrDefault("DEMO_PASSWORD");
+            // Реквизиты OAuth-приложений банков — те же ключи .env, что у docker-compose; redirect URI = http://127.0.0.1:{порт}/oauth/{provider}/callback
+            foreach (var (key, envName) in IntegrationKeys)
+                config[key] = Environment.GetEnvironmentVariable(envName) ?? env.GetValueOrDefault(envName);
 
             var builder = WebApplication.CreateBuilder(new WebApplicationOptions
             {

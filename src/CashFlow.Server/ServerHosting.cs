@@ -76,6 +76,7 @@ public static class ServerHosting
         app.MapGroup("/api/auth").MapIdentityApi<ApplicationUser>();
         app.MapCashFlowApi();
         app.MapDemoApi();
+        app.MapBankOAuth(); // /oauth/{provider}/start|callback (веб, cookie) и /api/oauth/{provider}/start (приложение, bearer)
         return app;
     }
 

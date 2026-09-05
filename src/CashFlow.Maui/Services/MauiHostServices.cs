@@ -65,11 +65,17 @@ public sealed class MauiCurrentUser : ICurrentUser
     public async Task<IReadOnlyList<ProfileDto>> ProfilesAsync() => await _profiles.ListAsync(await IdAsync());
 }
 
-/// <summary>Выход и OAuth банка в MAUI: OAuth открывается в системном браузере на сервере (там нужна cookie-сессия сервера).</summary>
+/// <summary>
+/// Выход и OAuth банка в MAUI. Сервер по bearer-токену готовит авторизацию (state, PKCE) и отдаёт URL банка,
+/// приложение открывает его в системном браузере; после возврата банка на сервер подключение появится в списке.
+/// </summary>
 public sealed class MauiAppShell : IAppShell
 {
+    private sealed record OAuthStartResponse(string Url, string State);
+
     private readonly ApiSession _session;
-    public MauiAppShell(ApiSession session) => _session = session;
+    private readonly ApiClient _api;
+    public MauiAppShell(ApiSession session, ApiClient api) { _session = session; _api = api; }
 
     public bool IsBrowserHosted => false;
 
@@ -77,7 +83,7 @@ public sealed class MauiAppShell : IAppShell
 
     public async Task StartBankOAuthAsync(string providerKey, Guid profileId, string? connectionName)
     {
-        var url = _session.Url($"oauth/{providerKey}/start?profileId={profileId}&name={Uri.EscapeDataString(connectionName ?? "")}");
-        await Launcher.Default.OpenAsync(url);
+        var start = await _api.PostAsync<OAuthStartResponse>($"api/oauth/{providerKey}/start", new { profileId, name = connectionName });
+        await Launcher.Default.OpenAsync(new Uri(start.Url));
     }
 }
