@@ -42,11 +42,18 @@
         </div>
     </div>
 
-    @if (summary.Income == 0 && summary.Expense == 0)
+    @if (summary.Income == 0 && summary.Expense == 0 && !hasAnyData)
     {
         <div class="insight">
             <div class="eyebrow">Начало</div>
             <p>Данных пока нет. <a href="/sources">Загрузите выписку</a> или <a href="/connections">подключите банк</a> — обзор соберётся автоматически.</p>
+        </div>
+    }
+    else if (summary.Income == 0 && summary.Expense == 0)
+    {
+        <div class="insight">
+            <div class="eyebrow">Период пуст</div>
+            <p>За @PeriodLabel операций нет. Последние данные — по @lastDataDate?.ToString("dd.MM.yyyy"): переключите период на «Год» или <a href="/sources">догрузите выписку</a>.</p>
         </div>
     }
     else
@@ -121,6 +128,8 @@
     SummaryDto? summary;
     List<AccountCoverageDto> stale = [];
     int uncategorized;
+    bool hasAnyData;
+    DateOnly? lastDataDate;
     string? profileId;
     int months = 1;
     DateOnly from, to;
@@ -160,7 +169,10 @@
         from = months == 1 ? new DateOnly(today.Year, today.Month, 1) : today.AddMonths(-months);
         Guid? pid = Guid.TryParse(profileId, out var g) ? g : null;
         summary = await Q.SummaryAsync(uid, pid, from, to);
-        stale = (await Q.CoverageAsync(uid, pid)).Where(c => c.Count > 0 && c.StaleDays > 30 && c.Account.IncludeInCashFlow).ToList();
+        var coverage = await Q.CoverageAsync(uid, pid);
+        stale = coverage.Where(c => c.Count > 0 && c.StaleDays > 30 && c.Account.IncludeInCashFlow).ToList();
+        hasAnyData = coverage.Any(c => c.Count > 0);
+        lastDataDate = coverage.Where(c => c.Last is not null).Select(c => c.Last).Max();
         uncategorized = (await Q.TransactionsAsync(uid, new TransactionFilter(pid, null, null, null, from, to, null, OnlyUncategorized: true, IncludeTransfers: false, Take: 1000))).Count;
     }
 

@@ -160,7 +160,7 @@ public sealed class TransactionImportService
             .ToDictionary(kv => kv.Key, kv => codeToId[kv.Value]);
         var cps = _uow.Counterparties.Query().Where(c => c.UserId == userId).ToList();
 
-        var categorizer = new RuleCategorizer(rules, mcc, cps);
+        var categorizer = new RuleCategorizer(rules, mcc, cps, cats.ToDictionary(c => c.Id, c => c.Kind)); // вид категории должен совпадать со знаком операции
         var transferCat = codeToId.GetValueOrDefault("transfer");
         var n = 0;
 

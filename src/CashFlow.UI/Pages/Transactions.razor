@@ -84,7 +84,7 @@
                     {
                         <select value="@(r.CategoryId?.ToString() ?? "")" @onchange="e => SetCategory(r, e.Value?.ToString())" style="max-width:180px">
                             <option value="">— без категории —</option>
-                            @foreach (var c in categories.Where(c => c.Kind == (r.IsIncome ? CategoryKind.Income : CategoryKind.Expense) || c.Kind == CategoryKind.Transfer || c.Kind == CategoryKind.Investment))
+                            @foreach (var c in categories.Where(c => c.Id == r.CategoryId || c.Kind == (r.IsIncome ? CategoryKind.Income : CategoryKind.Expense) || c.Kind == CategoryKind.Transfer || c.Kind == CategoryKind.Investment))
                             { <option value="@c.Id">@c.Label</option> }
                         </select>
                     }

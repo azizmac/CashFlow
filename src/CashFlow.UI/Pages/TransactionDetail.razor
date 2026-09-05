@@ -48,7 +48,7 @@
                 }
                 <select style="width:100%" value="@(d.Transaction.CategoryId?.ToString() ?? "")" @onchange="e => SetCategory(e.Value?.ToString())">
                     <option value="">— без категории —</option>
-                    @foreach (var c in categories.Where(c => c.Kind == (d.Transaction.IsIncome ? CategoryKind.Income : CategoryKind.Expense) || c.Kind == CategoryKind.Transfer || c.Kind == CategoryKind.Investment))
+                    @foreach (var c in categories.Where(c => c.Id == d.Transaction.CategoryId || c.Kind == (d.Transaction.IsIncome ? CategoryKind.Income : CategoryKind.Expense) || c.Kind == CategoryKind.Transfer || c.Kind == CategoryKind.Investment))
                     { <option value="@c.Id">@c.Label</option> }
                 </select>
                 @if (d.Counterparty is not null)
@@ -61,7 +61,8 @@
                 <div class="head" style="padding:16px 18px 6px"><h3>Контрагент</h3></div>
                 @if (d.Counterparty is not null)
                 {
-                    <a class="item clickable list" href="/counterparties/@d.Counterparty.Id" style="display:flex">
+                    <div class="list">
+                    <a class="item clickable" href="/counterparties/@d.Counterparty.Id">
                         <Avatar Name="@d.Counterparty.DisplayName" />
                         <div class="grow">
                             <div class="ttl">@d.Counterparty.DisplayName</div>
@@ -70,6 +71,7 @@
                         </div>
                         <span class="chev">›</span>
                     </a>
+                    </div>
                 }
                 else { <p class="muted" style="padding:0 18px 16px;margin:0">Контрагент не определён.</p> }
                 @if (!d.Raw.IsEmpty)
