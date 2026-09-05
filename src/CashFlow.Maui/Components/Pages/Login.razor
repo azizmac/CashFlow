@@ -1,56 +1,147 @@
 @page "/Account/Login"
 @page "/Account/Register"
 @page "/login"
+@using CashFlow.Maui.Services
 @inject CashFlow.Client.ApiClient Api
 @inject NavigationManager Nav
+@inject IServiceProvider Services
+@implements IDisposable
 
 <div class="login">
-    <div class="login-card">
-        <div class="brand">💸 CashFlow AI</div>
-        <p class="muted">Приложение подключается к вашему серверу CashFlow. Данные хранятся там, здесь только сессия.</p>
-        <div class="form">
-            <label>Адрес сервера <input @bind="server" placeholder="https://cashflow.example.com или http://192.168.1.10:8080" /></label>
-            <label>E-mail <input @bind="email" type="email" autocomplete="username" /></label>
-            <label>Пароль <input @bind="password" type="password" autocomplete="current-password" @onkeydown="OnKey" /></label>
-            @if (error is not null) { <div class="alert err">@error</div> }
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button class="primary" @onclick="DoLogin" disabled="@busy">@(busy ? "Входим…" : "Войти")</button>
-                <button @onclick="DoRegister" disabled="@busy">Зарегистрироваться</button>
+    <div class="logo">₽</div>
+    <h1>@(register ? "Создать аккаунт" : "С возвращением")</h1>
+    <p class="lead">
+        @if (Local is not null && !remote)
+        {
+            @(register ? "Аккаунт создаётся в вашей базе на этом компьютере. Данные банков никуда не уходят." : "Всё хранится в вашей базе на этом компьютере. Приложение только читает выписки и счета.")
+        }
+        else
+        {
+            @(register ? "Аккаунт создаётся на вашем сервере CashFlow. Данные банков остаются там, здесь хранится только сессия." : "Войдите в свой сервер CashFlow. Данные не покидают ваш сервер, приложение только читает.")
+        }
+    </p>
+
+    @if (Local is not null && !remote)
+    {
+        @if (Local.Status == EmbeddedServer.State.Starting)
+        {
+            <div class="alert info">Запускаю локальный сервер…</div>
+        }
+        else if (Local.Status == EmbeddedServer.State.Failed)
+        {
+            <div class="alert err">@Local.Error</div>
+            <div class="glass-form" style="margin-bottom:12px">
+                <div class="fld"><label>Строка подключения PostgreSQL</label><input @bind="connectionString" placeholder="Host=localhost;Port=5432;Database=cashflow;Username=cashflow;Password=…" /></div>
+                <div class="fld"><label>Ключ шифрования (как ENCRYPTION_MASTER_KEY у веб-версии, если база общая)</label><input @bind="masterKey" placeholder="base64, 32 байта" /></div>
             </div>
+            <div class="actions" style="margin-bottom:16px">
+                <button class="primary wide" @onclick="SaveAndRestart" disabled="@busy">Сохранить и запустить снова</button>
+                <div class="foot">Файл настроек: <code>@Local.SettingsPath</code></div>
+            </div>
+        }
+    }
+
+    <div class="glass-form">
+        @if (Local is null || remote)
+        {
+            <div class="fld"><label>Сервер</label><input @bind="server" placeholder="https://cashflow.example.com" autocapitalize="off" autocorrect="off" /></div>
+        }
+        <div class="fld"><label>Email</label><input @bind="email" type="email" autocomplete="username" placeholder="you@example.com" /></div>
+        <div class="fld"><label>Пароль</label><input @bind="password" type="password" autocomplete="@(register ? "new-password" : "current-password")" placeholder="••••••••••" @onkeydown="OnKey" /></div>
+    </div>
+
+    @if (error is not null) { <div class="alert err">@error</div> }
+
+    <div class="actions">
+        <button class="primary wide" @onclick="() => register ? DoRegister() : DoLogin()" disabled="@(busy || !CanSubmit)">@(busy ? "Секунду…" : register ? "Создать аккаунт" : "Войти")</button>
+        <div class="foot">
+            @if (register) { <span>Уже есть аккаунт? <a href="" @onclick="() => register = false" @onclick:preventDefault>Войти</a></span> }
+            else { <span>Нет аккаунта? <a href="" @onclick="() => register = true" @onclick:preventDefault>Зарегистрироваться</a></span> }
         </div>
+        @if (Local is not null)
+        {
+            <div class="foot">
+                @if (remote) { <a href="" @onclick="() => remote = false" @onclick:preventDefault>← Локальная база на этом компьютере</a> }
+                else { <a href="" @onclick="() => remote = true" @onclick:preventDefault>Подключиться к другому серверу CashFlow</a> }
+            </div>
+        }
     </div>
 </div>
 
 @code {
-    string server = "", email = "", password = "";
-    string? error; bool busy;
+    string server = "", email = "", password = "", connectionString = "", masterKey = "";
+    string? error; bool busy, register, remote;
+
+    EmbeddedServer? Local =>
+#if WINDOWS || MACCATALYST
+        Services.GetService<EmbeddedServer>();
+#else
+        null;
+#endif
+
+    bool CanSubmit => Local is null || remote || Local.Status == EmbeddedServer.State.Ready;
 
     protected override void OnInitialized()
     {
         server = Preferences.Default.Get("cashflow.server", "");
         email = Preferences.Default.Get("cashflow.email", "");
+        remote = Local is not null && Preferences.Default.Get("cashflow.remote", false);
+        register = Nav.Uri.Contains("/Account/Register", StringComparison.OrdinalIgnoreCase);
+        if (Local is not null)
+        {
+            Local.Changed += OnServerChanged;
+            connectionString = Local.Current.ConnectionString ?? "";
+            masterKey = Local.Current.MasterKey ?? "";
+        }
     }
 
-    Task OnKey(KeyboardEventArgs e) => e.Key == "Enter" ? DoLogin() : Task.CompletedTask;
+    void OnServerChanged()
+    {
+        if (Local is { } l) { connectionString = l.Current.ConnectionString ?? ""; masterKey = l.Current.MasterKey ?? ""; }
+        InvokeAsync(StateHasChanged);
+    }
 
-    async Task DoLogin() => await Run(() => Api.LoginAsync(server.Trim(), email.Trim(), password));
+    public void Dispose() { if (Local is { } l) l.Changed -= OnServerChanged; }
+
+    string BaseUrl => Local is not null && !remote ? Local.BaseUrl ?? "" : server.Trim();
+
+    Task OnKey(KeyboardEventArgs e) => e.Key == "Enter" ? (register ? DoRegister() : DoLogin()) : Task.CompletedTask;
+
+    async Task DoLogin() => await Run(() => Api.LoginAsync(BaseUrl, email.Trim(), password));
 
     async Task DoRegister() => await Run(async () =>
     {
-        await Api.RegisterAsync(server.Trim(), email.Trim(), password);
-        await Api.LoginAsync(server.Trim(), email.Trim(), password);
+        await Api.RegisterAsync(BaseUrl, email.Trim(), password);
+        await Api.LoginAsync(BaseUrl, email.Trim(), password);
     });
+
+    async Task SaveAndRestart()
+    {
+        if (Local is null) return;
+        busy = true; error = null;
+        try
+        {
+            var s = Local.Current;
+            s.ConnectionString = connectionString.Trim();
+            s.MasterKey = masterKey.Trim();
+            await Local.SaveSettingsAsync(s);
+            await Local.RestartAsync();
+        }
+        catch (Exception ex) { error = ex.Message; }
+        finally { busy = false; }
+    }
 
     async Task Run(Func<Task> action)
     {
         error = null;
-        if (string.IsNullOrWhiteSpace(server) || !Uri.TryCreate(server.Trim(), UriKind.Absolute, out _)) { error = "Укажите адрес сервера, например http://192.168.1.10:8080"; return; }
+        if (string.IsNullOrWhiteSpace(BaseUrl) || !Uri.TryCreate(BaseUrl, UriKind.Absolute, out _)) { error = "Укажите адрес сервера, например http://192.168.1.10:8080"; return; }
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrEmpty(password)) { error = "Введите e-mail и пароль"; return; }
         busy = true;
         try
         {
             await action();
-            Preferences.Default.Set("cashflow.server", server.Trim());
+            if (Local is null || remote) Preferences.Default.Set("cashflow.server", server.Trim());
+            if (Local is not null) Preferences.Default.Set("cashflow.remote", remote);
             Preferences.Default.Set("cashflow.email", email.Trim());
             password = "";
             Nav.NavigateTo("/");

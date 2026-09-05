@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 
-    <!-- MAUI Blazor Hybrid: тот же UI (CashFlow.UI), данные через REST (CashFlow.Client). База PostgreSQL остаётся на сервере.
+    <!-- MAUI Blazor Hybrid: тот же UI (CashFlow.UI), данные через REST (CashFlow.Client). База PostgreSQL остаётся на сервере;
+         на Windows/macOS сервер встроен в приложение и поднимается сам, на телефоне указывается адрес сервера.
          По умолчанию собирается только Windows (воркод maui-windows). Мобильные цели: установить воркод `dotnet workload install maui`
          и собирать с -p:MobileTargets=true. -->
     <PropertyGroup>
@@ -48,6 +49,12 @@
     <ItemGroup>
         <ProjectReference Include="..\CashFlow.UI\CashFlow.UI.csproj" />
         <ProjectReference Include="..\CashFlow.Client\CashFlow.Client.csproj" />
+    </ItemGroup>
+
+    <!-- Настольная «общая сборка» (Windows, macOS): сервер CashFlow запускается внутри приложения (см. Services/EmbeddedServer.cs) -->
+    <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows' Or $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+        <ProjectReference Include="..\CashFlow.Server\CashFlow.Server.csproj" />
     </ItemGroup>
 
 </Project>

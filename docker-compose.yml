@@ -8,6 +8,8 @@ services:
       POSTGRES_DB: cashflow
       POSTGRES_USER: cashflow
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    ports:
+      - "${DB_PORT:-127.0.0.1:55432}:5432"   # для настольного приложения (встроенный сервер) на этой же машине
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:

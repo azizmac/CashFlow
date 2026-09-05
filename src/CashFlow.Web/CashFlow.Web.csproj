@@ -14,15 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CashFlow.Application\CashFlow.Application.csproj" />
-    <ProjectReference Include="..\CashFlow.Api\CashFlow.Api.csproj" />
+    <ProjectReference Include="..\CashFlow.Server\CashFlow.Server.csproj" />
     <ProjectReference Include="..\CashFlow.UI\CashFlow.UI.csproj" />
-    <ProjectReference Include="..\CashFlow.Infrastructure\CashFlow.Infrastructure.csproj" />
-    <ProjectReference Include="..\CashFlow.Connectors.Statements\CashFlow.Connectors.Statements.csproj" />
-    <ProjectReference Include="..\CashFlow.Connectors.TInvest\CashFlow.Connectors.TInvest.csproj" />
-    <ProjectReference Include="..\CashFlow.Connectors.TBank.Business\CashFlow.Connectors.TBank.Business.csproj" />
-    <ProjectReference Include="..\CashFlow.Connectors.Sber.Business\CashFlow.Connectors.Sber.Business.csproj" />
-    <ProjectReference Include="..\CashFlow.Connectors.Alfa.Business\CashFlow.Connectors.Alfa.Business.csproj" />
   </ItemGroup>
 
 </Project>

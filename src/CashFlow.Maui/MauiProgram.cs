@@ -1,5 +1,6 @@
 using CashFlow.Client;
 using CashFlow.Maui.Services;
+using CashFlow.UI;
 using CashFlow.UI.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Logging;
@@ -18,13 +19,21 @@ public static class MauiProgram
         builder.Services.AddMauiBlazorWebView();
         builder.Services.AddAuthorizationCore();
 
-        // Данные — только через REST сервера; сессия — в защищённом хранилище платформы
+        // Данные — только через REST; сессия — в защищённом хранилище платформы
         builder.Services.AddSingleton<ISessionStore, SecureSessionStore>();
         builder.Services.AddCashFlowApiClient();
+
+#if WINDOWS || MACCATALYST
+        // Настольная сборка: сервер CashFlow поднимается внутри приложения, клиент подключается к нему сам
+        var server = new EmbeddedServer();
+        builder.Services.AddSingleton(server);
+        server.Start();
+#endif
 
         // Абстракции хоста для общего UI
         builder.Services.AddSingleton<MauiAuthStateProvider>();
         builder.Services.AddSingleton<AuthenticationStateProvider>(sp => sp.GetRequiredService<MauiAuthStateProvider>());
+        builder.Services.AddCashFlowUi();
         builder.Services.AddSingleton<ICurrentUser, MauiCurrentUser>();
         builder.Services.AddSingleton<IAppShell, MauiAppShell>();
 

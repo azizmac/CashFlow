@@ -1,9 +1,14 @@
 @using CashFlow.Maui.Components.Pages
+@using CashFlow.Maui.Services
 @inject CashFlow.Client.ApiSession Session
+@inject IServiceProvider Services
 
 @if (!restored)
 {
-    <p style="padding:24px;color:#6b7280">Загрузка…</p>
+    <div class="login" style="align-items:center;text-align:center">
+        <div class="logo">₽</div>
+        <p class="lead" style="margin-top:18px">@status</p>
+    </div>
 }
 else
 {
@@ -15,7 +20,6 @@ else
                         <Login />
                     </NotAuthorized>
                 </AuthorizeRouteView>
-                <FocusOnNavigate RouteData="routeData" Selector="h1" />
             </Found>
             <NotFound>
                 <LayoutView Layout="typeof(CashFlow.UI.Layout.MainLayout)"><p style="padding:24px">Страница не найдена.</p></LayoutView>
@@ -26,10 +30,26 @@ else
 
 @code {
     bool restored;
+    string status = "Загрузка…";
 
     protected override async Task OnInitializedAsync()
     {
         await Session.RestoreAsync();
+#if WINDOWS || MACCATALYST
+        // Настольная сборка: ждём встроенный сервер, чтобы страницы не обращались к ещё не поднятому API
+        if (Services.GetService<EmbeddedServer>() is { } local)
+        {
+            status = "Запускаю сервер…";
+            StateHasChanged();
+            await local.Started;
+            // Сессия с прошлого запуска указывает на локальный сервер: порт мог измениться — переписываем адрес
+            if (local.Status == EmbeddedServer.State.Ready && Session.Current is { } s && local.IsLocalUrl(s.BaseUrl) && s.BaseUrl != local.BaseUrl)
+                await Session.SetAsync(s with { BaseUrl = local.BaseUrl! });
+            // Локальный сервер не поднялся, а сессия локальная — показываем вход с описанием проблемы
+            if (local.Status != EmbeddedServer.State.Ready && Session.Current is { } s2 && local.IsLocalUrl(s2.BaseUrl))
+                await Session.ClearAsync();
+        }
+#endif
         restored = true;
     }
 }
