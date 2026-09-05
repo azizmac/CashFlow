@@ -8,14 +8,14 @@
             <aside class="side">
                 <div class="brand">CashFlow AI</div>
                 <nav>
-                    <NavLink href="/" Match="NavLinkMatch.All"><span class="ico">◍</span>Обзор</NavLink>
-                    <NavLink href="/transactions"><span class="ico">≡</span>Операции</NavLink>
-                    <NavLink href="/categories"><span class="ico">◑</span>Категории</NavLink>
-                    <NavLink href="/counterparties"><span class="ico">◇</span>Контрагенты</NavLink>
-                    <NavLink href="/accounts"><span class="ico">◫</span>Счета</NavLink>
-                    <NavLink href="/sources"><span class="ico">⇪</span>Импорт</NavLink>
-                    <NavLink href="/connections"><span class="ico">⟳</span>Подключения</NavLink>
-                    <NavLink href="/settings"><span class="ico">⚙</span>Настройки</NavLink>
+                    <NavLink href="/" Match="NavLinkMatch.All"><Icon Name="overview" />Обзор</NavLink>
+                    <NavLink href="/transactions"><Icon Name="transactions" />Операции</NavLink>
+                    <NavLink href="/categories"><Icon Name="categories" />Категории</NavLink>
+                    <NavLink href="/counterparties"><Icon Name="counterparties" />Контрагенты</NavLink>
+                    <NavLink href="/accounts"><Icon Name="accounts" />Счета</NavLink>
+                    <NavLink href="/sources"><Icon Name="import" />Импорт</NavLink>
+                    <NavLink href="/connections"><Icon Name="connections" />Подключения</NavLink>
+                    <NavLink href="/settings"><Icon Name="settings" />Настройки</NavLink>
                 </nav>
                 <div class="user">
                     <span class="who" title="@context.User.Identity?.Name">@context.User.Identity?.Name</span>
@@ -24,12 +24,12 @@
                         <form action="Account/Logout" method="post">
                             <AntiforgeryToken />
                             <input type="hidden" name="ReturnUrl" value="/" />
-                            <button type="submit" class="link">Выйти</button>
+                            <button type="submit" class="link"><Icon Name="logout" Size="14" /> Выйти</button>
                         </form>
                     }
                     else
                     {
-                        <button class="link" @onclick="Shell.LogoutAsync">Выйти</button>
+                        <button class="link" @onclick="Shell.LogoutAsync"><Icon Name="logout" Size="14" /> Выйти</button>
                     }
                 </div>
                 <div class="foot">только чтение · данные не покидают ваш сервер</div>
@@ -39,11 +39,11 @@
             </main>
         </div>
         <nav class="tabbar">
-            <NavLink href="/" Match="NavLinkMatch.All"><span class="ico">◍</span>Обзор</NavLink>
-            <NavLink href="/transactions"><span class="ico">≡</span>Операции</NavLink>
-            <NavLink href="/sources" class="fab" title="Загрузить выписку"><span class="ico">⇪</span></NavLink>
-            <NavLink href="/accounts"><span class="ico">◫</span>Счета</NavLink>
-            <NavLink href="/settings"><span class="ico">⚙</span>Ещё</NavLink>
+            <NavLink href="/" Match="NavLinkMatch.All"><Icon Name="overview" Size="22" />Обзор</NavLink>
+            <NavLink href="/transactions"><Icon Name="transactions" Size="22" />Операции</NavLink>
+            <NavLink href="/sources" class="fab" title="Загрузить выписку"><Icon Name="import" Size="22" /></NavLink>
+            <NavLink href="/accounts"><Icon Name="accounts" Size="22" />Счета</NavLink>
+            <NavLink href="/settings"><Icon Name="settings" Size="22" />Ещё</NavLink>
         </nav>
     </Authorized>
     <NotAuthorized>

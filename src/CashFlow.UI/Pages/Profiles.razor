@@ -53,7 +53,7 @@
     <div>
         <h2>Appearance</h2>
         <div class="card">
-            <div class="seg">
+            <div class="seg" style="--seg-i:@(Theme.Current == ThemeService.Dark ? 0 : Theme.Current == ThemeService.Light ? 1 : 2);--seg-n:3">
                 <button class="@(Theme.Current == ThemeService.Dark ? "on" : "")" @onclick="() => Theme.SetAsync(ThemeService.Dark)">Тёмная</button>
                 <button class="@(Theme.Current == ThemeService.Light ? "on" : "")" @onclick="() => Theme.SetAsync(ThemeService.Light)">Светлая</button>
                 <button class="@(Theme.Current == ThemeService.System ? "on" : "")" @onclick="() => Theme.SetAsync(ThemeService.System)">Система</button>

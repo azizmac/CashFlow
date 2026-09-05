@@ -21,7 +21,7 @@
 
 @if (profiles is null || summary is null) { <p class="muted">Загрузка…</p> return; }
 
-<div class="seg" style="margin-bottom:14px">
+<div class="seg" style="margin-bottom:14px;--seg-i:@(months == 1 ? 0 : months == 3 ? 1 : 2);--seg-n:3">
     <button class="@(months == 1 ? "on" : "")" @onclick="() => SetPeriod(1)">Месяц</button>
     <button class="@(months == 3 ? "on" : "")" @onclick="() => SetPeriod(3)">3 месяца</button>
     <button class="@(months == 12 ? "on" : "")" @onclick="() => SetPeriod(12)">Год</button>

@@ -159,8 +159,11 @@ code { font-family: ui-monospace, Menlo, monospace; font-size: 12px; background:
 .side nav { display: flex; flex-direction: column; gap: 4px; }
 .side nav a { display: flex; gap: 9px; align-items: center; padding: 8px 10px; border-radius: 10px; font-size: 13.5px; color: var(--side-fg); }
 .side nav a .ico { opacity: .6; width: 16px; text-align: center; }
+.side nav a .svg-ico { opacity: .7; flex-shrink: 0; }
+.side nav a.active .svg-ico { opacity: 1; color: var(--link); }
+button.link .svg-ico { vertical-align: -2px; }
 .side nav a:hover { background: var(--inset); color: var(--text); }
-.side nav a.active { background: var(--side-active); color: var(--text); font-weight: 600; box-shadow: inset 3px 0 0 var(--accent); }
+.side nav a.active { background: var(--side-active); color: var(--text); font-weight: 600; }
 @media (min-width: 1500px) { .side { width: 240px; } }
 .side nav a.active .ico { opacity: .85; }
 .side .user { margin-top: auto; padding: 10px; border-radius: 14px; background: var(--inset); border: 1px solid var(--inset-border); font-size: 12.5px; color: var(--text-2); display: flex; flex-direction: column; gap: 6px; }
@@ -305,9 +308,13 @@ body { zoom: var(--ui-zoom); }
 .chips::-webkit-scrollbar { display: none; }
 .chip { padding: 6px 12px; border-radius: 999px; background: var(--glass-strong); border: 1px solid var(--glass-border-2); font-size: 12.5px; color: var(--text-2); white-space: nowrap; cursor: pointer; }
 .chip.on { background: var(--chip-on); color: var(--chip-on-fg); border-color: transparent; font-weight: 600; }
-.seg { display: flex; gap: 4px; padding: 4px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); backdrop-filter: blur(20px); }
-.seg button { flex: 1; text-align: center; padding: 7px 0; border-radius: 10px; font-size: 13px; font-weight: 600; background: transparent; color: var(--seg-off-fg); border: none; cursor: pointer; transition: background .25s cubic-bezier(.32,.72,0,1); }
-.seg button.on { background: var(--seg-on); color: var(--seg-on-fg); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.seg { position: relative; display: flex; padding: 4px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); backdrop-filter: blur(20px); --seg-i: 0; --seg-n: 3; }
+.seg::before { content: ""; position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / var(--seg-n)); border-radius: 10px;
+  background: var(--seg-on); box-shadow: 0 1px 3px rgba(0,0,0,.14), 0 0 0 .5px rgba(0,0,0,.04);
+  transform: translateX(calc(var(--seg-i) * 100%)); transition: transform var(--t-ui) var(--ease-out); }
+.seg button { position: relative; flex: 1; text-align: center; padding: 7px 0; border-radius: 10px; font-size: 13px; font-weight: 600; background: transparent; color: var(--seg-off-fg); border: none; cursor: pointer; transition: color var(--t-fast) ease; }
+.seg button.on { color: var(--seg-on-fg); }
+.seg button:active:not(.on) { transform: scale(0.97); }
 .select-pill { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; border-radius: 999px; background: var(--glass-strong); border: 1px solid var(--glass-border-2); backdrop-filter: blur(20px) saturate(160%); font-size: 13px; color: var(--text-2); }
 .select-pill select { background: transparent; border: none; color: inherit; font: inherit; padding: 0; outline: none; max-width: 200px; }
 .select-pill select option { color: #14161a; }
@@ -315,7 +322,9 @@ input, select, textarea {
   font: inherit; color: var(--text); padding: 9px 12px; border: 1px solid var(--input-border); border-radius: 12px; background: var(--input-bg);
   outline: none; min-width: 0;
 }
-input:focus, select:focus, textarea:focus { border-color: rgba(47,107,255,.6); box-shadow: 0 0 0 3px rgba(47,107,255,.18); }
+input:focus, select:focus, textarea:focus { border-color: rgba(47,107,255,.7); box-shadow: 0 0 0 3.5px rgba(47,107,255,.32); transition: box-shadow var(--t-fast) ease, border-color var(--t-fast) ease; }
+:focus-visible { outline: 2px solid rgba(47,107,255,.7); outline-offset: 2px; }
+button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline: none; }
 select option { color: #14161a; }
 input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); padding: 0; }
 input[type="file"] { padding: 6px 0; background: transparent; border: none; }
@@ -406,11 +415,11 @@ button:active:not(:disabled), .btn:active, .chip:active, .seg button:active, .ta
   .chip:not(.on):hover { background: var(--glass-border-2); }
 }
 /* Появление страницы: короткий ease-out снизу, без stagger-блокировки ввода */
-.main > * { animation: page-in var(--t-ui) var(--ease-out) both; }
+.main > * { animation: page-in 180ms var(--ease-out) both; }
 .stack > *:nth-child(2) { animation: page-in var(--t-ui) var(--ease-out) 40ms both; }
 .stack > *:nth-child(3) { animation: page-in var(--t-ui) var(--ease-out) 80ms both; }
 .stack > *:nth-child(n+4) { animation: page-in var(--t-ui) var(--ease-out) 120ms both; }
-@keyframes page-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes page-in { from { opacity: 0; transform: translateY(4px); } }
 /* Карточки результата/сообщения: материал «прибывает» — размытие и масштаб вместе с прозрачностью */
 .alert, .insight, .callout { transition: opacity var(--t-ui) var(--ease-out), transform var(--t-ui) var(--ease-out), filter var(--t-ui) var(--ease-out); }
 @starting-style { .alert, .insight, .callout { opacity: 0; transform: scale(0.97); filter: blur(4px); } }
@@ -436,3 +445,13 @@ body { transition: background-color var(--t-ui) ease, color var(--t-ui) ease; }
   .glass, .card, .glass-form, .pill, .chip, .seg, .side, .tabbar { border-color: color-mix(in srgb, var(--text) 45%, transparent); }
   .muted, .faint { color: var(--text-2); }
 }
+
+/* ---------- скроллбары в духе macOS: тонкие, накладные, без трека ---------- */
+* { scrollbar-width: thin; scrollbar-color: rgba(128,128,140,.35) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(128,128,140,.3); border-radius: 999px; border: 3px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: rgba(128,128,140,.55); border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-corner { background: transparent; }
+/* Таббар: иконки SVG над подписью, активная — цветом акцента */
+.tabbar a .svg-ico { display: block; }
