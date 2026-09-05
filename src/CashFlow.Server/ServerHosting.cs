@@ -16,6 +16,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace CashFlow.Server;
 
@@ -65,24 +66,33 @@ public static class ServerHosting
 
         // Письма не отправляем: self-hosted, подтверждение почты выключено. Веб-хост может заменить своей реализацией.
         services.TryAddSingleton<IEmailSender<ApplicationUser>, NoOpIdentityEmailSender>();
+        services.Configure<DemoOptions>(config.GetSection(DemoOptions.Section)); // демо-пользователь для локальных проверок
         return services;
     }
 
-    /// <summary>REST для клиентов: /api/auth (login/refresh/register Identity) и /api/* поверх контрактов Application.</summary>
+    /// <summary>REST для клиентов: /api/auth (login/refresh/register Identity), /api/* поверх контрактов Application, /api/demo.</summary>
     public static WebApplication MapCashFlowServerApi(this WebApplication app)
     {
         app.MapGroup("/api/auth").MapIdentityApi<ApplicationUser>();
         app.MapCashFlowApi();
+        app.MapDemoApi();
         return app;
     }
 
-    /// <summary>Миграции и справочники при старте: пользователь просто запускает контейнер или приложение.</summary>
+    /// <summary>Миграции, справочники и демо-пользователь при старте: пользователь просто запускает контейнер или приложение.</summary>
     public static async Task InitializeDatabaseAsync(this IServiceProvider services, CancellationToken ct = default)
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<CashFlowDbContext>();
         await db.Database.MigrateAsync(ct);
         await scope.ServiceProvider.GetRequiredService<SeedService>().SeedAsync();
+        try { await DemoUser.EnsureAsync(scope.ServiceProvider, ct); }
+        catch (Exception ex)
+        {
+            // Демо-пользователь не должен ронять сервер: пишем в лог и работаем дальше
+            scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Logging.ILoggerFactory>().CreateLogger("CashFlow.Demo")
+                .LogError(ex, "Демо-пользователь не создан: {Message}", ex.Message);
+        }
     }
 }
 

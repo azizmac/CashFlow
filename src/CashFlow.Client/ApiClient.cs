@@ -62,6 +62,22 @@ public sealed class ApiClient
         }
     }
 
+    private sealed record DemoCredentials(string Email, string Password);
+
+    /// <summary>Реквизиты демо-пользователя, если сервер запущен с демо-режимом (локальные проверки); иначе null.</summary>
+    public async Task<(string Email, string Password)?> TryGetDemoAsync(string baseUrl, CancellationToken ct = default)
+    {
+        try
+        {
+            var url = new Uri(new Uri(baseUrl.TrimEnd('/') + "/"), "api/demo");
+            using var resp = await _http.GetAsync(url, ct);
+            if (!resp.IsSuccessStatusCode) return null;
+            var d = await resp.Content.ReadFromJsonAsync<DemoCredentials>(Json, ct);
+            return d is null ? null : (d.Email, d.Password);
+        }
+        catch { return null; }
+    }
+
     /// <summary>Запрос без токена; сетевые ошибки переводим в понятное сообщение.</summary>
     private async Task<HttpResponseMessage> SendAuthAsync(Uri url, object body, CancellationToken ct)
     {

@@ -32,6 +32,9 @@ services:
       # Ключ шифрования полей (ИНН, счета, телефоны, токены API). Сгенерировать: openssl rand -base64 32
       Encryption__MasterKey: ${ENCRYPTION_MASTER_KEY:?set ENCRYPTION_MASTER_KEY in .env}
       Sync__IntervalHours: ${SYNC_INTERVAL_HOURS:-6}
+      # Демо-пользователь для локальных проверок (вход по /dev/login и кнопкой в приложении). Не задавать на сервере в сети!
+      Demo__Email: ${DEMO_EMAIL:-}
+      Demo__Password: ${DEMO_PASSWORD:-}
       CASHFLOW_TZ: ${CASHFLOW_TZ:-Europe/Moscow}
       # Подключение банков «через авторизацию» (необязательно). Публичный адрес нужен для redirect URI за reverse proxy.
       Integrations__PublicBaseUrl: ${PUBLIC_BASE_URL:-}

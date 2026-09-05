@@ -54,6 +54,10 @@
 
     <div class="actions">
         <button class="primary wide" @onclick="() => register ? DoRegister() : DoLogin()" disabled="@(busy || !CanSubmit)">@(busy ? "Секунду…" : register ? "Создать аккаунт" : "Войти")</button>
+        @if (demo is { } d && !register)
+        {
+            <button class="wide" @onclick="DoDemo" disabled="@busy">Войти как демо-пользователь (@d.Email)</button>
+        }
         <div class="foot">
             @if (register) { <span>Уже есть аккаунт? <a href="" @onclick="() => register = false" @onclick:preventDefault>Войти</a></span> }
             else { <span>Нет аккаунта? <a href="" @onclick="() => register = true" @onclick:preventDefault>Зарегистрироваться</a></span> }
@@ -71,6 +75,7 @@
 @code {
     string server = "", email = "", password = "", connectionString = "", masterKey = "";
     string? error; bool busy, register, remote;
+    (string Email, string Password)? demo;
 
     EmbeddedServer? Local =>
 #if WINDOWS || MACCATALYST
@@ -95,10 +100,26 @@
         }
     }
 
+    protected override async Task OnInitializedAsync() => await LoadDemoAsync();
+
     void OnServerChanged()
     {
         if (Local is { } l) { connectionString = l.Current.ConnectionString ?? ""; masterKey = l.Current.MasterKey ?? ""; }
-        InvokeAsync(StateHasChanged);
+        _ = InvokeAsync(async () => { await LoadDemoAsync(); StateHasChanged(); });
+    }
+
+    /// <summary>Кнопка демо-входа появляется только если сервер запущен с Demo:Email/Demo:Password (локальные проверки).</summary>
+    async Task LoadDemoAsync()
+    {
+        if (Local is null || remote || Local.Status != EmbeddedServer.State.Ready || Local.BaseUrl is null) { demo = null; return; }
+        demo = await Api.TryGetDemoAsync(Local.BaseUrl);
+    }
+
+    async Task DoDemo()
+    {
+        if (demo is not { } d) return;
+        email = d.Email; password = d.Password;
+        await DoLogin();
     }
 
     public void Dispose() { if (Local is { } l) l.Changed -= OnServerChanged; }

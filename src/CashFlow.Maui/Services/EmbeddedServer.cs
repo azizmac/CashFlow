@@ -80,6 +80,10 @@ public sealed class EmbeddedServer
                 ["Logging:LogLevel:Default"] = "Warning",
             };
             if (!string.IsNullOrWhiteSpace(s.TimeZone)) Environment.SetEnvironmentVariable("CASHFLOW_TZ", s.TimeZone);
+            // Демо-пользователь (локальные проверки): из .env репозитория или окружения, как у контейнера
+            var env = ReadDotEnv();
+            config["Demo:Email"] = Environment.GetEnvironmentVariable("DEMO_EMAIL") ?? env.GetValueOrDefault("DEMO_EMAIL");
+            config["Demo:Password"] = Environment.GetEnvironmentVariable("DEMO_PASSWORD") ?? env.GetValueOrDefault("DEMO_PASSWORD");
 
             var builder = WebApplication.CreateBuilder(new WebApplicationOptions
             {

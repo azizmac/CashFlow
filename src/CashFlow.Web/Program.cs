@@ -45,5 +45,6 @@ app.MapRazorComponents<App>()
 app.MapAdditionalIdentityEndpoints();
 app.MapBankOAuth(); // /oauth/{provider}/start|callback — подключение банка через авторизацию
 app.MapCashFlowServerApi(); // /api/auth + /api/* — единственный вход для мобильного и настольного клиента
+app.MapDemoWebLogin(); // /dev/login — вход демо-пользователя, работает только при заданных Demo__Email / Demo__Password
 
 app.Run();
