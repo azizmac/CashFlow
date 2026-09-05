@@ -30,6 +30,8 @@ docker compose up -d --build
 
 ## Разработка
 
+Тесты: `dotnet test tests/CashFlow.Domain.Tests` (парсеры и домен, без базы) и `dotnet test tests/CashFlow.Api.Tests` (сервер в памяти поверх PostgreSQL: нужен `docker compose up -d db`; на каждый прогон создаётся и удаляется своя база). В GitHub Actions то же самое выполняет `ci.yml`, а `secret-scan.yml` проверяет, что в репозиторий не попали реальные реквизиты и ключи — локально это делает `python tools/secret-scan.py` и pre-commit хук (`git config core.hooksPath .githooks`). Все примеры в тестах вымышленные; правила — `.claude/skills/no-sensitive-data/SKILL.md`.
+
 Требуется .NET 9 SDK и PostgreSQL (локально или `docker compose up db`).
 
 ```bash

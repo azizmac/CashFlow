@@ -17,7 +17,7 @@
 | Безопасность | AES-GCM шифрование полей (`Encryption:MasterKey`), маскирование номеров и телефонов в DTO |
 | UI-дизайн | Дизайн-система «сдержанное жидкое стекло» из `docs/design/cashflow-ai-ui-mockups/project/CashFlow AI.dc.html`; токены — CSS-переменные в `src/CashFlow.UI/wwwroot/app.css`; тёмная тема базовая, светлая через `[data-theme=light]` |
 | Инфраструктура | Docker Compose (`web` на 8080, `db` PostgreSQL на `127.0.0.1:55432`), Docker MCP `tools/docker-mcp` |
-| Тесты | xUnit, `tests/CashFlow.Domain.Tests` (`dotnet test`) |
+| Тесты | xUnit: `tests/CashFlow.Domain.Tests` (домен, парсеры) и `tests/CashFlow.Api.Tests` (интеграционные, PostgreSQL на 55432, база на прогон) |
 | Утилиты | `tools/StatementProbe` — прогон реальных выписок через парсеры и БД |
 
 ## Архитектурные правила

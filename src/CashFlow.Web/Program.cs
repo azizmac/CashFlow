@@ -48,3 +48,6 @@ app.MapCashFlowServerApi(); // /api/auth + /api/* — единственный �
 app.MapDemoWebLogin(); // /dev/login — вход демо-пользователя, работает только при заданных Demo__Email / Demo__Password
 
 app.Run();
+
+// Для WebApplicationFactory в интеграционных тестах (tests/CashFlow.Api.Tests)
+public partial class Program { }

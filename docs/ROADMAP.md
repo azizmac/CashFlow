@@ -21,6 +21,8 @@
 | D-06 | Настольная «общая сборка»: встроенный сервер в MAUI (Windows/macOS), автоподключение без ввода адреса, `server.json` / `server.log`, composition root `CashFlow.Server` | `src/CashFlow.Maui/Services/EmbeddedServer.cs`, `src/CashFlow.Server/ServerHosting.cs` |
 | D-07 | Русские тексты ошибок: Identity (`RussianIdentityErrorDescriber`), валидация форм, сетевые и HTTP-ошибки клиента | `src/CashFlow.Server`, `src/CashFlow.Client/ApiClient.cs`, `src/CashFlow.Web/Components/Account/Pages/*` |
 | D-08 | Базовые правила движения и доступности из скиллов apple-design / emil-design-eng: отклик на нажатие, кривые, `prefers-reduced-motion/transparency/contrast` | конец `src/CashFlow.UI/wwwroot/app.css` |
+| D-12 | Интеграционные тесты API (`tests/CashFlow.Api.Tests`, WebApplicationFactory + отдельная база PostgreSQL на прогон): регистрация и вход, импорт 1С, дедуп, маскирование счетов в JSON, изоляция пользователей (404/403), команды категорий, русские ошибки; CI `.github/workflows/ci.yml` с сервисом postgres | `tests/CashFlow.Api.Tests/ApiTests.cs` |
+| D-13 | Обезличивание тестовых данных, `tools/secret-scan.py`, pre-commit хук, Actions `secret-scan`, skill `no-sensitive-data`, переписана неотправленная история | `CLAUDE.md`, `.claude/skills/no-sensitive-data` |
 | D-11 | Демо-пользователь (`DEMO_EMAIL`/`DEMO_PASSWORD` в `.env`, кнопка «Войти как демо» в приложении, `/dev/login` в вебе) и проверка всех экранов с реальными данными: исправлены обрезка заголовков секций скруглёнными углами, блок контрагента и пустой select категории в карточке операции, сообщение обзора при пустом периоде; категоризатор больше не назначает доходную категорию расходу | `src/CashFlow.Server/DemoUser.cs`, `src/CashFlow.Domain/Ledger/Services/RuleCategorizer.cs` |
 | D-10 | Solution-папки в `CashFlow.sln` по слоям: `src/1 Core`, `src/2 Infrastructure/Connectors`, `src/3 Server`, `src/4 Client`, `src/5 Hosts`, `tests`, `tools` | `CashFlow.sln`, `dotnet build CashFlow.sln` зелёный |
 | D-09 | Docker Compose: `web` :8080, `db` проброшена на `127.0.0.1:55432` (5432 на машине разработчика занят) | `docker-compose.yml`, `.env.example` |
@@ -35,7 +37,6 @@
 
 ### P1 — довести текущую сборку
 
-- **R-03. Тесты Application и API.** Интеграционные тесты на `LedgerQueries`, `ImportService`, `ConnectionsService` (Testcontainers PostgreSQL или временная база) и на `MapCashFlowApi` (WebApplicationFactory): изоляция пользователей (403/404), импорт multipart, маскирование в DTO. Критерий: `dotnet test` покрывает границу DTO; ни один тест не отдаёт сущности домена наружу.
 - **R-04. Экран «Подключения» во встроенном сервере.** `BankOAuthEndpoints` живут в `CashFlow.Web` и требуют cookie-сессию; в настольной сборке OAuth не работает. Перенести старт/колбэк OAuth в `CashFlow.Server` с bearer-авторизацией и системным браузером (loopback redirect `http://127.0.0.1:{port}/oauth/.../callback`). Критерий: из MAUI на Windows подключение Сбера открывает браузер и возвращается в приложение.
 - **R-05. Установщик настольной сборки.** MSIX или Inno Setup для Windows, `.pkg` для macOS; опция «поднять PostgreSQL в Docker» или подсказка с командой. Критерий: чистая машина, установка, первый запуск → экран входа без правки файлов.
 - **R-06. Мобильные цели.** `dotnet workload install maui`, сборка Android (APK) и iOS с `-p:MobileTargets=true`, проверить safe-area, таббар, `InputFile` на телефоне, «Поделиться»/экспорт файла. Критерий: APK ставится и входит на удалённый сервер.
@@ -62,7 +63,7 @@
 ## Правила приёмки для любой задачи
 
 1. Сборка: `dotnet build src/CashFlow.Web` и `dotnet build src/CashFlow.Maui -f net9.0-windows10.0.19041.0` (если менялся UI/клиент).
-2. Тесты: `dotnet test tests/CashFlow.Domain.Tests` зелёные; новые парсеры — с реальными файлами через `tools/StatementProbe`.
+2. Тесты: `dotnet test tests/CashFlow.Domain.Tests` и `dotnet test tests/CashFlow.Api.Tests` (нужен PostgreSQL из `docker compose up -d db`) зелёные; новые парсеры — с реальными файлами через `tools/StatementProbe`, в тесты попадает только вымышленная копия структуры.
 3. Сервер: `docker compose up -d --build web`, `curl http://localhost:8080/Account/Login` → 200; встроенный сервер приложения: `curl http://127.0.0.1:47831/api/profiles` → 401 без токена.
 4. Граница безопасности: наружу не ушли сущности домена, полные номера счетов, телефоны, `CredentialRef`, ключи API.
 5. В репозиторий не попали реальные данные владельца и секреты: `python tools/secret-scan.py --staged` перед коммитом, примеры только вымышленные (skill `no-sensitive-data`).

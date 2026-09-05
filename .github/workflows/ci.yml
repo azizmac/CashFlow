@@ -1,0 +1,31 @@
+name: ci
+# Сборка и тесты: доменные (без базы) и интеграционные API (PostgreSQL как сервис). Данные тестов вымышленные.
+on: [push, pull_request]
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_USER: cashflow
+          POSTGRES_PASSWORD: cashflow
+        ports: ["55432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U cashflow" --health-interval 5s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+      - name: Restore and build (server, web, tests)
+        run: |
+          dotnet restore src/CashFlow.Web/CashFlow.Web.csproj
+          dotnet build src/CashFlow.Web/CashFlow.Web.csproj -c Release --no-restore
+      - name: Domain tests
+        run: dotnet test tests/CashFlow.Domain.Tests -c Release
+      - name: API integration tests
+        env:
+          CASHFLOW_TEST_PG: "Host=localhost;Port=55432;Database=postgres;Username=cashflow;Password=cashflow"
+        run: dotnet test tests/CashFlow.Api.Tests -c Release
