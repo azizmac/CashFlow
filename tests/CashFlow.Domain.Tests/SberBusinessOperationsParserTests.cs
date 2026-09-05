@@ -6,7 +6,7 @@ using ClosedXML.Excel;
 
 namespace CashFlow.Domain.Tests;
 
-/// <summary>Экспорт «Операции» из СберБизнеса — структура повторяет реальный файл.</summary>
+/// <summary>Экспорт «Операции» из СберБизнеса — структура повторяет реальный файл, все реквизиты вымышленные.</summary>
 public class SberBusinessOperationsParserTests
 {
     private static MemoryStream Workbook()

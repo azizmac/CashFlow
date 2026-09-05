@@ -2,7 +2,7 @@ using CashFlow.Connectors.Statements;
 
 namespace CashFlow.Domain.Tests;
 
-/// <summary>Разбор описаний из PDF-выписки по карте Сбера (текст взят из реальной выписки, имена изменены).</summary>
+/// <summary>Разбор описаний из PDF-выписки по карте Сбера (структура строк как в реальной выписке, имена и номера вымышленные).</summary>
 public class SberCardPdfParserTests
 {
     [Theory]

@@ -1,0 +1,5 @@
+#!/bin/sh
+# Перед коммитом: запрет чувствительных данных (см. .claude/skills/no-sensitive-data и tools/secret-scan.py).
+# Подключение один раз:  git config core.hooksPath .githooks
+if command -v python >/dev/null 2>&1; then PY=python; elif command -v python3 >/dev/null 2>&1; then PY=python3; else echo "python не найден, проверка секретов пропущена"; exit 0; fi
+$PY tools/secret-scan.py --staged || { echo "Коммит остановлен: в файлах есть чувствительные данные."; exit 1; }

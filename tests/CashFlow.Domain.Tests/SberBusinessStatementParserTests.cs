@@ -4,7 +4,7 @@ using ClosedXML.Excel;
 
 namespace CashFlow.Domain.Tests;
 
-/// <summary>Расширенная XLSX-выписка СберКазначейства — структура повторяет реальный файл (ИНН и названия изменены).</summary>
+/// <summary>Расширенная XLSX-выписка СберКазначейства — структура повторяет реальный файл (все реквизиты, суммы и названия вымышленные).</summary>
 public class SberBusinessStatementParserTests
 {
     private const string Own = "40702810100000000001";
@@ -25,7 +25,7 @@ public class SberBusinessStatementParserTests
 
         // Поступление от ООО
         ws.Cell("B13").Value = "01.07.2026";
-        ws.Cell("C13").Value = "40702810100000000456\n7700000001\nООО Доставка Еды";
+        ws.Cell("C13").Value = "40702810100000000456\n7700000001\nООО \"Доставка Еды\"";
         ws.Cell("D13").Value = $"{Own}\n7700000002\nООО \"ТЕСТ\"";
         ws.Cell("F13").Value = 499.28;
         ws.Cell("G13").Value = "85519"; ws.Cell("H13").Value = "01";
@@ -64,7 +64,7 @@ public class SberBusinessStatementParserTests
         ws.Cell("B19").Value = "Входящий остаток"; ws.Cell("D19").Value = "0,00"; ws.Cell("F19").Value = "100 000,00 (П)"; ws.Cell("J19").Value = "01.07.2026";
         ws.Cell("B20").Value = "Итого оборотов"; ws.Cell("D20").Value = 5060; ws.Cell("F20").Value = 499.28;
         // Разряды разделены узким пробелом U+202F, как в реальном файле; в конце строки дата, которую нельзя принять за сумму
-        ws.Cell("B21").Value = "Исходящий остаток"; ws.Cell("D21").Value = "0,00"; ws.Cell("F21").Value = "275 880,98 (П)"; ws.Cell("J21").Value = "31.07.2026";
+        ws.Cell("B21").Value = "Исходящий остаток"; ws.Cell("D21").Value = "0,00"; ws.Cell("F21").Value = "95 439,28 (П)"; ws.Cell("J21").Value = "31.07.2026";
 
         var ms = new MemoryStream();
         wb.SaveAs(ms);
@@ -92,7 +92,7 @@ public class SberBusinessStatementParserTests
 
         var income = r.Transactions[0];
         Assert.Equal(499.28m, income.Amount.Amount);
-        Assert.Equal("ООО Доставка Еды", income.Counterparty.Name);
+        Assert.Equal("ООО \"Доставка Еды\"", income.Counterparty.Name);
         Assert.Equal("7700000001", income.Counterparty.Inn);
         Assert.Equal("40702810100000000456", income.Counterparty.Account);
         Assert.Equal("044525225", income.Counterparty.Bik);
