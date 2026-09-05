@@ -19,7 +19,7 @@
     </Tools>
 </PageHead>
 
-@if (profiles is null || summary is null) { <p class="muted">Загрузка…</p> return; }
+@if (profiles is null || summary is null) { <Skeleton Rows="3" /> return; }
 
 <div class="seg" style="margin-bottom:14px;--seg-i:@(months == 1 ? 0 : months == 3 ? 1 : 2);--seg-n:3">
     <button class="@(months == 1 ? "on" : "")" @onclick="() => SetPeriod(1)">Месяц</button>
@@ -29,13 +29,13 @@
 
 <div class="stack">
     @* Десктоп (макет 1i): ряд из четырёх KPI-карточек; телефон (макет 1a): одна hero-карточка *@
-    <div class="kpis hidden-narrow">
+    <div class="kpis hidden-narrow" @key="@("kpis:" + PeriodKey)">
         <div class="kpi accent"><div class="eyebrow">Net worth</div><div class="value num">@Ui.Rub(summary.NetWorth)</div><div class="sub">по остаткам счетов в активах</div></div>
         <div class="kpi"><div class="eyebrow">Income</div><div class="value num pos">+@Ui.N0(summary.Income)</div><div class="sub">@PeriodLabel</div></div>
         <div class="kpi"><div class="eyebrow">Expense</div><div class="value num neg">−@Ui.N0(summary.Expense)</div><div class="sub">@PeriodLabel</div></div>
         <div class="kpi"><div class="eyebrow">Сальдо</div><div class="value num @(Saldo >= 0 ? "pos" : "neg")">@Ui.Signed(Saldo) ₽</div><div class="sub">доходы минус расходы</div></div>
     </div>
-    <div class="card hero hidden-wide">
+    <div class="card hero hidden-wide" @key="@("hero:" + PeriodKey)">
         <div class="eyebrow">Net worth · @PeriodLabel</div>
         <div class="big-number num">@Ui.Rub(summary.NetWorth)</div>
         <div class="muted" style="font-size:12.5px">по остаткам счетов, включённых в активы</div>
@@ -87,7 +87,7 @@
         </a>
     }
 
-    <div class="grid2">
+    <div class="grid2" @key="@("grid:" + PeriodKey)">
         <div class="card">
             <div class="head"><h3>Куда уходят деньги</h3><a href="/categories" class="muted" style="font-size:12.5px">Все</a></div>
             @if (summary.ByCategory.Count == 0) { <p class="muted" style="margin:0">Расходов за период нет.</p> }
@@ -121,7 +121,7 @@
                             <div class="sub">@Ui.KindLabel(c.Kind) · @c.Count @Plural(c.Count, "операция", "операции", "операций")</div>
                         </div>
                         <div class="amt num">−@Ui.N0(c.Total)</div>
-                        <span class="chev">›</span>
+                        <Icon Name="chevron" Size="14" Class="chev" />
                     </a>
                 }
             </div>
@@ -143,6 +143,7 @@
     string uid = "";
 
     decimal Saldo => summary is null ? 0 : summary.Income - summary.Expense;
+    string PeriodKey => $"{months}:{profileId}:{from:yyyyMMdd}";
     string PeriodLabel => months == 1 ? from.ToString("MMMM yyyy", System.Globalization.CultureInfo.GetCultureInfo("ru-RU")) : $"{from:dd.MM.yyyy} — {to:dd.MM.yyyy}";
 
     string Insight

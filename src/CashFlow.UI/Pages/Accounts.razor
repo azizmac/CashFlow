@@ -10,7 +10,7 @@
     <Tools><button class="small" @onclick="() => showAdd = !showAdd">@(showAdd ? "Скрыть" : "+ Ручной счёт")</button></Tools>
 </PageHead>
 
-@if (profiles is null) { <p class="muted">Загрузка…</p> return; }
+@if (profiles is null) { <Skeleton Rows="2" Hero="140" /> return; }
 
 <div class="stack">
     <div class="card hero">
@@ -20,7 +20,7 @@
         @if (byType.Count > 0)
         {
             <div class="bar-stack">
-                @foreach (var t in byType) { <div style="flex:@((double)t.Sum);background:@t.Color" title="@t.Label"></div> }
+                @foreach (var (t, i) in byType.Select((t, i) => (t, i))) { <div style="flex:@(((double)t.Sum).ToString("0", System.Globalization.CultureInfo.InvariantCulture));background:@t.Color;--i:@i" title="@t.Label"></div> }
             </div>
             <div class="legend">
                 @foreach (var t in byType) { <span><span class="dot" style="background:@t.Color"></span>@t.Label · @Ui.N0(t.Sum)</span> }
@@ -51,7 +51,7 @@
                             <div class="sub" style="display:flex;gap:8px;justify-content:flex-end;margin-top:3px">
                                 <label title="Учитывать в денежном потоке"><input type="checkbox" checked="@a.IncludeInCashFlow" @onchange="e => Flags(a, cashFlow: (bool)e.Value!)" /> поток</label>
                                 <label title="Учитывать в чистых активах"><input type="checkbox" checked="@a.IncludeInNetWorth" @onchange="e => Flags(a, netWorth: (bool)e.Value!)" /> активы</label>
-                                <button class="link muted" @onclick="() => Archive(a)" title="В архив">✕</button>
+                                <button class="icon-btn small danger" @onclick="() => Archive(a)" title="В архив"><Icon Name="close" Size="13" /></button>
                             </div>
                         </div>
                     </div>

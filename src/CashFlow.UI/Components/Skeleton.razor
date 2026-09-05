@@ -1,0 +1,14 @@
+@* Скелетон загрузки вместо надписи «Загрузка…»: форма будущего контента, лёгкое мерцание, без блокировки *@
+<div class="skeleton" aria-busy="true" aria-live="polite">
+    @if (Title) { <div class="skel" style="height:14px;width:90px;margin-bottom:10px"></div><div class="skel" style="height:34px;width:38%;margin-bottom:18px"></div> }
+    @for (var i = 0; i < Rows; i++)
+    {
+        <div class="skel" style="height:@(i == 0 ? Hero : 58)px;margin-bottom:12px"></div>
+    }
+</div>
+
+@code {
+    [Parameter] public int Rows { get; set; } = 3;
+    [Parameter] public int Hero { get; set; } = 120;
+    [Parameter] public bool Title { get; set; } = true;
+}

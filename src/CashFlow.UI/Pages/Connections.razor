@@ -10,7 +10,7 @@
     <Sub>Только чтение. Токены шифруются и хранятся на вашем сервере. Запрашивайте у банка доступ с минимальными правами: счета и выписки.</Sub>
 </PageHead>
 
-@if (profiles is null) { <p class="muted">Загрузка…</p> return; }
+@if (profiles is null) { <Skeleton Rows="2" Hero="120" /> return; }
 
 @if (msg is not null) { <div class="alert @msgCss">@msg</div> }
 

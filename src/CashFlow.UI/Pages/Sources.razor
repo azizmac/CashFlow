@@ -13,7 +13,7 @@
     <Sub>Файл разбирается на вашем сервере. Повторная загрузка того же периода безопасна: операции дедуплицируются, а контрагенты дополняются.</Sub>
 </PageHead>
 
-@if (profiles is null) { <p class="muted">Загрузка…</p> return; }
+@if (profiles is null) { <Skeleton Rows="2" Hero="180" /> return; }
 
 <div class="stack">
     <div>
@@ -44,7 +44,7 @@
                     <div class="item">
                         <div class="icon">@Ext(f.Name)</div>
                         <div class="grow"><div class="ttl">@f.Name</div><div class="sub">@((f.Size / 1024.0).ToString("0.#")) КБ · @(busy && done < files.Count && files[done] == f ? "разбираю…" : "готов к импорту")</div></div>
-                        @if (!busy) { <button class="link muted" @onclick="() => files.Remove(f)">✕</button> }
+                        @if (!busy) { <button class="icon-btn small" @onclick="() => files.Remove(f)" title="Убрать файл"><Icon Name="close" Size="14" /></button> }
                     </div>
                 }
             </div>

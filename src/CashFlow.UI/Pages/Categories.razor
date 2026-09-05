@@ -21,7 +21,7 @@
 <div class="stack">
     @if (summary is not null)
     {
-        <div class="card hero">
+        <div class="card hero" @key="@("donut:" + months)">
             <div class="row" style="gap:18px">
                 <div class="donut" style="background:@Conic">
                     <div class="hole"><div class="eyebrow">Расходы</div><div class="value num">@Ui.N0(summary.Expense)</div></div>
@@ -38,7 +38,7 @@
             </div>
         </div>
 
-        <div class="card tight">
+        <div class="card tight" @key="@("list:" + months)">
             <div class="section">Расходы · @Ui.N0(summary.Expense) ₽</div>
             <div class="list">
                 @{ var j = 0; }
@@ -54,7 +54,7 @@
                             <div class="sub">@c.Count @Home.Plural(c.Count, "операция", "операции", "операций")@(delta is { } d ? $" · {(d >= 0 ? "+" : "−")}{Math.Abs(d):0}% к прошлому периоду" : "")</div>
                         </div>
                         <div class="amt num">@Ui.N0(c.Total)</div>
-                        <span class="chev">›</span>
+                        <Icon Name="chevron" Size="14" Class="chev" />
                     </a>
                     j++;
                 }
@@ -82,7 +82,7 @@
                     <div class="item">
                         <div class="icon sm">@(c.Icon ?? "•")</div>
                         <a class="grow plain" href="/transactions?category=@c.Id"><div class="ttl">@c.Name</div></a>
-                        @if (!c.IsSystem) { <button class="link muted" @onclick="() => Remove(c)" title="Удалить">✕</button> }
+                        @if (!c.IsSystem) { <button class="icon-btn small danger" @onclick="() => Remove(c)" title="Удалить"><Icon Name="close" Size="14" /></button> }
                     </div>
                 }
             }
@@ -103,7 +103,7 @@
                             <div class="ttl">@Field(r.Field) @Match(r.Match) <code>@r.Pattern</code></div>
                             <div class="sub">→ @(categories.FirstOrDefault(c => c.Id == r.CategoryId)?.Label) · сработало @r.HitCount · <span class="pill" style="padding:0 7px">@r.Origin</span></div>
                         </div>
-                        <button class="link muted" @onclick="() => RemoveRule(r)">✕</button>
+                        <button class="icon-btn small danger" @onclick="() => RemoveRule(r)" title="Удалить правило"><Icon Name="close" Size="14" /></button>
                     </div>
                 }
             </div>
@@ -145,10 +145,10 @@
             foreach (var c in Expenses.Take(6))
             {
                 var share = (double)(c.Total / summary.Expense) * 100;
-                parts.Add($"{Ui.CategoryBar(Cat(c.CategoryId)?.Color, i)} {acc:0.#}% {acc + share:0.#}%");
+                parts.Add(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{Ui.CategoryBar(Cat(c.CategoryId)?.Color, i)} {acc:0.#}% {acc + share:0.#}%")); // точка как разделитель: CSS не понимает запятую
                 acc += share; i++;
             }
-            parts.Add($"var(--track) {acc:0.#}% 100%");
+            parts.Add(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"var(--track) {acc:0.#}% 100%"));
             return "conic-gradient(" + string.Join(", ", parts) + ")";
         }
     }

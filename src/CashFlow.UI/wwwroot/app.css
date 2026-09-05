@@ -455,3 +455,94 @@ body { transition: background-color var(--t-ui) ease, color var(--t-ui) ease; }
 ::-webkit-scrollbar-corner { background: transparent; }
 /* Таббар: иконки SVG над подписью, активная — цветом акцента */
 .tabbar a .svg-ico { display: block; }
+
+/* =====================================================================================================
+   Система компонентов v2 (по .claude/skills/emil-design-eng и apple-design): кнопки, поля, чипы,
+   визуализации, скелетоны, пустые состояния. Правила: отклик на нажатие, ease-out на появление,
+   только transform/opacity в движении, < 300 мс, hover только для указателя.
+   ===================================================================================================== */
+
+/* ---------- кнопки: три уровня, фиксированные высоты, состояния ---------- */
+button, .btn { height: 36px; padding: 0 16px; font-size: 13.5px; font-weight: 560; letter-spacing: -.005em; white-space: nowrap; }
+button.small, .btn.small { height: 30px; padding: 0 12px; font-size: 12.5px; }
+button.wide, .btn.wide { height: 48px; font-size: 16px; font-weight: 600; }
+button.link { height: auto; padding: 0; font-weight: 500; }
+button.primary, .btn.primary { box-shadow: 0 8px 20px rgba(47,107,255,.28), inset 0 1px 0 rgba(255,255,255,.18); }
+button.white { box-shadow: 0 1px 2px rgba(0,0,0,.18); }
+button:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+button:disabled:active { transform: none; }
+@media (hover: hover) and (pointer: fine) {
+  button.primary:not(:disabled):hover { filter: brightness(1.08); box-shadow: 0 10px 24px rgba(47,107,255,.36), inset 0 1px 0 rgba(255,255,255,.2); }
+  button:not(.primary):not(.link):not(:disabled):hover { background: var(--glass-border-2); }
+}
+/* Иконочная кнопка 32×32 вместо мелких ✎ и ✕: круглая, нейтральная, заметна при наведении */
+.icon-btn { width: 32px; height: 32px; padding: 0; border-radius: 999px; background: transparent; border: 1px solid transparent; color: var(--muted); flex-shrink: 0; }
+.icon-btn.small { width: 28px; height: 28px; }
+@media (hover: hover) and (pointer: fine) { .icon-btn:not(:disabled):hover { background: var(--glass-strong); color: var(--text); border-color: var(--glass-border-2); } }
+.icon-btn.danger:hover { color: var(--neg); }
+/* Кнопка в процессе: быстрый спиннер — 600 мс, ощущение скорости */
+button.loading { color: transparent !important; position: relative; pointer-events: none; }
+button.loading::after { content: ""; position: absolute; width: 16px; height: 16px; border-radius: 999px; border: 2px solid rgba(255,255,255,.35); border-top-color: #fff; animation: spin 600ms linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- поля и селекты: одна высота, свой шеврон вместо системного ---------- */
+input:not([type="checkbox"]):not([type="file"]), select, textarea { min-height: 38px; }
+select { appearance: none; -webkit-appearance: none; padding-right: 32px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+  background-repeat: no-repeat; background-position: right 10px center; background-size: 14px; }
+.select-pill select { padding-right: 22px; background-position: right 2px center; }
+.select-pill { height: 36px; }
+input::placeholder, textarea::placeholder { color: var(--faint); }
+.search { height: 40px; border-radius: 14px; }
+.search .svg-ico { color: var(--faint); flex-shrink: 0; }
+
+/* ---------- чипы и пилюли: без прыжка ширины при активации ---------- */
+.chip { font-weight: 500; height: 32px; display: inline-flex; align-items: center; transition: background-color var(--t-fast) ease, color var(--t-fast) ease, transform var(--t-press) var(--ease-out); }
+.chip.on { font-weight: 500; }
+.pill { height: 24px; }
+
+/* ---------- списки: отклик строки на нажатие ---------- */
+.list .item.clickable { transition: background-color var(--t-fast) ease; }
+.list .item.clickable:active { background: var(--glass-strong); }
+.chev.svg-ico { color: var(--faint); flex-shrink: 0; }
+
+/* ---------- визуализации: появляются как материал, реагируют на смену периода ---------- */
+.bar-track > div { transition: width 420ms var(--ease-out), background-color var(--t-fast) ease; background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 85%, #fff 15%), var(--accent)); }
+.bar-track { background: var(--track); }
+@starting-style { .bar-track > div { width: 0 !important; } }
+.bars > div { transform-origin: bottom; transition: transform 460ms var(--ease-out), filter var(--t-fast) ease; transition-delay: calc(var(--i, 0) * 28ms); cursor: default; }
+@starting-style { .bars > div { transform: scaleY(0); } }
+@media (hover: hover) and (pointer: fine) { .bars > div:hover { filter: brightness(1.3); } }
+.bars { position: relative; }
+.bars::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--sep-2); }
+.bar-stack > div { transform-origin: left; transition: transform 520ms var(--ease-out); transition-delay: calc(var(--i, 0) * 40ms); }
+@starting-style { .bar-stack > div { transform: scaleX(0); } }
+.donut { transition: transform 520ms var(--ease-out), opacity 300ms ease; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
+@starting-style { .donut { transform: rotate(-24deg) scale(.94); opacity: 0; } }
+.kpi .value, .big-number, .stats .value { animation: value-in 240ms var(--ease-out) both; }
+@keyframes value-in { from { opacity: .15; filter: blur(4px); transform: translateY(2px); } }
+.kpi { transition: transform var(--t-fast) var(--ease-out), border-color var(--t-fast) ease; }
+@media (hover: hover) and (pointer: fine) { .kpi:hover { border-color: var(--glass-border-2); } }
+
+/* ---------- скелетоны ---------- */
+.skeleton { max-width: 960px; }
+.skel { border-radius: 16px; background: linear-gradient(90deg, var(--inset) 25%, var(--glass-strong) 50%, var(--inset) 75%); background-size: 200% 100%; animation: skel 1.4s linear infinite; }
+@keyframes skel { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+/* ---------- пустые состояния ---------- */
+.empty { text-align: center; padding: 34px 20px; color: var(--muted); }
+.empty .icon { width: 48px; height: 48px; border-radius: 16px; margin: 0 auto 12px; font-size: 20px; }
+.empty .ttl { color: var(--text); font-weight: 640; font-size: 15px; }
+.empty p { margin: 6px auto 0; max-width: 420px; line-height: 1.5; }
+.empty .actions { margin-top: 14px; display: flex; gap: 8px; justify-content: center; }
+
+/* ---------- таблицы (правила): ряды дышат, шапка тише ---------- */
+th { font-weight: 560; padding-top: 12px; padding-bottom: 8px; }
+tbody tr { transition: background-color var(--t-fast) ease; }
+@media (hover: hover) and (pointer: fine) { tbody tr:hover { background: var(--inset); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .skel { animation: none; }
+  .bar-track > div, .bars > div, .bar-stack > div, .donut { transition: none; }
+  .kpi .value, .big-number, .stats .value { animation: none; }
+}

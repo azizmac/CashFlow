@@ -8,7 +8,7 @@
 <PageHead Eyebrow="Counterparties" Title="Контрагенты" />
 
 <div class="search" style="margin-bottom:12px">
-    <span>⌕</span>
+    <Icon Name="search" Size="15" />
     <input placeholder="Название, ИНН" @bind="search" @bind:after="Reload" />
 </div>
 
@@ -22,7 +22,7 @@
 
 @if (rows.Count == 0)
 {
-    <div class="card"><p class="muted" style="margin:0">Контрагентов пока нет — они появятся после загрузки выписки.</p></div>
+    <div class="card empty"><div class="icon"><Icon Name="counterparties" Size="20" /></div><div class="ttl">Контрагентов пока нет</div><p>Они появятся после загрузки первой выписки: имена, ИНН и счета берутся из назначения платежей.</p><div class="actions"><a class="btn small" href="/sources"><Icon Name="import" Size="14" /> Загрузить выписку</a></div></div>
 }
 else
 {
@@ -41,7 +41,7 @@ else
                         @if (c.Out > 0) { <div class="amt num">−@Ui.N0(c.Out)</div> }
                         @if (c.In > 0) { <div class="@(c.Out > 0 ? "sub" : "amt") pos num">+@Ui.N0(c.In)</div> }
                     </div>
-                    <span class="chev">›</span>
+                    <Icon Name="chevron" Size="14" Class="chev" />
                 </a>
             }
         </div>

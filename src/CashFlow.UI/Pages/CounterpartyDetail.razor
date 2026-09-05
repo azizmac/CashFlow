@@ -6,7 +6,7 @@
 
 <PageTitle>Контрагент — CashFlow</PageTitle>
 
-@if (cp is null) { <p class="muted">@(loaded ? "Контрагент не найден." : "Загрузка…")</p> return; }
+@if (cp is null) { @if (loaded) { <div class="card empty"><div class="icon">?</div><div class="ttl">Контрагент не найден</div><p><a href="/counterparties">К списку контрагентов</a></p></div> } else { <Skeleton Rows="3" Hero="200" Title="false" /> } return; }
 
 <div class="crumbs"><a href="/counterparties">Контрагенты</a> › @cp.DisplayName</div>
 
@@ -21,7 +21,7 @@
                 }
                 else
                 {
-                    <div class="row"><h1 style="font-size:24px">@cp.DisplayName</h1><button class="small" @onclick="() => { editing = true; editName = cp.DisplayName; }">✎</button></div>
+                    <div class="row"><h1 style="font-size:24px">@cp.DisplayName</h1><button class="icon-btn" title="Переименовать" @onclick="() => { editing = true; editName = cp.DisplayName; }"><Icon Name="edit" Size="15" /></button></div>
                 }
                 <div class="wrap" style="margin-top:8px">
                     <label class="select-pill" style="height:28px;font-size:12px">
@@ -47,9 +47,9 @@
         {
             <div class="bars">
                 @{ var max = months.Max(m => m.Total); }
-                @foreach (var m in months)
+                @foreach (var (m, i) in months.Select((m, i) => (m, i)))
                 {
-                    <div class="@(m.Month == months[^1].Month ? "cur" : "")" style="height:@(max > 0 ? Math.Max(3, (int)(m.Total / max * 100)) : 3)%" title="@m.Month.ToString("MMMM yyyy", Ru): @Ui.Rub(m.Total)"></div>
+                    <div class="@(m.Month == months[^1].Month ? "cur" : "")" style="height:@(max > 0 ? Math.Max(3, (int)(m.Total / max * 100)) : 3)%;--i:@i" title="@m.Month.ToString("MMMM yyyy", Ru): @Ui.Rub(m.Total)"></div>
                 }
             </div>
             <div class="axis"><span>@months[0].Month.ToString("MMM", Ru)</span><span>@months[^1].Month.ToString("MMM", Ru)</span></div>

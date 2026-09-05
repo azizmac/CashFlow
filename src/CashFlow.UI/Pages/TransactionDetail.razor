@@ -6,7 +6,7 @@
 
 <PageTitle>Операция — CashFlow</PageTitle>
 
-@if (d is null) { <p class="muted">@(loaded ? "Операция не найдена." : "Загрузка…")</p> return; }
+@if (d is null) { @if (loaded) { <div class="card empty"><div class="icon">?</div><div class="ttl">Операция не найдена</div><p>Возможно, она удалена вместе со счётом. <a href="/transactions">К списку операций</a></p></div> } else { <Skeleton Rows="3" Hero="110" Title="false" /> } return; }
 
 <div class="crumbs"><a href="/transactions">Операции</a> › <a href="/transactions?account=@d.Transaction.AccountId&transfers=1">@d.Transaction.AccountName</a> › @d.Transaction.PostedAt.Local().ToString("dd.MM.yyyy")</div>
 
@@ -69,7 +69,7 @@
                             <div class="sub">@Ui.KindLabel(d.Counterparty.Kind)@(d.Counterparty.Inn is not null ? $" · ИНН {d.Counterparty.Inn}" : "")@(d.Counterparty.Kpp is not null ? $" / КПП {d.Counterparty.Kpp}" : "")</div>
                             @if (d.Counterparty.AccountsMasked.Count > 0 || d.Counterparty.PhonesMasked.Count > 0) { <div class="sub">@string.Join(", ", d.Counterparty.AccountsMasked.Concat(d.Counterparty.PhonesMasked))</div> }
                         </div>
-                        <span class="chev">›</span>
+                        <Icon Name="chevron" Size="14" Class="chev" />
                     </a>
                     </div>
                 }

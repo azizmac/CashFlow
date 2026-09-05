@@ -10,7 +10,7 @@
 
 <PageHead Eyebrow="Settings" Title="Настройки" />
 
-@if (profiles is null) { <p class="muted">Загрузка…</p> return; }
+@if (profiles is null) { <Skeleton Rows="3" Hero="70" /> return; }
 
 <div class="stack">
     <div class="card">
@@ -69,8 +69,8 @@
                 <div class="item"><div class="icon">◔</div><div class="grow"><div class="ttl">Доступ к банкам — только чтение</div><div class="sub">никаких платежей и переводов, только счета и выписки</div></div></div>
                 @if (Shell.IsBrowserHosted)
                 {
-                    <a class="item clickable" href="Account/Manage/ChangePassword"><div class="icon">⚿</div><div class="grow"><div class="ttl">Пароль</div><div class="sub">сменить пароль входа</div></div><span class="chev">›</span></a>
-                    <a class="item clickable" href="Account/Manage/TwoFactorAuthentication"><div class="icon">✓</div><div class="grow"><div class="ttl">Двухфакторная аутентификация</div><div class="sub">приложение-аутентификатор</div></div><span class="chev">›</span></a>
+                    <a class="item clickable" href="Account/Manage/ChangePassword"><div class="icon">⚿</div><div class="grow"><div class="ttl">Пароль</div><div class="sub">сменить пароль входа</div></div><Icon Name="chevron" Size="14" Class="chev" /></a>
+                    <a class="item clickable" href="Account/Manage/TwoFactorAuthentication"><div class="icon">✓</div><div class="grow"><div class="ttl">Двухфакторная аутентификация</div><div class="sub">приложение-аутентификатор</div></div><Icon Name="chevron" Size="14" Class="chev" /></a>
                 }
             </div>
         </div>

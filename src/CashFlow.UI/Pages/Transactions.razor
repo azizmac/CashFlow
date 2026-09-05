@@ -12,7 +12,7 @@
     </Tools>
 </PageHead>
 
-@if (profiles is null) { <p class="muted">Загрузка…</p> return; }
+@if (profiles is null) { <Skeleton Rows="4" Hero="58" /> return; }
 
 <div class="chips" style="margin-bottom:12px">
     <span class="chip @(mode == "all" ? "on" : "")" @onclick='() => SetMode("all")'>Все</span>
@@ -23,7 +23,7 @@
 </div>
 
 <div class="search" style="margin-bottom:12px">
-    <span>⌕</span>
+    <Icon Name="search" Size="15" />
     <input placeholder="Поиск по описанию, контрагенту, назначению" @bind="search" @bind:after="Reload" />
 </div>
 
@@ -51,7 +51,7 @@
 
 @if (rows.Count == 0)
 {
-    <div class="card"><p class="muted" style="margin:0">Ничего не найдено. Измените фильтры или <a href="/sources">загрузите выписку</a>.</p></div>
+    <div class="card empty"><div class="icon"><Icon Name="transactions" Size="20" /></div><div class="ttl">Операций не найдено</div><p>Измените период или фильтры. Если данных ещё нет — загрузите выписку.</p><div class="actions"><a class="btn small" href="/sources"><Icon Name="import" Size="14" /> Загрузить выписку</a></div></div>
 }
 
 @foreach (var day in rows.GroupBy(r => DateOnly.FromDateTime(r.PostedAt.Local().DateTime)))
@@ -78,7 +78,7 @@
                     </a>
                     @if (r.CategoryId is null && r.ProposedCategoryId is not null && !r.IsTransfer)
                     {
-                        <button class="small white" title="Принять предложение ИИ" @onclick="() => Accept(r)">✓</button>
+                        <button class="small white" title="Принять предложение ИИ" @onclick="() => Accept(r)"><Icon Name="check" Size="14" /> Принять</button>
                     }
                     else if (editId == r.Id)
                     {
@@ -90,7 +90,7 @@
                     }
                     else
                     {
-                        <button class="small" title="Изменить категорию" @onclick="() => editId = r.Id" style="padding:4px 9px">✎</button>
+                        <button class="icon-btn" title="Изменить категорию" @onclick="() => editId = r.Id"><Icon Name="edit" Size="15" /></button>
                     }
                     <a href="/transactions/@r.Id" class="amt num plain @(r.IsTransfer ? "muted" : r.IsIncome ? "pos" : "")">@(r.IsIncome ? "+" : "−")@Ui.N0(Math.Abs(r.Amount))</a>
                 </div>
