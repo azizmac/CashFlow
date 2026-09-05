@@ -493,3 +493,7 @@ cashflow-src.zip
 # сертификаты банков для OAuth-интеграций
 secrets/*
 !secrets/.gitkeep
+
+# Сборка установщика (tools/publish-desktop.ps1)
+installer/windows/publish/
+installer/windows/output/

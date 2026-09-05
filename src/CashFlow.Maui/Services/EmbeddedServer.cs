@@ -27,11 +27,22 @@ public sealed class EmbeddedServer
 
     public sealed class Settings
     {
+        /// <summary>Явная строка подключения к PostgreSQL. Пусто — авто: локальный кластер (pgsql рядом с приложением) → .env/docker → localhost:55432.</summary>
         public string? ConnectionString { get; set; }
         public string? MasterKey { get; set; }
         public int Port { get; set; } = 47831;
         public string? TimeZone { get; set; }
+        /// <summary>Папка bin PostgreSQL для локального кластера; пусто — искать pgsql/bin рядом с exe или в папке данных.</summary>
+        public string? PostgresBinDir { get; set; }
+        public int PostgresPort { get; set; } = 55433;
+        /// <summary>Пароль пользователя cashflow локального кластера; генерируется при initdb.</summary>
+        public string? LocalDbPassword { get; set; }
     }
+
+    private EmbeddedPostgres? _pg;
+    private string? _resolvedConnectionString;
+    /// <summary>Откуда база: «локальный PostgreSQL», «внешний PostgreSQL» — для экрана настроек.</summary>
+    public string DatabaseSource { get; private set; } = "";
 
     private static readonly (string Key, string Env)[] IntegrationKeys =
     [
@@ -68,6 +79,42 @@ public sealed class EmbeddedServer
         await StartCoreAsync();
     }
 
+    /// <summary>Выход из приложения: остановить API и локальный PostgreSQL, если он наш.</summary>
+    public async Task ShutdownAsync()
+    {
+        if (_app is not null) { try { await _app.StopAsync(); } catch { } _app = null; }
+        if (_pg is not null) { await _pg.StopAsync(); _pg = null; }
+    }
+
+    /// <summary>Строка подключения: явная из server.json → локальный кластер → окружение/.env → docker по умолчанию.</summary>
+    private async Task<string> ResolveConnectionStringAsync(Settings s, Dictionary<string, string> env, CancellationToken ct)
+    {
+        if (!string.IsNullOrWhiteSpace(s.ConnectionString)) { DatabaseSource = "внешний PostgreSQL (server.json)"; return s.ConnectionString; }
+        var fromEnv = Environment.GetEnvironmentVariable("ConnectionStrings__Postgres");
+        if (!string.IsNullOrWhiteSpace(fromEnv)) { DatabaseSource = "внешний PostgreSQL (переменная окружения)"; return fromEnv; }
+
+        var bin = EmbeddedPostgres.Locate(s.PostgresBinDir, DataDirectory);
+        if (bin is not null)
+        {
+            _pg ??= new EmbeddedPostgres(bin, Path.Combine(DataDirectory, "pgdata"), s.PostgresPort);
+            if (string.IsNullOrEmpty(s.LocalDbPassword))
+            {
+                // Пароль сохраняем до initdb: если запуск оборвётся, кластер не останется без известного пароля
+                s.LocalDbPassword = EmbeddedPostgres.GeneratePassword();
+                await SaveSettingsAsync(s);
+            }
+            await _pg.EnsureStartedAsync(s.LocalDbPassword, ct);
+            DatabaseSource = $"локальный PostgreSQL ({bin})";
+            return _pg.ConnectionString(s.LocalDbPassword);
+        }
+
+        var pwd = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? env.GetValueOrDefault("POSTGRES_PASSWORD") ?? "cashflow";
+        var bind = env.GetValueOrDefault("DB_PORT") ?? "127.0.0.1:55432"; // порт из docker-compose.yml: 5432 на машине часто занят своим PostgreSQL
+        var port = bind.Contains(':') ? bind[(bind.LastIndexOf(':') + 1)..] : bind;
+        DatabaseSource = $"PostgreSQL из docker compose (localhost:{port})";
+        return $"Host=localhost;Port={port};Database=cashflow;Username=cashflow;Password={pwd}";
+    }
+
     public async Task SaveSettingsAsync(Settings s)
     {
         Directory.CreateDirectory(DataDirectory);
@@ -81,9 +128,11 @@ public sealed class EmbeddedServer
         {
             Directory.CreateDirectory(DataDirectory);
             var s = await LoadSettingsAsync();
+            var dotenv = ReadDotEnv();
+            _resolvedConnectionString = await ResolveConnectionStringAsync(s, dotenv, CancellationToken.None);
             var config = new Dictionary<string, string?>
             {
-                ["ConnectionStrings:Postgres"] = s.ConnectionString,
+                ["ConnectionStrings:Postgres"] = _resolvedConnectionString,
                 ["Encryption:MasterKey"] = s.MasterKey,
                 ["Sync:IntervalHours"] = "6",
                 ["Logging:LogLevel:Default"] = "Warning",
@@ -147,20 +196,8 @@ public sealed class EmbeddedServer
             try { s = JsonSerializer.Deserialize<Settings>(await File.ReadAllTextAsync(SettingsPath)) ?? new(); } catch { s = new(); }
         }
         var env = ReadDotEnv();
-        var changed = false;
+        var changed = !File.Exists(SettingsPath); // первый запуск: записать файл с ключом, даже если строка подключения выбирается автоматически
 
-        if (string.IsNullOrWhiteSpace(s.ConnectionString))
-        {
-            s.ConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__Postgres");
-            if (string.IsNullOrWhiteSpace(s.ConnectionString))
-            {
-                var pwd = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? env.GetValueOrDefault("POSTGRES_PASSWORD") ?? "cashflow";
-                var bind = env.GetValueOrDefault("DB_PORT") ?? "127.0.0.1:55432"; // порт из docker-compose.yml: 5432 на машине часто занят своим PostgreSQL
-                var port = bind.Contains(':') ? bind[(bind.LastIndexOf(':') + 1)..] : bind;
-                s.ConnectionString = $"Host=localhost;Port={port};Database=cashflow;Username=cashflow;Password={pwd}";
-            }
-            changed = true;
-        }
         if (string.IsNullOrWhiteSpace(s.MasterKey))
         {
             s.MasterKey = Environment.GetEnvironmentVariable("Encryption__MasterKey") ?? Environment.GetEnvironmentVariable("ENCRYPTION_MASTER_KEY") ?? env.GetValueOrDefault("ENCRYPTION_MASTER_KEY");
@@ -222,7 +259,7 @@ public sealed class EmbeddedServer
     private string Describe(Exception ex)
     {
         var root = ex; while (root.InnerException is not null) root = root.InnerException;
-        var host = Current.ConnectionString?.Split(';').FirstOrDefault(p => p.StartsWith("Host=", StringComparison.OrdinalIgnoreCase))?[5..] ?? "localhost";
+        var host = (_resolvedConnectionString ?? Current.ConnectionString)?.Split(';').FirstOrDefault(p => p.StartsWith("Host=", StringComparison.OrdinalIgnoreCase))?[5..] ?? "localhost";
         return root switch
         {
             System.Net.Sockets.SocketException => $"PostgreSQL на {host} не отвечает. Запустите базу (в папке проекта: docker compose up -d db) или укажите другие параметры подключения ниже.",

@@ -21,6 +21,7 @@
 | D-06 | Настольная «общая сборка»: встроенный сервер в MAUI (Windows/macOS), автоподключение без ввода адреса, `server.json` / `server.log`, composition root `CashFlow.Server` | `src/CashFlow.Maui/Services/EmbeddedServer.cs`, `src/CashFlow.Server/ServerHosting.cs` |
 | D-07 | Русские тексты ошибок: Identity (`RussianIdentityErrorDescriber`), валидация форм, сетевые и HTTP-ошибки клиента | `src/CashFlow.Server`, `src/CashFlow.Client/ApiClient.cs`, `src/CashFlow.Web/Components/Account/Pages/*` |
 | D-08 | Базовые правила движения и доступности из скиллов apple-design / emil-design-eng: отклик на нажатие, кривые, `prefers-reduced-motion/transparency/contrast` | конец `src/CashFlow.UI/wwwroot/app.css` |
+| D-15 | Установщик Windows (Inno Setup, `installer/windows/CashFlow.iss`, сборка `tools/publish-desktop.ps1`): self-contained публикация, компонент «Локальная база PostgreSQL» скачивает бинарники EDB при установке; `EmbeddedPostgres` создаёт кластер в папке данных при первом запуске (initdb, pg_ctl), останавливает его при закрытии окна; порядок выбора базы: server.json → локальный кластер → .env/docker | `src/CashFlow.Maui/Services/EmbeddedPostgres.cs`, README «Установщик Windows» |
 | D-14 | OAuth банков перенесён в `CashFlow.Server` (`BankOAuth.cs`): веб — cookie и редирект, приложение — `POST /api/oauth/{provider}/start` по bearer, системный браузер, анонимный callback по одноразовому state с HTML-страницей «вернитесь в приложение»; страница «Подключения» ждёт появления подключения и запускает синхронизацию; реквизиты банков во встроенном сервере из `.env` | `src/CashFlow.Server/BankOAuth.cs`, `MauiAppShell`, тест `OAuth_start_requires_configured_provider…` |
 | D-12 | Интеграционные тесты API (`tests/CashFlow.Api.Tests`, WebApplicationFactory + отдельная база PostgreSQL на прогон): регистрация и вход, импорт 1С, дедуп, маскирование счетов в JSON, изоляция пользователей (404/403), команды категорий, русские ошибки; CI `.github/workflows/ci.yml` с сервисом postgres | `tests/CashFlow.Api.Tests/ApiTests.cs` |
 | D-13 | Обезличивание тестовых данных, `tools/secret-scan.py`, pre-commit хук, Actions `secret-scan`, skill `no-sensitive-data`, переписана неотправленная история | `CLAUDE.md`, `.claude/skills/no-sensitive-data` |
@@ -38,7 +39,7 @@
 
 ### P1 — довести текущую сборку
 
-- **R-05. Установщик настольной сборки.** MSIX или Inno Setup для Windows, `.pkg` для macOS; опция «поднять PostgreSQL в Docker» или подсказка с командой. Критерий: чистая машина, установка, первый запуск → экран входа без правки файлов.
+- **R-05b. Установщик macOS.** `.pkg`/`.dmg` с подписью и нотаризацией, бинарники PostgreSQL для macOS (EDB или Postgres.app), тот же `EmbeddedPostgres` (`pg_ctl` без `.exe`). Критерий: чистый Mac, установка, вход без правки файлов.
 - **R-06. Мобильные цели.** `dotnet workload install maui`, сборка Android (APK) и iOS с `-p:MobileTargets=true`, проверить safe-area, таббар, `InputFile` на телефоне, «Поделиться»/экспорт файла. Критерий: APK ставится и входит на удалённый сервер.
 
 ### P2 — экраны макета, для которых нужен новый функционал

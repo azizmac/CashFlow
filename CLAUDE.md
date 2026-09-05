@@ -10,13 +10,13 @@
 | Хранилище | PostgreSQL 16 (Npgsql, EF Core 9, миграции в `CashFlow.Infrastructure`), схема `cashflow` |
 | Сервер | ASP.NET Core minimal API (`CashFlow.Api`), ASP.NET Identity (cookie для веба + bearer-токены `MapIdentityApi` для клиентов), composition root `CashFlow.Server` |
 | Веб | Blazor Server (interactive server render mode), страницы из Razor Class Library `CashFlow.UI` |
-| Приложение | .NET MAUI Blazor Hybrid (`CashFlow.Maui`): Windows/macOS — «общая сборка» со встроенным Kestrel-сервером (`Services/EmbeddedServer.cs`), Android/iOS — клиент к удалённому серверу |
+| Приложение | .NET MAUI Blazor Hybrid (`CashFlow.Maui`): Windows/macOS — «общая сборка» со встроенным Kestrel-сервером (`Services/EmbeddedServer.cs`) и локальным PostgreSQL (`Services/EmbeddedPostgres.cs`, initdb/pg_ctl), Android/iOS — клиент к удалённому серверу |
 | Клиент API | `CashFlow.Client` — HTTP-реализации контрактов Application, SecureStorage для сессии |
 | Парсеры выписок | PdfPig (PDF), ClosedXML (XLSX), 1CClientBankExchange (txt), CSV — проект `CashFlow.Connectors.Statements` |
 | Интеграции банков | OAuth (PKCE) коннекторы Сбер / Т-Банк / Альфа в `CashFlow.Connectors.*` |
 | Безопасность | AES-GCM шифрование полей (`Encryption:MasterKey`), маскирование номеров и телефонов в DTO |
 | UI-дизайн | Дизайн-система «сдержанное жидкое стекло» из `docs/design/cashflow-ai-ui-mockups/project/CashFlow AI.dc.html`; токены — CSS-переменные в `src/CashFlow.UI/wwwroot/app.css`; тёмная тема базовая, светлая через `[data-theme=light]` |
-| Инфраструктура | Docker Compose (`web` на 8080, `db` PostgreSQL на `127.0.0.1:55432`), Docker MCP `tools/docker-mcp` |
+| Инфраструктура | Docker Compose (`web` на 8080, `db` PostgreSQL на `127.0.0.1:55432`), Docker MCP `tools/docker-mcp`; установщик Windows — Inno Setup (`installer/windows`, `tools/publish-desktop.ps1`) |
 | Тесты | xUnit: `tests/CashFlow.Domain.Tests` (домен, парсеры) и `tests/CashFlow.Api.Tests` (интеграционные, PostgreSQL на 55432, база на прогон) |
 | Утилиты | `tools/StatementProbe` — прогон реальных выписок через парсеры и БД |
 
