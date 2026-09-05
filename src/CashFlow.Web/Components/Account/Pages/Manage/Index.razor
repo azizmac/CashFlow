@@ -70,7 +70,7 @@
 
     private sealed class InputModel
     {
-        [Phone]
+        [Phone(ErrorMessage = "Введите корректный номер телефона")]
         [Display(Name = "Phone number")]
         public string? PhoneNumber { get; set; }
     }

@@ -34,8 +34,18 @@ public sealed class ApiClient
     public async Task LoginAsync(string baseUrl, string email, string password, CancellationToken ct = default)
     {
         var url = new Uri(new Uri(baseUrl.TrimEnd('/') + "/"), "api/auth/login?useCookies=false");
-        using var resp = await _http.PostAsJsonAsync(url, new { email, password }, Json, ct);
-        if (resp.StatusCode == HttpStatusCode.Unauthorized) throw new ApiException(401, "Неверный e-mail или пароль");
+        using var resp = await SendAuthAsync(url, new { email, password }, ct);
+        if (resp.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            var body = await resp.Content.ReadAsStringAsync(ct);
+            throw new ApiException(401, ExtractDetail(body) switch
+            {
+                "LockedOut" => "Аккаунт временно заблокирован после нескольких неудачных попыток. Попробуйте позже.",
+                "NotAllowed" => "Вход для этого аккаунта запрещён.",
+                "RequiresTwoFactor" => "Для этого аккаунта включена двухфакторная аутентификация, войдите через веб-версию.",
+                _ => "Неверный e-mail или пароль"
+            });
+        }
         await EnsureOkAsync(resp, ct);
         var t = await resp.Content.ReadFromJsonAsync<TokenResponse>(Json, ct) ?? throw new ApiException(500, "Пустой ответ сервера");
         await _session.SetAsync(new SessionData(baseUrl.TrimEnd('/'), email, t.AccessToken, t.RefreshToken, DateTimeOffset.UtcNow.AddSeconds(t.ExpiresIn)));
@@ -44,12 +54,34 @@ public sealed class ApiClient
     public async Task RegisterAsync(string baseUrl, string email, string password, CancellationToken ct = default)
     {
         var url = new Uri(new Uri(baseUrl.TrimEnd('/') + "/"), "api/auth/register");
-        using var resp = await _http.PostAsJsonAsync(url, new { email, password }, Json, ct);
+        using var resp = await SendAuthAsync(url, new { email, password }, ct);
         if (!resp.IsSuccessStatusCode)
         {
             var body = await resp.Content.ReadAsStringAsync(ct);
             throw new ApiException((int)resp.StatusCode, ExtractValidationMessage(body) ?? "Не удалось зарегистрироваться");
         }
+    }
+
+    /// <summary>Запрос без токена; сетевые ошибки переводим в понятное сообщение.</summary>
+    private async Task<HttpResponseMessage> SendAuthAsync(Uri url, object body, CancellationToken ct)
+    {
+        try { return await _http.PostAsJsonAsync(url, body, Json, ct); }
+        catch (HttpRequestException ex) { throw new ApiException(0, Unreachable(url, ex)); }
+        catch (TaskCanceledException) when (!ct.IsCancellationRequested) { throw new ApiException(0, "Сервер не ответил вовремя. Проверьте адрес и сеть."); }
+    }
+
+    private static string Unreachable(Uri url, HttpRequestException ex) => ex.InnerException is System.Net.Sockets.SocketException
+        ? $"Сервер {url.GetLeftPart(UriPartial.Authority)} недоступен. Проверьте, что он запущен, и адрес указан верно."
+        : $"Не удалось связаться с сервером: {ex.Message}";
+
+    private static string? ExtractDetail(string body)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            return doc.RootElement.TryGetProperty("detail", out var d) ? d.GetString() : null;
+        }
+        catch { return null; }
     }
 
     private async Task<bool> TryRefreshAsync(CancellationToken ct)
@@ -142,10 +174,12 @@ public sealed class ApiClient
         return resp;
     }
 
-    private Task<HttpResponseMessage> SendOnceAsync(HttpRequestMessage req, CancellationToken ct)
+    private async Task<HttpResponseMessage> SendOnceAsync(HttpRequestMessage req, CancellationToken ct)
     {
         if (_session.Current is { } s) req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", s.AccessToken);
-        return _http.SendAsync(req, ct);
+        try { return await _http.SendAsync(req, ct); }
+        catch (HttpRequestException ex) { throw new ApiException(0, Unreachable(req.RequestUri!, ex)); }
+        catch (TaskCanceledException) when (!ct.IsCancellationRequested) { throw new ApiException(0, "Сервер не ответил вовремя. Проверьте сеть."); }
     }
 
     private static async Task<T> ReadAsync<T>(HttpResponseMessage resp, CancellationToken ct)
@@ -160,9 +194,15 @@ public sealed class ApiClient
         var body = await resp.Content.ReadAsStringAsync(ct);
         string? msg = null;
         try { msg = JsonSerializer.Deserialize<ApiError>(body, Json)?.Error; } catch { /* не JSON */ }
-        msg ??= ExtractValidationMessage(body) ?? $"Сервер ответил {(int)resp.StatusCode}";
+        msg ??= ExtractValidationMessage(body) ?? StatusText((int)resp.StatusCode);
         throw new ApiException((int)resp.StatusCode, msg);
     }
+
+    private static string StatusText(int code) => code switch
+    {
+        400 => "Сервер отклонил запрос (400)", 403 => "Нет доступа (403)", 404 => "Не найдено (404)", 413 => "Файл слишком большой (413)",
+        500 => "Внутренняя ошибка сервера (500)", 502 or 503 or 504 => $"Сервер временно недоступен ({code})", _ => $"Сервер ответил кодом {code}"
+    };
 
     /// <summary>ValidationProblemDetails от Identity: {"errors":{"PasswordTooShort":["..."]}}.</summary>
     private static string? ExtractValidationMessage(string body)

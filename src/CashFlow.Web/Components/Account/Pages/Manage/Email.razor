@@ -115,8 +115,8 @@
 
     private sealed class InputModel
     {
-        [Required]
-        [EmailAddress]
+        [Required(ErrorMessage = "Обязательное поле")]
+        [EmailAddress(ErrorMessage = "Введите корректный e-mail")]
         [Display(Name = "New email")]
         public string? NewEmail { get; set; }
     }
