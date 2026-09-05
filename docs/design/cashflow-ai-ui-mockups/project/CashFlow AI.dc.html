@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas"><style>
+body{margin:0;background:#e9e9ec;font-family:-apple-system,"SF Pro Display","Helvetica Neue",system-ui,sans-serif}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08)}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 22px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#141416;color:#fff;border-radius:4px;text-decoration:none}
+.dv-tname{font:600 13px/1.2 system-ui,sans-serif;color:#141416}
+.dv-opts{display:flex;flex-wrap:wrap;gap:34px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#141416;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11.5px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.55)}
+.dv-row{display:flex;gap:20px;align-items:flex-start}
+.dv-opt:target .dv-oid{background:#2f6bff;color:#fff}
+.dv-next{margin:24px 0 0;font:12px/1.5 system-ui,sans-serif;color:rgba(0,0,0,.5)}
+a{color:#2f6bff}a:hover{color:#1b4fd6}
+</style></helmet>
+
+<section class="dv-turn" id="t2">
+<div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Пропущенное из первого раунда: онбординг и вход, прогноз cash flow</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="2a"><div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Онбординг: вход · первый банк · код восстановления</div>
+<div class="dv-row">
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ 390 }}" height="{{ 844 }}" dark="{{ true }}" hint-size="390px,844px">
+<div style="position:absolute;inset:0;background:radial-gradient(120% 70% at 50% -10%, rgba(47,107,255,.34), transparent 62%),radial-gradient(90% 60% at 10% 80%, rgba(0,190,160,.18), transparent 60%),radial-gradient(80% 60% at 95% 60%, rgba(140,90,255,.2), transparent 60%),#07080c"></div>
+<div style="position:relative;height:100%;display:flex;flex-direction:column;color:#f3f4f6;padding:0 22px">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding-top:60px">
+<div style="width:58px;height:58px;border-radius:19px;background:linear-gradient(150deg,#4d7cff,#8a5cff);display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 14px 34px rgba(70,100,255,.45)">✦</div>
+<div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.45)">CashFlow AI</div>
+<div style="font-size:34px;font-weight:700;letter-spacing:-.9px;line-height:1.1">Все счета<br>в одной картине</div>
+<div style="font-size:15px;line-height:1.5;color:rgba(255,255,255,.6)">Балансы, траты, контрагенты и советы, где тратить меньше. Только чтение — приложение не может списать деньги.</div>
+</div>
+<div style="padding-bottom:44px;display:flex;flex-direction:column;gap:12px">
+<div style="border-radius:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.11);backdrop-filter:blur(30px) saturate(170%);overflow:hidden">
+<div style="padding:14px 16px;border-bottom:.5px solid rgba(255,255,255,.09)"><div style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.38)">Email</div><div style="font-size:16px;margin-top:3px">azizov@mail.ru</div></div>
+<div style="padding:14px 16px;display:flex;align-items:center"><div style="flex:1"><div style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.38)">Password</div><div style="font-size:16px;margin-top:3px;letter-spacing:2px">••••••••••</div></div><div style="font-size:13px;color:#6f97ff">Забыли?</div></div>
+</div>
+<div style="padding:15px;border-radius:999px;background:#2f6bff;color:#fff;text-align:center;font-size:16px;font-weight:600;box-shadow:0 12px 30px rgba(47,107,255,.4)">Войти</div>
+<div style="padding:14px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.13);backdrop-filter:blur(20px);text-align:center;font-size:15px;display:flex;align-items:center;justify-content:center;gap:9px">Войти по Face ID</div>
+<div style="text-align:center;font-size:13.5px;color:rgba(255,255,255,.5);margin-top:2px">Нет аккаунта? <span style="color:#6f97ff">Регистрация</span></div>
+</div>
+</div>
+</x-import>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ 390 }}" height="{{ 844 }}" dark="{{ true }}" hint-size="390px,844px">
+<div style="position:absolute;inset:0;background:radial-gradient(110% 60% at 30% 0%, rgba(0,190,160,.22), transparent 60%),radial-gradient(90% 60% at 90% 40%, rgba(47,107,255,.22), transparent 60%),#07080c"></div>
+<div style="position:relative;height:100%;display:flex;flex-direction:column;color:#f3f4f6">
+<div style="padding:52px 16px 6px;display:flex;align-items:center;justify-content:space-between">
+<div style="font-size:15px;color:rgba(255,255,255,.6)">Назад</div>
+<div style="display:flex;gap:5px;align-items:center"><div style="width:22px;height:4px;border-radius:2px;background:#fff"></div><div style="width:22px;height:4px;border-radius:2px;background:#fff"></div><div style="width:22px;height:4px;border-radius:2px;background:rgba(255,255,255,.2)"></div></div>
+<div style="font-size:15px;color:rgba(255,255,255,.4)">Позже</div></div>
+<div style="padding:24px 22px 10px">
+<div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.45)">Step 2 of 3</div>
+<div style="font-size:28px;font-weight:700;letter-spacing:-.5px;margin-top:6px;line-height:1.15">Подключите первый банк</div>
+<div style="font-size:14.5px;line-height:1.5;color:rgba(255,255,255,.55);margin-top:8px">Токен и выписки остаются на устройстве. Мы запрашиваем только права на чтение остатков и операций.</div></div>
+<div style="flex:1;overflow:auto;padding:12px 16px 30px;display:flex;flex-direction:column;gap:10px">
+<div style="padding:15px 16px;border-radius:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.11);backdrop-filter:blur(30px);display:flex;align-items:center;gap:13px">
+<div style="width:42px;height:42px;border-radius:14px;background:oklch(.6 .15 150);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700">С</div>
+<div style="flex:1"><div style="font-size:15.5px;font-weight:600">Сбер</div><div style="font-size:11.5px;color:rgba(255,255,255,.45)">PDF-выписка по карте · импорт файла</div></div>
+<div style="color:rgba(255,255,255,.3)">›</div></div>
+<div style="padding:15px 16px;border-radius:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.11);backdrop-filter:blur(30px);display:flex;align-items:center;gap:13px">
+<div style="width:42px;height:42px;border-radius:14px;background:oklch(.78 .16 88);color:#1a1400;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700">Т</div>
+<div style="flex:1"><div style="font-size:15.5px;font-weight:600">Т-Банк · Т-Инвестиции</div><div style="font-size:11.5px;color:rgba(255,255,255,.45)">API · read-only токен, счета и выписки</div></div>
+<div style="padding:4px 9px;border-radius:999px;background:rgba(76,175,80,.18);border:1px solid rgba(76,175,80,.3);font-size:11px;color:oklch(.85 .12 152)">быстро</div></div>
+<div style="padding:15px 16px;border-radius:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.11);backdrop-filter:blur(30px);display:flex;align-items:center;gap:13px">
+<div style="width:42px;height:42px;border-radius:14px;background:oklch(.6 .18 25);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700">А</div>
+<div style="flex:1"><div style="font-size:15.5px;font-weight:600">Другой банк</div><div style="font-size:11.5px;color:rgba(255,255,255,.45)">Выписка XLSX/CSV или ручной счёт</div></div>
+<div style="color:rgba(255,255,255,.3)">›</div></div>
+<div style="margin-top:8px;padding:15px 16px;border-radius:22px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+<div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.38)">What we never do</div>
+<div style="display:flex;flex-direction:column;gap:9px;margin-top:10px;font-size:13.5px;color:rgba(255,255,255,.65)">
+<div style="display:flex;gap:9px"><span style="color:oklch(.7 .18 22)">✕</span>Платежи, переводы и сделки</div>
+<div style="display:flex;gap:9px"><span style="color:oklch(.7 .18 22)">✕</span>Отправка токенов на наш сервер</div>
+<div style="display:flex;gap:9px"><span style="color:oklch(.76 .15 152)">✓</span>Данные в зашифрованной базе на устройстве</div>
+</div></div>
+</div>
+</div>
+</x-import>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ 390 }}" height="{{ 844 }}" dark="{{ true }}" hint-size="390px,844px">
+<div style="position:absolute;inset:0;background:radial-gradient(110% 60% at 50% 0%, rgba(140,90,255,.28), transparent 60%),radial-gradient(90% 60% at 20% 90%, rgba(47,107,255,.2), transparent 60%),#07080c"></div>
+<div style="position:relative;height:100%;display:flex;flex-direction:column;color:#f3f4f6">
+<div style="padding:52px 16px 6px;display:flex;align-items:center;justify-content:space-between">
+<div style="font-size:15px;color:rgba(255,255,255,.6)">Назад</div>
+<div style="display:flex;gap:5px;align-items:center"><div style="width:22px;height:4px;border-radius:2px;background:#fff"></div><div style="width:22px;height:4px;border-radius:2px;background:#fff"></div><div style="width:22px;height:4px;border-radius:2px;background:#fff"></div></div>
+<div style="width:44px"></div></div>
+<div style="padding:22px 22px 6px">
+<div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.45)">Step 3 of 3</div>
+<div style="font-size:28px;font-weight:700;letter-spacing:-.5px;margin-top:6px;line-height:1.15">Код восстановления</div>
+<div style="font-size:14.5px;line-height:1.5;color:rgba(255,255,255,.55);margin-top:8px">24 слова — единственный способ вернуть данные, если забыт пароль. Мы не храним копию.</div></div>
+<div style="flex:1;overflow:auto;padding:14px 16px 30px;display:flex;flex-direction:column;gap:12px">
+<div style="padding:16px;border-radius:24px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.11);backdrop-filter:blur(30px) saturate(170%)">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;font-family:ui-monospace,Menlo,monospace;font-size:13px">
+<div style="display:flex;gap:8px"><span style="color:rgba(255,255,255,.3);width:16px;text-align:right">1</span>ledger</div>
+<div style="display:flex;gap:8px"><span style="color:rgba(255,255,255,.3);width:16px;text-align:right">2</span>amber</div>
+<div style="display:flex;gap:8px"><span style="color:rgba(255,255,255,.3);width:16px;text-align:right">3</span>tundra</div>
+<div style="display:flex;gap:8px"><span style="color:rgba(255,255,255,.3);width:16px;text-align:right">4</span>quartz</div>
+<div style="display:flex;gap:8px"><span style="color:rgba(255,255,255,.3);width:16px;text-align:right">5</span>vessel</div>
+<div style="display:flex;gap:8px"><span style="color:rgba(255,255,255,.3);width:16px;text-align:right">6</span>marble</div>
+<div style="display:flex;gap:8px"><span style="color:rgba(255,255,255,.3);width:16px;text-align:right">7</span>orbit</div>
+<div style="display:flex;gap:8px"><span style="color:rgba(255,255,255,.3);width:16px;text-align:right">8</span>cinder</div>
+<div style="display:flex;gap:8px"><span style="color:rgba(255,255,255,.3);width:16px;text-align:right">9</span>saddle</div>
+<div style="display:flex;gap:8px"><span style="color:rgba(255,255,255,.3);width:16px;text-align:right">10</span>fathom</div>
+<div style="display:flex;gap:8px"><span style="color:rgba(255,255,255,.3);width:16px;text-align:right">11</span>plume</div>
+<div style="display:flex;gap:8px"><span style="color:rgba(255,255,255,.3);width:16px;text-align:right">12</span>ridge</div>
+<div style="display:flex;gap:8px;opacity:.35"><span style="color:rgba(255,255,255,.3);width:16px;text-align:right">13</span>•••••</div>
+<div style="display:flex;gap:8px;opacity:.35"><span style="color:rgba(255,255,255,.3);width:16px;text-align:right">14</span>•••••</div>
+</div>
+<div style="margin-top:14px;padding-top:12px;border-top:.5px solid rgba(255,255,255,.09);display:flex;gap:8px">
+<div style="flex:1;padding:9px 0;border-radius:999px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.13);text-align:center;font-size:13px">Скопировать</div>
+<div style="flex:1;padding:9px 0;border-radius:999px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.13);text-align:center;font-size:13px">Показать все 24</div>
+</div></div>
+<div style="padding:15px 16px;border-radius:20px;background:rgba(255,193,7,.1);border:1px solid rgba(255,193,7,.24);font-size:13.5px;line-height:1.5;color:rgba(255,255,255,.8)">Пароль без кода восстановления вернуть нельзя — данные останутся зашифрованными навсегда. Это цена того, что их не видит никто, кроме вас.</div>
+<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:20px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09)">
+<div style="width:26px;height:26px;border-radius:8px;background:#2f6bff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">✓</div>
+<div style="flex:1;font-size:14px;line-height:1.4">Я сохранил код в надёжном месте</div></div>
+<div style="padding:15px;border-radius:999px;background:#2f6bff;color:#fff;text-align:center;font-size:16px;font-weight:600;box-shadow:0 12px 30px rgba(47,107,255,.4)">Готово — открыть обзор</div>
+</div>
+</div>
+</x-import>
+</div>
+</div>
+
+<div class="dv-opt" id="2b"><div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>Прогноз cash flow: регулярные потоки, проекция баланса</div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ 390 }}" height="{{ 844 }}" dark="{{ true }}" hint-size="390px,844px">
+<div style="position:absolute;inset:0;background:radial-gradient(110% 70% at 20% 0%, rgba(0,190,160,.22), transparent 60%),radial-gradient(90% 60% at 95% 25%, rgba(47,107,255,.24), transparent 60%),#08090d"></div>
+<div style="position:relative;height:100%;display:flex;flex-direction:column;color:#f3f4f6">
+<div style="padding:58px 20px 8px"><div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.45)">Forecast</div><div style="font-size:30px;font-weight:700;letter-spacing:-.4px;margin-top:2px">Прогноз</div></div>
+<div style="flex:1;overflow:auto;padding:10px 16px 120px;display:flex;flex-direction:column;gap:14px">
+
+<div style="padding:18px;border-radius:24px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px) saturate(170%);box-shadow:0 18px 40px rgba(0,0,0,.35)">
+<div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.45)">Balance in 6 months</div><div style="font-size:11px;color:rgba(255,255,255,.4)">до марта 2027</div></div>
+<div style="font-size:34px;font-weight:700;letter-spacing:-.9px;margin:6px 0 2px;font-variant-numeric:tabular-nums">4 052 000 ₽</div>
+<div style="font-size:12.5px;color:rgba(255,255,255,.5)">+867 080 ₽ к сегодняшним остаткам</div>
+<div style="position:relative;height:118px;margin-top:18px">
+<div style="position:absolute;left:0;right:0;bottom:0;height:100%;border-radius:12px;background:linear-gradient(180deg,rgba(47,107,255,.16),rgba(47,107,255,0));clip-path:polygon(0 62%,17% 55%,33% 58%,50% 44%,67% 40%,84% 26%,100% 18%,100% 100%,0 100%)"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;height:100%;clip-path:polygon(0 60%,17% 53%,33% 56%,50% 42%,67% 38%,84% 24%,100% 16%,100% 20%,84% 28%,67% 42%,50% 46%,33% 60%,17% 57%,0 64%);background:linear-gradient(90deg,#4d7cff,#8a5cff)"></div>
+<div style="position:absolute;left:0;right:0;top:0;bottom:0;border-left:.5px solid rgba(255,255,255,.07);border-bottom:.5px solid rgba(255,255,255,.07)"></div>
+<div style="position:absolute;right:0;top:12%;width:9px;height:9px;border-radius:999px;background:#fff;box-shadow:0 0 0 4px rgba(120,150,255,.3)"></div>
+</div>
+<div style="display:flex;justify-content:space-between;margin-top:8px;font-size:10.5px;color:rgba(255,255,255,.35)"><span>окт</span><span>ноя</span><span>дек</span><span>янв</span><span>фев</span><span>мар</span></div>
+<div style="display:flex;gap:14px;margin-top:12px;font-size:11.5px;color:rgba(255,255,255,.5)"><span>Регулярные потоки · графики кредита и вклада · купоны</span></div>
+</div>
+
+<div style="border-radius:24px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px);overflow:hidden">
+<div style="padding:13px 16px;display:flex;justify-content:space-between;align-items:baseline;border-bottom:.5px solid rgba(255,255,255,.08)"><div style="font-size:15px;font-weight:640">Регулярные потоки</div><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4)">Detected</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:.5px solid rgba(255,255,255,.07)">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(46,125,50,.24);display:flex;align-items:center;justify-content:center;font-size:15px">💼</div>
+<div style="flex:1"><div style="font-size:14.5px">Зарплата · ООО «Ксенум»</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">каждое 27-е · уверенность 0.98</div></div>
+<div style="font-size:14px;font-weight:600;color:oklch(.76 .15 152);font-variant-numeric:tabular-nums">+184 000</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:.5px solid rgba(255,255,255,.07)">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(96,125,139,.22);display:flex;align-items:center;justify-content:center;font-size:15px">🏠</div>
+<div style="flex:1"><div style="font-size:14.5px">Аренда квартиры</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">каждое 5-е · уверенность 0.94</div></div>
+<div style="font-size:14px;font-weight:600;color:oklch(.7 .18 22);font-variant-numeric:tabular-nums">−62 000</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:.5px solid rgba(255,255,255,.07)">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(183,28,28,.24);display:flex;align-items:center;justify-content:center;font-size:15px">💳</div>
+<div style="flex:1"><div style="font-size:14.5px">Кредит Альфа-Банк</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">график платежей · до 09.2028</div></div>
+<div style="font-size:14px;font-weight:600;color:oklch(.7 .18 22);font-variant-numeric:tabular-nums">−18 400</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:.5px solid rgba(255,255,255,.07)">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(0,188,212,.2);display:flex;align-items:center;justify-content:center;font-size:15px">🔁</div>
+<div style="flex:1"><div style="font-size:14.5px">Подписки · 7 сервисов</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">МТС, хостинг, музыка и ещё 4</div></div>
+<div style="font-size:14px;font-weight:600;color:oklch(.7 .18 22);font-variant-numeric:tabular-nums">−4 260</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 16px">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(0,105,92,.28);display:flex;align-items:center;justify-content:center;font-size:15px">📈</div>
+<div style="flex:1"><div style="font-size:14.5px">Проценты по вкладу и купоны</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">вклад до 14.03.27 · 4 выпуска ОФЗ</div></div>
+<div style="font-size:14px;font-weight:600;color:oklch(.76 .15 152);font-variant-numeric:tabular-nums">+9 840</div></div>
+</div>
+
+<div style="padding:16px 18px;border-radius:24px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px)">
+<div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.4)">Month ahead</div>
+<div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
+<div><div style="display:flex;justify-content:space-between;font-size:13.5px"><span style="color:rgba(255,255,255,.65)">Ожидаемый доход</span><span style="font-weight:600;font-variant-numeric:tabular-nums">193 840 ₽</span></div>
+<div style="height:6px;border-radius:3px;background:rgba(255,255,255,.09);margin-top:6px;overflow:hidden"><div style="height:100%;width:100%;background:oklch(.72 .14 150);border-radius:3px"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:13.5px"><span style="color:rgba(255,255,255,.65)">Обязательные платежи</span><span style="font-weight:600;font-variant-numeric:tabular-nums">84 660 ₽</span></div>
+<div style="height:6px;border-radius:3px;background:rgba(255,255,255,.09);margin-top:6px;overflow:hidden"><div style="height:100%;width:44%;background:oklch(.66 .18 22);border-radius:3px"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:13.5px"><span style="color:rgba(255,255,255,.65)">Свободно на переменные траты</span><span style="font-weight:600;font-variant-numeric:tabular-nums">109 180 ₽</span></div>
+<div style="height:6px;border-radius:3px;background:rgba(255,255,255,.09);margin-top:6px;overflow:hidden"><div style="height:100%;width:56%;background:linear-gradient(90deg,#4d7cff,#8a5cff);border-radius:3px"></div></div></div>
+</div></div>
+
+<div style="padding:16px 18px;border-radius:24px;background:linear-gradient(140deg,rgba(47,107,255,.2),rgba(140,90,255,.12));border:1px solid rgba(130,160,255,.24);backdrop-filter:blur(30px)">
+<div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.55)">AI insight</div>
+<div style="font-size:14.5px;line-height:1.45;margin-top:7px">5 октября совпадают аренда и платёж по кредиту — 80 400 ₽ за один день при остатке 62 300 ₽ на карте Сбер. Перевод с р/с ИП до 4 октября закрывает разрыв.</div>
+<div style="display:flex;gap:8px;margin-top:14px"><div style="padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.92);color:#0b0d12;font-size:13px;font-weight:600">Напомнить 3 октября</div></div>
+</div>
+</div>
+</div>
+</x-import>
+</div>
+
+</div>
+<p class="dv-next">Дальше можно: «прогноз <a class="dv-oid" href="#2b">2b</a> в светлой теме» · «онбординг <a class="dv-oid" href="#2a">2a</a> для desktop» · «добавить экран бюджетов»</p>
+</section>
+
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">CashFlow AI — iPhone-first, сдержанное жидкое стекло, тёмная и светлая темы</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1a"><div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Обзор · тёмная · переключатель периода живой</div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ 390 }}" height="{{ 844 }}" dark="{{ true }}" hint-size="390px,844px">
+<div style="position:absolute;inset:0;background:radial-gradient(120% 80% at 20% -10%, rgba(47,107,255,.28), transparent 60%),radial-gradient(90% 70% at 90% 15%, rgba(140,90,255,.22), transparent 60%),radial-gradient(120% 90% at 50% 110%, rgba(0,190,160,.18), transparent 60%),#08090d"></div>
+<div style="position:relative;height:100%;display:flex;flex-direction:column;color:#f3f4f6">
+<div style="padding:58px 20px 10px;display:flex;align-items:flex-end;justify-content:space-between">
+<div><div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.45)">Overview</div>
+<div style="font-size:30px;font-weight:700;letter-spacing:-.4px;margin-top:2px">Обзор</div></div>
+<div style="display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(20px) saturate(160%);font-size:13px;color:rgba(255,255,255,.8)">Все профили<span style="opacity:.5">▾</span></div>
+</div>
+<div style="flex:1;overflow:auto;padding:6px 16px 130px;display:flex;flex-direction:column;gap:14px">
+
+<div style="display:flex;gap:4px;padding:4px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);backdrop-filter:blur(20px)">
+<div onClick="{{ setMonth }}" style="flex:1;text-align:center;padding:7px 0;border-radius:10px;font-size:13px;font-weight:600;background:{{ bgMonth }};color:{{ fgMonth }};transition:background .25s cubic-bezier(.32,.72,0,1)">Месяц</div>
+<div onClick="{{ setQuarter }}" style="flex:1;text-align:center;padding:7px 0;border-radius:10px;font-size:13px;font-weight:600;background:{{ bgQuarter }};color:{{ fgQuarter }};transition:background .25s cubic-bezier(.32,.72,0,1)">3 месяца</div>
+<div onClick="{{ setYear }}" style="flex:1;text-align:center;padding:7px 0;border-radius:10px;font-size:13px;font-weight:600;background:{{ bgYear }};color:{{ fgYear }};transition:background .25s cubic-bezier(.32,.72,0,1)">Год</div>
+</div>
+
+<div style="padding:18px 18px 16px;border-radius:24px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px) saturate(170%);box-shadow:0 1px 0 rgba(255,255,255,.08) inset,0 18px 40px rgba(0,0,0,.35)">
+<div style="display:flex;justify-content:space-between;align-items:baseline">
+<div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.45)">Net worth</div>
+<div style="font-size:11px;color:rgba(255,255,255,.4)">{{ rangeLabel }}</div></div>
+<div style="font-size:36px;font-weight:700;letter-spacing:-1px;margin:6px 0 2px;font-variant-numeric:tabular-nums">3 184 920 ₽</div>
+<div style="font-size:12.5px;color:rgba(255,255,255,.5)">Счета, вклады и брокерские минус кредиты</div>
+<div style="display:flex;gap:10px;margin-top:16px">
+<div style="flex:1;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07)">
+<div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4)">Income</div>
+<div style="font-size:19px;font-weight:650;color:oklch(.76 .15 152);margin-top:3px;font-variant-numeric:tabular-nums">+{{ income }}</div></div>
+<div style="flex:1;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07)">
+<div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4)">Expense</div>
+<div style="font-size:19px;font-weight:650;color:oklch(.7 .18 22);margin-top:3px;font-variant-numeric:tabular-nums">−{{ expense }}</div></div>
+</div>
+<div style="margin-top:10px;padding:12px 14px;border-radius:16px;background:linear-gradient(100deg,rgba(47,107,255,.22),rgba(140,90,255,.14));border:1px solid rgba(120,150,255,.22);display:flex;justify-content:space-between;align-items:center">
+<div style="font-size:13px;color:rgba(255,255,255,.7)">Сальдо · <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.7">net flow</span></div>
+<div style="font-size:19px;font-weight:650;font-variant-numeric:tabular-nums">{{ saldo }}</div></div>
+</div>
+
+<div style="padding:16px 18px;border-radius:24px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px) saturate(170%)">
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+<div style="font-size:15px;font-weight:640">Куда уходят деньги</div>
+<div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4)">By category</div></div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:12px" style-hover="opacity:.75">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(76,175,80,.22);border:1px solid rgba(76,175,80,.3);display:flex;align-items:center;justify-content:center;font-size:16px">🛒</div>
+<div style="flex:1"><div style="display:flex;justify-content:space-between;font-size:13.5px"><span>Продукты</span><span style="font-variant-numeric:tabular-nums;font-weight:600">61 240 ₽</span></div>
+<div style="height:5px;border-radius:3px;background:rgba(255,255,255,.09);margin-top:6px;overflow:hidden"><div style="height:100%;width:100%;background:oklch(.72 .14 150);border-radius:3px"></div></div></div></div>
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(255,152,0,.2);border:1px solid rgba(255,152,0,.3);display:flex;align-items:center;justify-content:center;font-size:16px">🍽️</div>
+<div style="flex:1"><div style="display:flex;justify-content:space-between;font-size:13.5px"><span>Кафе и рестораны</span><span style="font-variant-numeric:tabular-nums;font-weight:600">38 910 ₽</span></div>
+<div style="height:5px;border-radius:3px;background:rgba(255,255,255,.09);margin-top:6px;overflow:hidden"><div style="height:100%;width:63%;background:oklch(.75 .15 70);border-radius:3px"></div></div></div></div>
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(33,150,243,.2);border:1px solid rgba(33,150,243,.3);display:flex;align-items:center;justify-content:center;font-size:16px">🚌</div>
+<div style="flex:1"><div style="display:flex;justify-content:space-between;font-size:13.5px"><span>Транспорт</span><span style="font-variant-numeric:tabular-nums;font-weight:600">21 480 ₽</span></div>
+<div style="height:5px;border-radius:3px;background:rgba(255,255,255,.09);margin-top:6px;overflow:hidden"><div style="height:100%;width:35%;background:oklch(.7 .14 250);border-radius:3px"></div></div></div></div>
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(139,195,74,.2);border:1px solid rgba(139,195,74,.3);display:flex;align-items:center;justify-content:center;font-size:16px">📦</div>
+<div style="flex:1"><div style="display:flex;justify-content:space-between;font-size:13.5px"><span>Маркетплейсы</span><span style="font-variant-numeric:tabular-nums;font-weight:600">19 730 ₽</span></div>
+<div style="height:5px;border-radius:3px;background:rgba(255,255,255,.09);margin-top:6px;overflow:hidden"><div style="height:100%;width:32%;background:oklch(.74 .14 130);border-radius:3px"></div></div></div></div>
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(96,125,139,.22);border:1px solid rgba(96,125,139,.32);display:flex;align-items:center;justify-content:center;font-size:16px">🏠</div>
+<div style="flex:1"><div style="display:flex;justify-content:space-between;font-size:13.5px"><span>Жильё и ЖКУ</span><span style="font-variant-numeric:tabular-nums;font-weight:600">18 900 ₽</span></div>
+<div style="height:5px;border-radius:3px;background:rgba(255,255,255,.09);margin-top:6px;overflow:hidden"><div style="height:100%;width:31%;background:oklch(.68 .06 240);border-radius:3px"></div></div></div></div>
+</div>
+<div style="margin-top:14px;font-size:13px;color:#6f97ff">Все категории →</div>
+</div>
+
+<div style="padding:16px 18px;border-radius:24px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px) saturate(170%)">
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+<div style="font-size:15px;font-weight:640">Кому уходят деньги</div>
+<div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4)">By counterparty</div></div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:.5px solid rgba(255,255,255,.08)">
+<div style="width:32px;height:32px;border-radius:999px;background:oklch(.6 .16 25);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">П</div>
+<div style="flex:1;font-size:14px">Магазин<div style="font-size:11.5px;color:rgba(255,255,255,.42)">магазин · 34 операции</div></div>
+<div style="font-size:14px;font-weight:600;font-variant-numeric:tabular-nums">28 460 ₽</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:.5px solid rgba(255,255,255,.08)">
+<div style="width:32px;height:32px;border-radius:999px;background:oklch(.55 .17 265);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">O</div>
+<div style="flex:1;font-size:14px">OZON<div style="font-size:11.5px;color:rgba(255,255,255,.42)">компания · 11 операций</div></div>
+<div style="font-size:14px;font-weight:600;font-variant-numeric:tabular-nums">19 730 ₽</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:.5px solid rgba(255,255,255,.08)">
+<div style="width:32px;height:32px;border-radius:999px;background:oklch(.72 .16 85);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#1a1400">Я</div>
+<div style="flex:1;font-size:14px">Яндекс Такси<div style="font-size:11.5px;color:rgba(255,255,255,.42)">компания · 41 операция</div></div>
+<div style="font-size:14px;font-weight:600;font-variant-numeric:tabular-nums">14 210 ₽</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:8px 0">
+<div style="width:32px;height:32px;border-radius:999px;background:oklch(.6 .14 155);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">В</div>
+<div style="flex:1;font-size:14px">ВкусВилл<div style="font-size:11.5px;color:rgba(255,255,255,.42)">магазин · 19 операций</div></div>
+<div style="font-size:14px;font-weight:600;font-variant-numeric:tabular-nums">12 890 ₽</div></div>
+</div></div>
+
+<div style="padding:16px 18px;border-radius:24px;background:linear-gradient(140deg,rgba(47,107,255,.2),rgba(140,90,255,.12));border:1px solid rgba(130,160,255,.24);backdrop-filter:blur(30px) saturate(170%)">
+<div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.55)">AI insight</div>
+<div style="font-size:14.5px;line-height:1.45;margin-top:7px">Доставка еды выросла на 41% к прошлому месяцу — 18 400 ₽ за 23 заказа. Два заказа в неделю вместо четырёх экономят около 8 900 ₽ в месяц.</div>
+<div style="display:flex;gap:8px;margin-top:14px">
+<div style="padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.92);color:#0b0d12;font-size:13px;font-weight:600">Показать операции</div>
+<div style="padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);font-size:13px">Скрыть</div></div>
+</div>
+</div>
+
+<div style="position:absolute;left:14px;right:14px;bottom:26px;height:64px;border-radius:26px;background:rgba(22,24,30,.62);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(30px) saturate(180%);box-shadow:0 12px 34px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:space-around;padding:0 8px">
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px;color:#7fa2ff"><div style="font-size:17px">◍</div><div style="font-size:10.5px;font-weight:600">Обзор</div></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px;color:rgba(255,255,255,.42)"><div style="font-size:17px">≡</div><div style="font-size:10.5px">Операции</div></div>
+<div style="width:46px;height:46px;border-radius:999px;background:linear-gradient(150deg,#4d7cff,#8a5cff);display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 8px 20px rgba(70,100,255,.5)">✦</div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px;color:rgba(255,255,255,.42)"><div style="font-size:17px">◫</div><div style="font-size:10.5px">Счета</div></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px;color:rgba(255,255,255,.42)"><div style="font-size:17px">⚙</div><div style="font-size:10.5px">Ещё</div></div>
+</div>
+</div>
+</x-import>
+</div>
+
+<div class="dv-opt" id="1b"><div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Обзор · светлая тема</div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ 390 }}" height="{{ 844 }}" hint-size="390px,844px">
+<div style="position:absolute;inset:0;background:radial-gradient(110% 70% at 15% -5%, rgba(47,107,255,.16), transparent 60%),radial-gradient(90% 60% at 95% 10%, rgba(160,110,255,.14), transparent 60%),radial-gradient(120% 80% at 40% 105%, rgba(0,180,160,.12), transparent 60%),#f3f3f6"></div>
+<div style="position:relative;height:100%;display:flex;flex-direction:column;color:#14161a">
+<div style="padding:58px 20px 10px;display:flex;align-items:flex-end;justify-content:space-between">
+<div><div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(0,0,0,.42)">Overview</div>
+<div style="font-size:30px;font-weight:700;letter-spacing:-.4px;margin-top:2px">Обзор</div></div>
+<div style="display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:999px;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.07);backdrop-filter:blur(20px) saturate(160%);font-size:13px;color:rgba(0,0,0,.7)">ИП Азизов<span style="opacity:.4">▾</span></div>
+</div>
+<div style="flex:1;overflow:auto;padding:6px 16px 130px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;gap:4px;padding:4px;border-radius:14px;background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.05)">
+<div style="flex:1;text-align:center;padding:7px 0;border-radius:10px;font-size:13px;font-weight:600;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.12)">Месяц</div>
+<div style="flex:1;text-align:center;padding:7px 0;border-radius:10px;font-size:13px;color:rgba(0,0,0,.5)">3 месяца</div>
+<div style="flex:1;text-align:center;padding:7px 0;border-radius:10px;font-size:13px;color:rgba(0,0,0,.5)">Год</div>
+</div>
+<div style="padding:18px;border-radius:24px;background:rgba(255,255,255,.72);border:1px solid rgba(0,0,0,.06);backdrop-filter:blur(30px) saturate(170%);box-shadow:0 10px 30px rgba(20,30,60,.08)">
+<div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(0,0,0,.42)">Net worth</div><div style="font-size:11px;color:rgba(0,0,0,.38)">01.09 — 30.09</div></div>
+<div style="font-size:36px;font-weight:700;letter-spacing:-1px;margin:6px 0 2px;font-variant-numeric:tabular-nums">1 946 300 ₽</div>
+<div style="font-size:12.5px;color:rgba(0,0,0,.48)">Только профиль ИП · р/с и вклад</div>
+<div style="display:flex;gap:10px;margin-top:16px">
+<div style="flex:1;padding:12px 14px;border-radius:16px;background:rgba(0,0,0,.035)">
+<div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(0,0,0,.4)">Income</div>
+<div style="font-size:19px;font-weight:650;color:oklch(.55 .15 150);margin-top:3px;font-variant-numeric:tabular-nums">+684 000</div></div>
+<div style="flex:1;padding:12px 14px;border-radius:16px;background:rgba(0,0,0,.035)">
+<div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(0,0,0,.4)">Expense</div>
+<div style="font-size:19px;font-weight:650;color:oklch(.55 .19 25);margin-top:3px;font-variant-numeric:tabular-nums">−291 450</div></div></div>
+<div style="margin-top:10px;padding:12px 14px;border-radius:16px;background:linear-gradient(100deg,rgba(47,107,255,.12),rgba(140,90,255,.08));border:1px solid rgba(47,107,255,.16);display:flex;justify-content:space-between;align-items:center">
+<div style="font-size:13px;color:rgba(0,0,0,.6)">Сальдо · <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.7">net flow</span></div>
+<div style="font-size:19px;font-weight:650;font-variant-numeric:tabular-nums;color:oklch(.5 .16 150)">+392 550 ₽</div></div>
+</div>
+<div style="padding:16px 18px;border-radius:24px;background:rgba(255,255,255,.72);border:1px solid rgba(0,0,0,.06);backdrop-filter:blur(30px) saturate(170%);box-shadow:0 10px 30px rgba(20,30,60,.06)">
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px"><div style="font-size:15px;font-weight:640">Куда уходят деньги</div><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(0,0,0,.4)">By category</div></div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(93,64,55,.14);display:flex;align-items:center;justify-content:center;font-size:16px">🧾</div>
+<div style="flex:1"><div style="display:flex;justify-content:space-between;font-size:13.5px"><span>Расходы ИП</span><span style="font-weight:600;font-variant-numeric:tabular-nums">142 800 ₽</span></div>
+<div style="height:5px;border-radius:3px;background:rgba(0,0,0,.07);margin-top:6px;overflow:hidden"><div style="height:100%;width:100%;background:oklch(.55 .1 60);border-radius:3px"></div></div></div></div>
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(84,110,122,.16);display:flex;align-items:center;justify-content:center;font-size:16px">🏛️</div>
+<div style="flex:1"><div style="display:flex;justify-content:space-between;font-size:13.5px"><span>Налоги и госплатежи</span><span style="font-weight:600;font-variant-numeric:tabular-nums">88 200 ₽</span></div>
+<div style="height:5px;border-radius:3px;background:rgba(0,0,0,.07);margin-top:6px;overflow:hidden"><div style="height:100%;width:62%;background:oklch(.5 .06 250);border-radius:3px"></div></div></div></div>
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(158,158,158,.18);display:flex;align-items:center;justify-content:center;font-size:16px">🏦</div>
+<div style="flex:1"><div style="display:flex;justify-content:space-between;font-size:13.5px"><span>Комиссии банка</span><span style="font-weight:600;font-variant-numeric:tabular-nums">14 320 ₽</span></div>
+<div style="height:5px;border-radius:3px;background:rgba(0,0,0,.07);margin-top:6px;overflow:hidden"><div style="height:100%;width:11%;background:oklch(.6 .02 250);border-radius:3px"></div></div></div></div>
+</div></div>
+<div style="padding:16px 18px;border-radius:24px;background:rgba(255,255,255,.72);border:1px solid rgba(0,0,0,.06);backdrop-filter:blur(30px)">
+<div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(0,0,0,.4)">Needs review</div>
+<div style="font-size:14.5px;line-height:1.45;margin-top:7px;color:rgba(0,0,0,.75)">7 операций без категории на 34 100 ₽. ИИ предложил категории — подтвердите одним тапом.</div>
+<div style="margin-top:13px;padding:9px 15px;border-radius:999px;background:#2f6bff;color:#fff;font-size:13px;font-weight:600;display:inline-block">Разобрать 7</div>
+</div>
+</div>
+<div style="position:absolute;left:14px;right:14px;bottom:26px;height:64px;border-radius:26px;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.07);backdrop-filter:blur(30px) saturate(180%);box-shadow:0 12px 30px rgba(20,30,60,.14);display:flex;align-items:center;justify-content:space-around;padding:0 8px">
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px;color:#2f6bff"><div style="font-size:17px">◍</div><div style="font-size:10.5px;font-weight:600">Обзор</div></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px;color:rgba(0,0,0,.4)"><div style="font-size:17px">≡</div><div style="font-size:10.5px">Операции</div></div>
+<div style="width:46px;height:46px;border-radius:999px;background:linear-gradient(150deg,#4d7cff,#8a5cff);color:#fff;display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 8px 20px rgba(70,100,255,.4)">✦</div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px;color:rgba(0,0,0,.4)"><div style="font-size:17px">◫</div><div style="font-size:10.5px">Счета</div></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px;color:rgba(0,0,0,.4)"><div style="font-size:17px">⚙</div><div style="font-size:10.5px">Ещё</div></div>
+</div>
+</div>
+</x-import>
+</div>
+
+<div class="dv-opt" id="1c"><div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Контрагенты и карточка контрагента</div>
+<div class="dv-row">
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ 390 }}" height="{{ 844 }}" dark="{{ true }}" hint-size="390px,844px">
+<div style="position:absolute;inset:0;background:radial-gradient(110% 70% at 80% -5%, rgba(140,90,255,.24), transparent 60%),radial-gradient(90% 60% at 10% 20%, rgba(47,107,255,.2), transparent 60%),#08090d"></div>
+<div style="position:relative;height:100%;display:flex;flex-direction:column;color:#f3f4f6">
+<div style="padding:58px 20px 8px"><div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.45)">Counterparties</div>
+<div style="font-size:30px;font-weight:700;letter-spacing:-.4px;margin-top:2px">Контрагенты</div></div>
+<div style="padding:6px 16px 10px"><div style="height:38px;border-radius:13px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(20px);display:flex;align-items:center;gap:8px;padding:0 12px;font-size:14px;color:rgba(255,255,255,.4)">⌕ Имя, ИНН, счёт или телефон</div></div>
+<div style="padding:0 16px 10px;display:flex;gap:7px;overflow:hidden">
+<div style="padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.9);color:#0b0d12;font-size:12.5px;font-weight:600;white-space:nowrap">Все 148</div>
+<div style="padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);font-size:12.5px;white-space:nowrap;color:rgba(255,255,255,.75)">Магазины</div>
+<div style="padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);font-size:12.5px;white-space:nowrap;color:rgba(255,255,255,.75)">Люди</div>
+<div style="padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);font-size:12.5px;white-space:nowrap;color:rgba(255,255,255,.75)">ИП</div>
+</div>
+<div style="flex:1;overflow:auto;padding:0 16px 120px">
+<div style="border-radius:22px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px) saturate(170%);overflow:hidden">
+<div style="padding:11px 16px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4);border-bottom:.5px solid rgba(255,255,255,.08)">Top by spend · 30 дней</div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:.5px solid rgba(255,255,255,.07);background:rgba(255,255,255,.05)">
+<div style="width:36px;height:36px;border-radius:999px;background:oklch(.6 .16 25);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">П</div>
+<div style="flex:1"><div style="font-size:14.5px;font-weight:560">Магазин</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">магазин · 4 алиаса · 🛒 Продукты</div></div>
+<div style="text-align:right"><div style="font-size:14px;font-weight:600;font-variant-numeric:tabular-nums">28 460 ₽</div><div style="font-size:11px;color:rgba(255,255,255,.35)">34 опер.</div></div>
+<div style="color:rgba(255,255,255,.3);font-size:13px">›</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:.5px solid rgba(255,255,255,.07)">
+<div style="width:36px;height:36px;border-radius:999px;background:oklch(.55 .17 265);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">O</div>
+<div style="flex:1"><div style="font-size:14.5px;font-weight:560">OZON</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">ООО «Ромашка Маркет» · ИНН 7700000005</div></div>
+<div style="text-align:right"><div style="font-size:14px;font-weight:600;font-variant-numeric:tabular-nums">19 730 ₽</div><div style="font-size:11px;color:rgba(255,255,255,.35)">11 опер.</div></div>
+<div style="color:rgba(255,255,255,.3);font-size:13px">›</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:.5px solid rgba(255,255,255,.07)">
+<div style="width:36px;height:36px;border-radius:999px;background:oklch(.72 .16 85);color:#1a1400;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">Я</div>
+<div style="flex:1"><div style="font-size:14.5px;font-weight:560">Яндекс Такси</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">компания · 🚕 Такси</div></div>
+<div style="text-align:right"><div style="font-size:14px;font-weight:600;font-variant-numeric:tabular-nums">14 210 ₽</div><div style="font-size:11px;color:rgba(255,255,255,.35)">41 опер.</div></div>
+<div style="color:rgba(255,255,255,.3);font-size:13px">›</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:.5px solid rgba(255,255,255,.07)">
+<div style="width:36px;height:36px;border-radius:999px;background:oklch(.6 .14 155);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">В</div>
+<div style="flex:1"><div style="font-size:14.5px;font-weight:560">ВкусВилл</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">магазин · 🛒 Продукты</div></div>
+<div style="text-align:right"><div style="font-size:14px;font-weight:600;font-variant-numeric:tabular-nums">12 890 ₽</div><div style="font-size:11px;color:rgba(255,255,255,.35)">19 опер.</div></div>
+<div style="color:rgba(255,255,255,.3);font-size:13px">›</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:.5px solid rgba(255,255,255,.07)">
+<div style="width:36px;height:36px;border-radius:999px;background:oklch(.5 .06 250);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">М</div>
+<div style="flex:1"><div style="font-size:14.5px;font-weight:560">Мосэнергосбыт</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">компания · 🏠 Жильё и ЖКУ</div></div>
+<div style="text-align:right"><div style="font-size:14px;font-weight:600;font-variant-numeric:tabular-nums">9 480 ₽</div><div style="font-size:11px;color:rgba(255,255,255,.35)">3 опер.</div></div>
+<div style="color:rgba(255,255,255,.3);font-size:13px">›</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 16px">
+<div style="width:36px;height:36px;border-radius:999px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">А</div>
+<div style="flex:1"><div style="font-size:14.5px;font-weight:560">Азизов А. А.</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">я · перевод между своими счетами</div></div>
+<div style="text-align:right"><div style="font-size:13px;color:rgba(255,255,255,.35)">исключено</div></div>
+</div>
+</div>
+<div style="margin-top:12px;padding:14px 16px;border-radius:20px;background:rgba(255,193,7,.1);border:1px solid rgba(255,193,7,.22)">
+<div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,209,102,.85)">Merge suggested</div>
+<div style="font-size:13.5px;line-height:1.4;margin-top:6px;color:rgba(255,255,255,.8)">«OZON.RU» и «ООО Ромашка Маркет» похожи на одного контрагента. Слить и объединить алиасы?</div>
+<div style="display:flex;gap:8px;margin-top:12px"><div style="padding:7px 13px;border-radius:999px;background:rgba(255,255,255,.9);color:#0b0d12;font-size:12.5px;font-weight:600">Слить</div><div style="padding:7px 13px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);font-size:12.5px">Не сейчас</div></div>
+</div>
+</div>
+</div>
+</x-import>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ 390 }}" height="{{ 844 }}" dark="{{ true }}" hint-size="390px,844px">
+<div style="position:absolute;inset:0;background:radial-gradient(110% 60% at 50% -10%, rgba(47,107,255,.3), transparent 62%),radial-gradient(90% 70% at 90% 40%, rgba(140,90,255,.16), transparent 60%),#08090d"></div>
+<div style="position:relative;height:100%;display:flex;flex-direction:column;color:#f3f4f6">
+<div style="padding:52px 16px 6px;display:flex;align-items:center;justify-content:space-between">
+<div style="width:36px;height:36px;border-radius:999px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:center;font-size:15px;color:rgba(255,255,255,.8)">‹</div>
+<div style="font-size:15px;font-weight:600">Контрагент</div>
+<div style="width:36px;height:36px;border-radius:999px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:center;font-size:14px;color:rgba(255,255,255,.8)">···</div>
+</div>
+<div style="flex:1;overflow:auto;padding:10px 16px 40px;display:flex;flex-direction:column;gap:14px">
+<div style="padding:20px 18px;border-radius:26px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px) saturate(170%);box-shadow:0 18px 40px rgba(0,0,0,.35);text-align:center">
+<div style="width:64px;height:64px;border-radius:999px;background:oklch(.55 .17 265);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;margin:0 auto 12px">O</div>
+<div style="font-size:22px;font-weight:680;letter-spacing:-.3px">OZON</div>
+<div style="font-size:12.5px;color:rgba(255,255,255,.45);margin-top:4px">ООО «Ромашка Маркет» · компания</div>
+<div style="display:flex;justify-content:center;gap:6px;margin-top:12px;flex-wrap:wrap">
+<div style="padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);font-size:11.5px;color:rgba(255,255,255,.7)">ИНН 7700000005</div>
+<div style="padding:5px 11px;border-radius:999px;background:rgba(139,195,74,.16);border:1px solid rgba(139,195,74,.28);font-size:11.5px">📦 Маркетплейсы</div>
+</div>
+<div style="display:flex;margin-top:18px;border-radius:18px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);overflow:hidden">
+<div style="flex:1;padding:12px 8px;text-align:center;border-right:.5px solid rgba(255,255,255,.08)"><div style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.4)">Year</div><div style="font-size:17px;font-weight:650;margin-top:3px;font-variant-numeric:tabular-nums">214 380</div></div>
+<div style="flex:1;padding:12px 8px;text-align:center;border-right:.5px solid rgba(255,255,255,.08)"><div style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.4)">Avg</div><div style="font-size:17px;font-weight:650;margin-top:3px;font-variant-numeric:tabular-nums">1 794</div></div>
+<div style="flex:1;padding:12px 8px;text-align:center"><div style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.4)">Trend</div><div style="font-size:17px;font-weight:650;margin-top:3px;color:oklch(.7 .18 22)">+18%</div></div>
+</div></div>
+
+<div style="padding:16px 18px;border-radius:24px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px)">
+<div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:15px;font-weight:640">По месяцам</div><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4)">12 months</div></div>
+<div style="display:flex;align-items:flex-end;gap:6px;height:96px;margin-top:16px">
+<div style="flex:1;height:32%;border-radius:6px 6px 3px 3px;background:rgba(255,255,255,.14)"></div>
+<div style="flex:1;height:48%;border-radius:6px 6px 3px 3px;background:rgba(255,255,255,.14)"></div>
+<div style="flex:1;height:41%;border-radius:6px 6px 3px 3px;background:rgba(255,255,255,.14)"></div>
+<div style="flex:1;height:62%;border-radius:6px 6px 3px 3px;background:rgba(255,255,255,.14)"></div>
+<div style="flex:1;height:55%;border-radius:6px 6px 3px 3px;background:rgba(255,255,255,.14)"></div>
+<div style="flex:1;height:70%;border-radius:6px 6px 3px 3px;background:rgba(255,255,255,.14)"></div>
+<div style="flex:1;height:44%;border-radius:6px 6px 3px 3px;background:rgba(255,255,255,.14)"></div>
+<div style="flex:1;height:58%;border-radius:6px 6px 3px 3px;background:rgba(255,255,255,.14)"></div>
+<div style="flex:1;height:66%;border-radius:6px 6px 3px 3px;background:rgba(255,255,255,.14)"></div>
+<div style="flex:1;height:52%;border-radius:6px 6px 3px 3px;background:rgba(255,255,255,.14)"></div>
+<div style="flex:1;height:78%;border-radius:6px 6px 3px 3px;background:rgba(255,255,255,.2)"></div>
+<div style="flex:1;height:100%;border-radius:6px 6px 3px 3px;background:linear-gradient(180deg,#6d8cff,#4d6cff)"></div>
+</div>
+<div style="display:flex;justify-content:space-between;margin-top:8px;font-size:10.5px;color:rgba(255,255,255,.35)"><span>окт</span><span>янв</span><span>апр</span><span>июл</span><span>сен</span></div>
+</div>
+
+<div style="border-radius:24px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px);overflow:hidden">
+<div style="padding:13px 16px;font-size:15px;font-weight:640;border-bottom:.5px solid rgba(255,255,255,.08)">Операции</div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:.5px solid rgba(255,255,255,.07)">
+<div style="flex:1"><div style="font-size:14px">OZON · Заказ 8842106</div><div style="font-size:11.5px;color:rgba(255,255,255,.4)">28.09 14:02 · Карта Сбер ·8724 · MCC 5399</div></div>
+<div style="font-size:14px;font-weight:600;color:oklch(.7 .18 22);font-variant-numeric:tabular-nums">−4 290,00</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:.5px solid rgba(255,255,255,.07)">
+<div style="flex:1"><div style="font-size:14px">OZON · Заказ 8790455</div><div style="font-size:11.5px;color:rgba(255,255,255,.4)">21.09 09:31 · Карта Т-Банк ·4412</div></div>
+<div style="font-size:14px;font-weight:600;color:oklch(.7 .18 22);font-variant-numeric:tabular-nums">−1 180,00</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 16px">
+<div style="flex:1"><div style="font-size:14px">OZON · Возврат</div><div style="font-size:11.5px;color:rgba(255,255,255,.4)">18.09 18:44 · ↩️ Возвраты</div></div>
+<div style="font-size:14px;font-weight:600;color:oklch(.76 .15 152);font-variant-numeric:tabular-nums">+2 340,00</div></div>
+</div>
+
+<div style="padding:16px 18px;border-radius:24px;background:linear-gradient(140deg,rgba(47,107,255,.2),rgba(140,90,255,.12));border:1px solid rgba(130,160,255,.24);backdrop-filter:blur(30px)">
+<div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.55)">AI insight</div>
+<div style="font-size:14.5px;line-height:1.45;margin-top:7px">За год в OZON ушло 214 380 ₽ — это 7% всех расходов. 38 заказов дешевле 700 ₽; объединение в один заказ в неделю экономит ~9 400 ₽ доставки.</div>
+</div>
+</div>
+</div>
+</x-import>
+</div>
+</div>
+
+<div class="dv-opt" id="1d"><div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Подключения и синк · импорт выписки</div>
+<div class="dv-row">
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ 390 }}" height="{{ 844 }}" dark="{{ true }}" hint-size="390px,844px">
+<div style="position:absolute;inset:0;background:radial-gradient(100% 60% at 20% 0%, rgba(0,190,160,.2), transparent 60%),radial-gradient(90% 70% at 95% 30%, rgba(47,107,255,.22), transparent 60%),#08090d"></div>
+<div style="position:relative;height:100%;display:flex;flex-direction:column;color:#f3f4f6">
+<div style="padding:58px 20px 8px"><div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.45)">Connections</div>
+<div style="font-size:30px;font-weight:700;letter-spacing:-.4px;margin-top:2px">Подключения</div>
+<div style="font-size:13px;color:rgba(255,255,255,.45);margin-top:6px;line-height:1.4">Только чтение. Токены хранятся на устройстве и не покидают его.</div></div>
+<div style="flex:1;overflow:auto;padding:10px 16px 120px;display:flex;flex-direction:column;gap:12px">
+
+<div style="padding:16px;border-radius:24px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px) saturate(170%)">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:40px;height:40px;border-radius:13px;background:oklch(.6 .15 150);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700">С</div>
+<div style="flex:1"><div style="font-size:15px;font-weight:600">Сбер · Карта</div><div style="font-size:11.5px;color:rgba(255,255,255,.45)">Statement import · PDF-выписка</div></div>
+<div style="padding:5px 10px;border-radius:999px;background:rgba(76,175,80,.18);border:1px solid rgba(76,175,80,.3);font-size:11.5px;color:oklch(.85 .12 152)">активно</div></div>
+<div style="display:flex;gap:10px;margin-top:14px">
+<div style="flex:1;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.05)"><div style="font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.4)">Last sync</div><div style="font-size:13.5px;margin-top:3px">сегодня 09:14</div></div>
+<div style="flex:1;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.05)"><div style="font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.4)">Imported</div><div style="font-size:13.5px;margin-top:3px">1 284 операции</div></div></div>
+</div>
+
+<div style="padding:16px;border-radius:24px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px) saturate(170%)">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:40px;height:40px;border-radius:13px;background:oklch(.78 .16 88);color:#1a1400;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700">Т</div>
+<div style="flex:1"><div style="font-size:15px;font-weight:600">Т-Инвестиции</div><div style="font-size:11.5px;color:rgba(255,255,255,.45)">T-Invest API · read-only токен</div></div>
+<div style="width:52px;height:31px;border-radius:999px;background:oklch(.6 .18 150);position:relative;box-shadow:0 0 0 1px rgba(255,255,255,.1) inset"><div style="position:absolute;top:2px;right:2px;width:27px;height:27px;border-radius:999px;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.3)"></div></div></div>
+<div style="margin-top:14px;padding:11px 13px;border-radius:14px;background:rgba(255,255,255,.05);display:flex;align-items:center;gap:10px">
+<div style="width:26px;height:26px;border-radius:999px;border:2px solid rgba(255,255,255,.15);border-top-color:#7fa2ff"></div>
+<div style="flex:1;font-size:13px;color:rgba(255,255,255,.7)">Синхронизация · позиции и денежные операции</div><div style="font-size:12px;color:rgba(255,255,255,.4);font-variant-numeric:tabular-nums">62%</div></div>
+</div>
+
+<div style="padding:16px;border-radius:24px;background:rgba(255,255,255,.06);border:1px solid rgba(255,152,0,.3);backdrop-filter:blur(30px) saturate(170%)">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:40px;height:40px;border-radius:13px;background:oklch(.78 .16 88);color:#1a1400;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700">Т</div>
+<div style="flex:1"><div style="font-size:15px;font-weight:600">Т-Бизнес · р/с ИП</div><div style="font-size:11.5px;color:rgba(255,255,255,.45)">T-API · счета и выписки</div></div>
+<div style="padding:5px 10px;border-radius:999px;background:rgba(255,152,0,.18);border:1px solid rgba(255,152,0,.32);font-size:11.5px;color:oklch(.85 .13 80)">нужен вход</div></div>
+<div style="font-size:13px;color:rgba(255,255,255,.6);margin-top:12px;line-height:1.4">Срок согласия истёк 02.09. Переподключите токен, чтобы догрузить операции с 02.09.</div>
+<div style="margin-top:13px;padding:9px 15px;border-radius:999px;background:#fff;color:#0b0d12;font-size:13px;font-weight:600;display:inline-block">Переподключить</div>
+</div>
+
+<div style="padding:16px;border-radius:24px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.16)">
+<div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.4)">Add source</div>
+<div style="display:flex;flex-direction:column;gap:2px;margin-top:8px">
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:.5px solid rgba(255,255,255,.07)"><div style="width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.09);display:flex;align-items:center;justify-content:center">＋</div><div style="flex:1;font-size:14px">Загрузить выписку</div><div style="color:rgba(255,255,255,.3)">›</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:.5px solid rgba(255,255,255,.07)"><div style="width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.09);display:flex;align-items:center;justify-content:center">✉</div><div style="flex:1;font-size:14px">Почтовый ящик для выписок</div><div style="color:rgba(255,255,255,.3)">›</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0"><div style="width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.09);display:flex;align-items:center;justify-content:center">🔑</div><div style="flex:1;font-size:14px">API-токен банка</div><div style="color:rgba(255,255,255,.3)">›</div></div>
+</div></div>
+
+<div style="font-size:11.5px;color:rgba(255,255,255,.35);line-height:1.45;padding:0 4px">Приложение не выполняет платежей и переводов. Все коннекторы работают только на чтение.</div>
+</div>
+</div>
+</x-import>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ 390 }}" height="{{ 844 }}" dark="{{ true }}" hint-size="390px,844px">
+<div style="position:absolute;inset:0;background:radial-gradient(100% 60% at 80% 0%, rgba(47,107,255,.26), transparent 60%),#08090d"></div>
+<div style="position:relative;height:100%;display:flex;flex-direction:column;color:#f3f4f6">
+<div style="padding:52px 16px 6px;display:flex;align-items:center;justify-content:space-between">
+<div style="font-size:15px;color:rgba(255,255,255,.6)">Отмена</div><div style="font-size:15px;font-weight:600">Импорт выписки</div><div style="font-size:15px;color:rgba(255,255,255,.25)">Готово</div></div>
+<div style="flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:14px">
+<div style="padding:26px 18px;border-radius:26px;background:rgba(255,255,255,.05);border:1px dashed rgba(255,255,255,.2);text-align:center">
+<div style="width:54px;height:54px;border-radius:18px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 12px">⇪</div>
+<div style="font-size:15px;font-weight:600">Перетащите файл или выберите</div>
+<div style="font-size:12.5px;color:rgba(255,255,255,.45);margin-top:6px;line-height:1.45">Сбер — PDF-выписка по карте · Т-Банк — XLSX/CSV выгрузка операций</div>
+</div>
+<div style="border-radius:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px);overflow:hidden">
+<div style="padding:12px 16px;display:flex;align-items:center;gap:12px;border-bottom:.5px solid rgba(255,255,255,.08)">
+<div style="width:34px;height:34px;border-radius:10px;background:oklch(.6 .15 150);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">PDF</div>
+<div style="flex:1"><div style="font-size:14px">Выписка_Сбер_09.2026.pdf</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">Сбер · Карта ·8724 · 248 КБ</div></div>
+<div style="font-size:12px;color:oklch(.8 .13 152)">разобрано</div></div>
+<div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;justify-content:space-between;font-size:13.5px"><span style="color:rgba(255,255,255,.6)">Найдено операций</span><span style="font-weight:600">312</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13.5px"><span style="color:rgba(255,255,255,.6)">Новых после дедупа</span><span style="font-weight:600">184</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13.5px"><span style="color:rgba(255,255,255,.6)">Контрагентов сопоставлено</span><span style="font-weight:600">171 из 184</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13.5px"><span style="color:rgba(255,255,255,.6)">Переводов между своими</span><span style="font-weight:600">9 · исключены</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13.5px"><span style="color:rgba(255,255,255,.6)">Категоризовано автоматически</span><span style="font-weight:600">168 · правила + MCC</span></div>
+<div style="height:6px;border-radius:3px;background:rgba(255,255,255,.09);overflow:hidden;margin-top:2px"><div style="height:100%;width:91%;background:linear-gradient(90deg,#4d7cff,#8a5cff);border-radius:3px"></div></div>
+</div></div>
+<div style="padding:14px 16px;border-radius:20px;background:rgba(255,193,7,.1);border:1px solid rgba(255,193,7,.22)">
+<div style="font-size:13.5px;line-height:1.45;color:rgba(255,255,255,.82)">16 операций без категории. ИИ предложил категории для 14 — подтвердить пачкой?</div>
+<div style="display:flex;gap:8px;margin-top:12px"><div style="padding:7px 13px;border-radius:999px;background:#fff;color:#0b0d12;font-size:12.5px;font-weight:600">Подтвердить 14</div><div style="padding:7px 13px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);font-size:12.5px">Разобрать вручную</div></div>
+</div>
+<div style="margin-top:2px;padding:14px 16px;border-radius:20px;background:rgba(255,255,255,.05);font-size:12px;color:rgba(255,255,255,.45);line-height:1.5">Сырая выписка сохраняется зашифрованной, чтобы перепрогнать разбор при обновлении парсера.</div>
+<div style="padding:13px;border-radius:999px;background:#2f6bff;color:#fff;text-align:center;font-size:15px;font-weight:600">Импортировать 184 операции</div>
+</div>
+</div>
+</x-import>
+</div>
+</div>
+
+<div class="dv-opt" id="1e"><div class="dv-olabel"><a class="dv-oid" href="#1e">1e</a>Настройки · светлая · приватность и профили</div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ 390 }}" height="{{ 844 }}" hint-size="390px,844px">
+<div style="position:absolute;inset:0;background:radial-gradient(110% 60% at 10% 0%, rgba(47,107,255,.14), transparent 60%),radial-gradient(90% 60% at 95% 20%, rgba(0,180,160,.12), transparent 60%),#f3f3f6"></div>
+<div style="position:relative;height:100%;display:flex;flex-direction:column;color:#14161a">
+<div style="padding:58px 20px 10px"><div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(0,0,0,.42)">Settings</div>
+<div style="font-size:30px;font-weight:700;letter-spacing:-.4px;margin-top:2px">Настройки</div></div>
+<div style="flex:1;overflow:auto;padding:8px 16px 40px;display:flex;flex-direction:column;gap:18px">
+
+<div style="padding:16px;border-radius:22px;background:rgba(255,255,255,.75);border:1px solid rgba(0,0,0,.06);backdrop-filter:blur(30px);box-shadow:0 8px 24px rgba(20,30,60,.07);display:flex;align-items:center;gap:14px">
+<div style="width:48px;height:48px;border-radius:999px;background:linear-gradient(150deg,#4d7cff,#8a5cff);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700">А</div>
+<div style="flex:1"><div style="font-size:16px;font-weight:620">azizov@mail.ru</div><div style="font-size:12.5px;color:rgba(0,0,0,.45)">2 профиля · 4 устройства</div></div>
+<div style="color:rgba(0,0,0,.25)">›</div></div>
+
+<div>
+<div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(0,0,0,.4);padding:0 6px 8px">Profiles</div>
+<div style="border-radius:20px;background:rgba(255,255,255,.75);border:1px solid rgba(0,0,0,.06);backdrop-filter:blur(30px);overflow:hidden">
+<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:.5px solid rgba(0,0,0,.07)"><div style="width:28px;height:28px;border-radius:8px;background:rgba(47,107,255,.14);display:flex;align-items:center;justify-content:center;font-size:13px">👤</div><div style="flex:1;font-size:15px">Физлицо</div><div style="font-size:13px;color:rgba(0,0,0,.4)">5 счетов</div><div style="color:rgba(0,0,0,.25);margin-left:6px">›</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:.5px solid rgba(0,0,0,.07)"><div style="width:28px;height:28px;border-radius:8px;background:rgba(0,180,160,.16);display:flex;align-items:center;justify-content:center;font-size:13px">🏢</div><div style="flex:1;font-size:15px">ИП Азизов А. А.</div><div style="font-size:13px;color:rgba(0,0,0,.4)">2 счёта</div><div style="color:rgba(0,0,0,.25);margin-left:6px">›</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:12px 16px"><div style="flex:1;font-size:15px;color:#2f6bff">Добавить профиль</div></div>
+</div></div>
+
+<div>
+<div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(0,0,0,.4);padding:0 6px 8px">Privacy &amp; AI</div>
+<div style="border-radius:20px;background:rgba(255,255,255,.75);border:1px solid rgba(0,0,0,.06);backdrop-filter:blur(30px);overflow:hidden">
+<div style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:.5px solid rgba(0,0,0,.07)"><div style="flex:1"><div style="font-size:15px">Локальная ИИ-категоризация</div><div style="font-size:11.5px;color:rgba(0,0,0,.45);margin-top:2px">Модель на устройстве, данные не уходят</div></div>
+<div style="width:52px;height:31px;border-radius:999px;background:oklch(.6 .18 150);position:relative"><div style="position:absolute;top:2px;right:2px;width:27px;height:27px;border-radius:999px;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.2)"></div></div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:.5px solid rgba(0,0,0,.07)"><div style="flex:1"><div style="font-size:15px">Внешняя LLM для советов</div><div style="font-size:11.5px;color:rgba(0,0,0,.45);margin-top:2px">Отправляется обезличенное описание и сумма</div></div>
+<div style="width:52px;height:31px;border-radius:999px;background:rgba(0,0,0,.12);position:relative"><div style="position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:999px;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.15)"></div></div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:13px 16px"><div style="flex:1;font-size:15px">Что именно отправляется</div><div style="font-size:13px;color:rgba(0,0,0,.4)">Пример</div><div style="color:rgba(0,0,0,.25);margin-left:6px">›</div></div>
+</div></div>
+
+<div>
+<div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(0,0,0,.4);padding:0 6px 8px">Security</div>
+<div style="border-radius:20px;background:rgba(255,255,255,.75);border:1px solid rgba(0,0,0,.06);backdrop-filter:blur(30px);overflow:hidden">
+<div style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:.5px solid rgba(0,0,0,.07)"><div style="flex:1;font-size:15px">Face ID для входа</div><div style="width:52px;height:31px;border-radius:999px;background:oklch(.6 .18 150);position:relative"><div style="position:absolute;top:2px;right:2px;width:27px;height:27px;border-radius:999px;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.2)"></div></div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:.5px solid rgba(0,0,0,.07)"><div style="flex:1;font-size:15px">Двухфакторная аутентификация</div><div style="font-size:13px;color:oklch(.55 .15 150)">включена</div><div style="color:rgba(0,0,0,.25);margin-left:6px">›</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:.5px solid rgba(0,0,0,.07)"><div style="flex:1;font-size:15px">Код восстановления</div><div style="font-size:13px;color:oklch(.6 .16 60)">не сохранён</div><div style="color:rgba(0,0,0,.25);margin-left:6px">›</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:13px 16px"><div style="flex:1;font-size:15px">Устройства и синхронизация</div><div style="font-size:13px;color:rgba(0,0,0,.4)">4</div><div style="color:rgba(0,0,0,.25);margin-left:6px">›</div></div>
+</div>
+<div style="font-size:11.5px;color:rgba(0,0,0,.42);line-height:1.5;padding:10px 6px 0">Сервер хранит только зашифрованные на устройстве изменения. Забытый пароль без кода восстановления делает данные недоступными.</div>
+</div>
+
+<div>
+<div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(0,0,0,.4);padding:0 6px 8px">Appearance</div>
+<div style="border-radius:20px;background:rgba(255,255,255,.75);border:1px solid rgba(0,0,0,.06);backdrop-filter:blur(30px);padding:14px 16px">
+<div style="display:flex;gap:8px">
+<div style="flex:1;padding:10px 0;text-align:center;border-radius:12px;background:#14161a;color:#fff;font-size:13px;font-weight:600">Тёмная</div>
+<div style="flex:1;padding:10px 0;text-align:center;border-radius:12px;background:#fff;border:1px solid rgba(0,0,0,.08);font-size:13px;font-weight:600">Светлая</div>
+<div style="flex:1;padding:10px 0;text-align:center;border-radius:12px;background:rgba(47,107,255,.12);color:#2f6bff;font-size:13px;font-weight:600">Система</div>
+</div></div></div>
+</div>
+</div>
+</x-import>
+</div>
+
+<div class="dv-opt" id="1f"><div class="dv-olabel"><a class="dv-oid" href="#1f">1f</a>ИИ-чат как плавающая командная строка поверх обзора</div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ 390 }}" height="{{ 844 }}" dark="{{ true }}" hint-size="390px,844px">
+<div style="position:absolute;inset:0;background:radial-gradient(120% 80% at 20% -10%, rgba(47,107,255,.28), transparent 60%),radial-gradient(90% 70% at 90% 15%, rgba(140,90,255,.22), transparent 60%),#08090d"></div>
+<div style="position:relative;height:100%;filter:blur(6px);opacity:.5;padding:58px 20px 0;color:#f3f4f6">
+<div style="font-size:30px;font-weight:700">Обзор</div>
+<div style="margin-top:16px;height:150px;border-radius:24px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1)"></div>
+<div style="margin-top:14px;height:220px;border-radius:24px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1)"></div>
+<div style="margin-top:14px;height:180px;border-radius:24px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1)"></div>
+</div>
+<div style="position:absolute;inset:0;background:rgba(6,7,10,.45)"></div>
+<div style="position:absolute;left:12px;right:12px;top:96px;border-radius:28px;background:rgba(28,30,38,.72);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(40px) saturate(180%);box-shadow:0 30px 70px rgba(0,0,0,.6),0 1px 0 rgba(255,255,255,.1) inset;overflow:hidden;color:#f3f4f6">
+<div style="display:flex;align-items:center;gap:10px;padding:15px 18px;border-bottom:.5px solid rgba(255,255,255,.1)">
+<div style="width:22px;height:22px;border-radius:999px;background:linear-gradient(150deg,#4d7cff,#8a5cff);display:flex;align-items:center;justify-content:center;font-size:11px">✦</div>
+<div style="flex:1;font-size:16px">куда ушли деньги в мае?<span style="display:inline-block;width:2px;height:17px;background:#7fa2ff;margin-left:2px;vertical-align:-3px"></span></div>
+<div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.35)">⌘K</div></div>
+<div style="padding:14px 18px 16px">
+<div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4)">Answer</div>
+<div style="font-size:14.5px;line-height:1.5;margin-top:8px;color:rgba(255,255,255,.9)">В мае расходы — 268 340 ₽. Больше всего ушло на продукты (61 240 ₽) и кафе (38 910 ₽). Кафе выросли на 41% к апрелю, остальное почти без изменений.</div>
+<div style="display:flex;flex-direction:column;gap:2px;margin-top:14px">
+<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:.5px solid rgba(255,255,255,.08)"><div style="width:26px;height:26px;border-radius:8px;background:rgba(76,175,80,.2);display:flex;align-items:center;justify-content:center;font-size:13px">🛒</div><div style="flex:1;font-size:13.5px">Продукты</div><div style="font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums">61 240 ₽</div></div>
+<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:.5px solid rgba(255,255,255,.08)"><div style="width:26px;height:26px;border-radius:8px;background:rgba(255,152,0,.2);display:flex;align-items:center;justify-content:center;font-size:13px">🍽️</div><div style="flex:1;font-size:13.5px">Кафе и рестораны <span style="color:oklch(.7 .18 22);font-size:12px">+41%</span></div><div style="font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums">38 910 ₽</div></div>
+<div style="display:flex;align-items:center;gap:10px;padding:9px 0"><div style="width:26px;height:26px;border-radius:8px;background:rgba(33,150,243,.2);display:flex;align-items:center;justify-content:center;font-size:13px">🚌</div><div style="flex:1;font-size:13.5px">Транспорт</div><div style="font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums">21 480 ₽</div></div>
+</div>
+<div style="display:flex;gap:7px;margin-top:14px;flex-wrap:wrap">
+<div style="padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);font-size:12.5px;color:rgba(255,255,255,.8)">Открыть операции</div>
+<div style="padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);font-size:12.5px;color:rgba(255,255,255,.8)">Сравнить с апрелем</div>
+<div style="padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);font-size:12.5px;color:rgba(255,255,255,.8)">Где тратить меньше</div>
+</div>
+<div style="margin-top:14px;font-size:11px;color:rgba(255,255,255,.3);line-height:1.45">Ответ построен на локальных данных. Во внешнюю модель ушли только описания и суммы.</div>
+</div>
+</div>
+</x-import>
+</div>
+
+<div class="dv-opt" id="1g"><div class="dv-olabel"><a class="dv-oid" href="#1g">1g</a>Операции · категории · счета и банки</div>
+<div class="dv-row">
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ 390 }}" height="{{ 844 }}" dark="{{ true }}" hint-size="390px,844px">
+<div style="position:absolute;inset:0;background:radial-gradient(100% 60% at 30% 0%, rgba(47,107,255,.22), transparent 60%),#08090d"></div>
+<div style="position:relative;height:100%;display:flex;flex-direction:column;color:#f3f4f6">
+<div style="padding:58px 20px 8px"><div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.45)">Transactions</div><div style="font-size:30px;font-weight:700;letter-spacing:-.4px;margin-top:2px">Операции</div></div>
+<div style="padding:6px 16px 8px;display:flex;gap:7px">
+<div style="padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.9);color:#0b0d12;font-size:12.5px;font-weight:600">Все</div>
+<div style="padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);font-size:12.5px;color:rgba(255,255,255,.75)">Без категории 7</div>
+<div style="padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);font-size:12.5px;color:rgba(255,255,255,.75)">Переводы</div>
+</div>
+<div style="flex:1;overflow:auto;padding:4px 16px 120px">
+<div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.35);padding:10px 4px 8px">Сегодня · 28 сентября</div>
+<div style="border-radius:20px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px);overflow:hidden">
+<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:.5px solid rgba(255,255,255,.07)">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(76,175,80,.2);display:flex;align-items:center;justify-content:center;font-size:15px">🛒</div>
+<div style="flex:1"><div style="font-size:14.5px">Магазин</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">Продукты · Сбер ·8724 · 14:02</div></div>
+<div style="font-size:14.5px;font-weight:600;color:oklch(.7 .18 22);font-variant-numeric:tabular-nums">−1 284</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:.5px solid rgba(255,255,255,.07);background:rgba(47,107,255,.08)">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(255,255,255,.09);display:flex;align-items:center;justify-content:center;font-size:15px">❔</div>
+<div style="flex:1"><div style="font-size:14.5px">ИП Сорокин М. В.</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">СБП по телефону · Т-Банк ·4412</div>
+<div style="display:flex;align-items:center;gap:7px;margin-top:7px"><div style="padding:5px 10px;border-radius:999px;background:rgba(47,107,255,.22);border:1px solid rgba(120,150,255,.34);font-size:11.5px">ИИ: 🎓 Образование</div><div style="width:26px;height:26px;border-radius:999px;background:#fff;color:#0b0d12;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">✓</div></div></div>
+<div style="font-size:14.5px;font-weight:600;color:oklch(.7 .18 22);font-variant-numeric:tabular-nums">−12 000</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 14px">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(255,152,0,.2);display:flex;align-items:center;justify-content:center;font-size:15px">🍽️</div>
+<div style="flex:1"><div style="font-size:14.5px">Самокат</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">Кафе и рестораны · по MCC 5812</div></div>
+<div style="font-size:14.5px;font-weight:600;color:oklch(.7 .18 22);font-variant-numeric:tabular-nums">−890</div></div>
+</div>
+<div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.35);padding:16px 4px 8px">27 сентября</div>
+<div style="border-radius:20px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px);overflow:hidden">
+<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:.5px solid rgba(255,255,255,.07)">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(46,125,50,.24);display:flex;align-items:center;justify-content:center;font-size:15px">💼</div>
+<div style="flex:1"><div style="font-size:14.5px">ООО «Ксенум»</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">Зарплата · вручную</div></div>
+<div style="font-size:14.5px;font-weight:600;color:oklch(.76 .15 152);font-variant-numeric:tabular-nums">+184 000</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:.5px solid rgba(255,255,255,.07);opacity:.55">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(120,144,156,.22);display:flex;align-items:center;justify-content:center;font-size:15px">🔄</div>
+<div style="flex:1"><div style="font-size:14.5px">Азизов А. А.</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">Перевод между своими · не влияет на расходы</div></div>
+<div style="font-size:14.5px;font-variant-numeric:tabular-nums">−50 000</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 14px">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(96,125,139,.22);display:flex;align-items:center;justify-content:center;font-size:15px">🏠</div>
+<div style="flex:1"><div style="font-size:14.5px">Мосэнергосбыт</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">Жильё и ЖКУ · правило</div></div>
+<div style="font-size:14.5px;font-weight:600;color:oklch(.7 .18 22);font-variant-numeric:tabular-nums">−3 160</div></div>
+</div>
+</div>
+<div style="position:absolute;left:14px;right:14px;bottom:26px;height:56px;border-radius:24px;background:rgba(22,24,30,.62);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(30px) saturate(180%);display:flex;align-items:center;padding:0 16px;gap:10px;box-shadow:0 12px 34px rgba(0,0,0,.45)">
+<div style="width:22px;height:22px;border-radius:999px;background:linear-gradient(150deg,#4d7cff,#8a5cff);display:flex;align-items:center;justify-content:center;font-size:11px">✦</div>
+<div style="flex:1;font-size:14px;color:rgba(255,255,255,.42)">Спросить о тратах…</div>
+<div style="font-size:11px;letter-spacing:.06em;color:rgba(255,255,255,.3)">⌘K</div></div>
+</div>
+</x-import>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ 390 }}" height="{{ 844 }}" dark="{{ true }}" hint-size="390px,844px">
+<div style="position:absolute;inset:0;background:radial-gradient(100% 60% at 70% 0%, rgba(0,190,160,.22), transparent 60%),radial-gradient(90% 60% at 10% 30%, rgba(140,90,255,.16), transparent 60%),#08090d"></div>
+<div style="position:relative;height:100%;display:flex;flex-direction:column;color:#f3f4f6">
+<div style="padding:58px 20px 8px"><div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.45)">Categories</div><div style="font-size:30px;font-weight:700;letter-spacing:-.4px;margin-top:2px">Категории</div></div>
+<div style="flex:1;overflow:auto;padding:10px 16px 120px;display:flex;flex-direction:column;gap:14px">
+<div style="padding:18px;border-radius:24px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px)">
+<div style="display:flex;align-items:center;gap:18px">
+<div style="width:118px;height:118px;border-radius:999px;background:conic-gradient(oklch(.72 .14 150) 0 23%,oklch(.75 .15 70) 23% 38%,oklch(.7 .14 250) 38% 46%,oklch(.74 .14 130) 46% 54%,oklch(.68 .06 240) 54% 61%,oklch(.6 .12 300) 61% 72%,rgba(255,255,255,.14) 72% 100%);display:flex;align-items:center;justify-content:center">
+<div style="width:78px;height:78px;border-radius:999px;background:#0c0e13;display:flex;flex-direction:column;align-items:center;justify-content:center">
+<div style="font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.4)">Total</div>
+<div style="font-size:15px;font-weight:680;font-variant-numeric:tabular-nums">268 340</div></div></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:7px;font-size:12.5px">
+<div style="display:flex;align-items:center;gap:8px"><div style="width:9px;height:9px;border-radius:3px;background:oklch(.72 .14 150)"></div>Продукты<span style="margin-left:auto;color:rgba(255,255,255,.5)">23%</span></div>
+<div style="display:flex;align-items:center;gap:8px"><div style="width:9px;height:9px;border-radius:3px;background:oklch(.75 .15 70)"></div>Кафе<span style="margin-left:auto;color:rgba(255,255,255,.5)">15%</span></div>
+<div style="display:flex;align-items:center;gap:8px"><div style="width:9px;height:9px;border-radius:3px;background:oklch(.7 .14 250)"></div>Транспорт<span style="margin-left:auto;color:rgba(255,255,255,.5)">8%</span></div>
+<div style="display:flex;align-items:center;gap:8px"><div style="width:9px;height:9px;border-radius:3px;background:oklch(.74 .14 130)"></div>Маркетплейсы<span style="margin-left:auto;color:rgba(255,255,255,.5)">8%</span></div>
+<div style="display:flex;align-items:center;gap:8px"><div style="width:9px;height:9px;border-radius:3px;background:rgba(255,255,255,.2)"></div>Прочее<span style="margin-left:auto;color:rgba(255,255,255,.5)">46%</span></div>
+</div></div></div>
+<div style="border-radius:22px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px);overflow:hidden">
+<div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:.5px solid rgba(255,255,255,.07)">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(76,175,80,.2);display:flex;align-items:center;justify-content:center;font-size:15px">🛒</div>
+<div style="flex:1"><div style="font-size:14.5px">Продукты</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">67 операций · 4 контрагента</div></div>
+<div style="text-align:right"><div style="font-size:14px;font-weight:600;font-variant-numeric:tabular-nums">61 240 ₽</div><div style="font-size:11px;color:oklch(.76 .15 152)">−4%</div></div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:.5px solid rgba(255,255,255,.07)">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(255,152,0,.2);display:flex;align-items:center;justify-content:center;font-size:15px">🍽️</div>
+<div style="flex:1"><div style="font-size:14.5px">Кафе и рестораны</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">41 операция · доставка 18 400 ₽</div></div>
+<div style="text-align:right"><div style="font-size:14px;font-weight:600;font-variant-numeric:tabular-nums">38 910 ₽</div><div style="font-size:11px;color:oklch(.7 .18 22)">+41%</div></div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:.5px solid rgba(255,255,255,.07)">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(33,150,243,.2);display:flex;align-items:center;justify-content:center;font-size:15px">🚌</div>
+<div style="flex:1"><div style="font-size:14.5px">Транспорт</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">Такси 14 210 · Топливо 5 090</div></div>
+<div style="text-align:right"><div style="font-size:14px;font-weight:600;font-variant-numeric:tabular-nums">21 480 ₽</div><div style="font-size:11px;color:rgba(255,255,255,.4)">+2%</div></div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:.5px solid rgba(255,255,255,.07)">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(0,188,212,.2);display:flex;align-items:center;justify-content:center;font-size:15px">🔁</div>
+<div style="flex:1"><div style="font-size:14.5px">Подписки</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">7 регулярных платежей</div></div>
+<div style="text-align:right"><div style="font-size:14px;font-weight:600;font-variant-numeric:tabular-nums">4 260 ₽</div><div style="font-size:11px;color:rgba(255,255,255,.4)">=</div></div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:12px 15px">
+<div style="width:34px;height:34px;border-radius:11px;background:rgba(255,255,255,.09);display:flex;align-items:center;justify-content:center;font-size:15px">❔</div>
+<div style="flex:1"><div style="font-size:14.5px">Без категории</div><div style="font-size:11.5px;color:#6f97ff">разобрать 7 операций</div></div>
+<div style="font-size:14px;font-weight:600;font-variant-numeric:tabular-nums">34 100 ₽</div></div>
+</div>
+</div>
+</div>
+</x-import>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ 390 }}" height="{{ 844 }}" dark="{{ true }}" hint-size="390px,844px">
+<div style="position:absolute;inset:0;background:radial-gradient(100% 60% at 50% 0%, rgba(140,90,255,.24), transparent 60%),#08090d"></div>
+<div style="position:relative;height:100%;display:flex;flex-direction:column;color:#f3f4f6">
+<div style="padding:58px 20px 8px"><div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.45)">Accounts</div><div style="font-size:30px;font-weight:700;letter-spacing:-.4px;margin-top:2px">Счета и банки</div></div>
+<div style="flex:1;overflow:auto;padding:10px 16px 120px;display:flex;flex-direction:column;gap:12px">
+<div style="padding:16px 18px;border-radius:24px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px)">
+<div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.45)">Net worth</div>
+<div style="font-size:32px;font-weight:700;letter-spacing:-.8px;margin-top:4px;font-variant-numeric:tabular-nums">3 184 920 ₽</div>
+<div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-top:14px;gap:2px">
+<div style="width:38%;background:oklch(.7 .14 250)"></div><div style="width:26%;background:oklch(.72 .14 150)"></div><div style="width:22%;background:oklch(.72 .15 88)"></div><div style="width:14%;background:oklch(.66 .18 22)"></div></div>
+<div style="display:flex;gap:12px;margin-top:10px;font-size:11.5px;color:rgba(255,255,255,.5);flex-wrap:wrap">
+<span>Карты 1 210 000</span><span>Вклад 820 000</span><span>Брокерский 690 000</span><span style="color:oklch(.7 .18 22)">Кредит −435 000</span></div>
+</div>
+<div style="padding:14px 16px;border-radius:22px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px)">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:38px;height:38px;border-radius:12px;background:oklch(.6 .15 150);display:flex;align-items:center;justify-content:center;font-weight:700">С</div>
+<div style="flex:1"><div style="font-size:14.5px;font-weight:600">Сбер</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">2 счёта · выписка PDF</div></div>
+<div style="font-size:15px;font-weight:650;font-variant-numeric:tabular-nums">742 180 ₽</div></div>
+<div style="margin-top:12px;display:flex;flex-direction:column;gap:2px">
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:.5px solid rgba(255,255,255,.07)"><div style="font-size:13.5px;flex:1">Карта Мир ·8724</div><div style="font-size:13.5px;font-variant-numeric:tabular-nums">184 320 ₽</div></div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:.5px solid rgba(255,255,255,.07)"><div style="font-size:13.5px;flex:1">Вклад «Лучший» · до 14.03.27</div><div style="font-size:13.5px;font-variant-numeric:tabular-nums">557 860 ₽</div></div>
+</div></div>
+<div style="padding:14px 16px;border-radius:22px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px)">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:38px;height:38px;border-radius:12px;background:oklch(.78 .16 88);color:#1a1400;display:flex;align-items:center;justify-content:center;font-weight:700">Т</div>
+<div style="flex:1"><div style="font-size:14.5px;font-weight:600">Т-Банк · Т-Инвестиции</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">3 счёта · API</div></div>
+<div style="font-size:15px;font-weight:650;font-variant-numeric:tabular-nums">1 878 740 ₽</div></div>
+<div style="margin-top:12px;display:flex;flex-direction:column;gap:2px">
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:.5px solid rgba(255,255,255,.07)"><div style="font-size:13.5px;flex:1">Карта ·4412</div><div style="font-size:13.5px;font-variant-numeric:tabular-nums">96 400 ₽</div></div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:.5px solid rgba(255,255,255,.07)"><div style="font-size:13.5px;flex:1">Р/с ИП ·2019</div><div style="font-size:13.5px;font-variant-numeric:tabular-nums">1 092 340 ₽</div></div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:.5px solid rgba(255,255,255,.07)"><div style="font-size:13.5px;flex:1">ИИС · 12 позиций</div><div style="font-size:13.5px;font-variant-numeric:tabular-nums">690 000 ₽</div></div>
+</div></div>
+<div style="padding:14px 16px;border-radius:22px;background:rgba(255,255,255,.055);border:1px solid rgba(183,28,28,.3);backdrop-filter:blur(30px)">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:38px;height:38px;border-radius:12px;background:oklch(.6 .18 25);display:flex;align-items:center;justify-content:center;font-weight:700">А</div>
+<div style="flex:1"><div style="font-size:14.5px;font-weight:600">Альфа-Банк</div><div style="font-size:11.5px;color:rgba(255,255,255,.42)">Кредит · платёж 5-го числа</div></div>
+<div style="font-size:15px;font-weight:650;color:oklch(.7 .18 22);font-variant-numeric:tabular-nums">−435 000 ₽</div></div>
+<div style="margin-top:12px;padding-top:10px;border-top:.5px solid rgba(255,255,255,.07);display:flex;justify-content:space-between;font-size:12.5px;color:rgba(255,255,255,.55)"><span>Следующий платёж 05.10</span><span style="color:#f3f4f6;font-weight:600">18 400 ₽</span></div>
+</div>
+</div>
+</div>
+</x-import>
+</div>
+</div>
+
+<div class="dv-opt" id="1h"><div class="dv-olabel"><a class="dv-oid" href="#1h">1h</a>Варианты навигации: таббар · плавающая панель · боковая рейка</div>
+<div class="dv-row">
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ 300 }}" height="{{ 650 }}" dark="{{ true }}" hint-size="300px,650px">
+<div style="position:absolute;inset:0;background:radial-gradient(110% 70% at 30% 0%, rgba(47,107,255,.24), transparent 60%),#08090d"></div>
+<div style="position:relative;height:100%;color:#f3f4f6;display:flex;flex-direction:column">
+<div style="padding:52px 18px 10px;font-size:24px;font-weight:700">Обзор</div>
+<div style="flex:1;padding:0 14px;display:flex;flex-direction:column;gap:10px"><div style="height:110px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)"></div><div style="height:150px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)"></div><div style="height:120px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)"></div></div>
+<div style="height:78px;background:rgba(16,17,22,.72);border-top:.5px solid rgba(255,255,255,.1);backdrop-filter:blur(30px) saturate(180%);display:flex;align-items:flex-start;justify-content:space-around;padding:10px 4px 0">
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px;color:#7fa2ff"><div style="font-size:17px">◍</div><div style="font-size:10px;font-weight:600">Обзор</div></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px;color:rgba(255,255,255,.4)"><div style="font-size:17px">≡</div><div style="font-size:10px">Операции</div></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px;color:rgba(255,255,255,.4)"><div style="font-size:17px">✦</div><div style="font-size:10px">ИИ</div></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px;color:rgba(255,255,255,.4)"><div style="font-size:17px">◫</div><div style="font-size:10px">Счета</div></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px;color:rgba(255,255,255,.4)"><div style="font-size:17px">⚙</div><div style="font-size:10px">Ещё</div></div>
+</div>
+<div style="position:absolute;left:0;right:0;bottom:-2px;text-align:center;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.3);padding-bottom:6px">Tab bar</div>
+</div>
+</x-import>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ 300 }}" height="{{ 650 }}" dark="{{ true }}" hint-size="300px,650px">
+<div style="position:absolute;inset:0;background:radial-gradient(110% 70% at 70% 0%, rgba(140,90,255,.24), transparent 60%),#08090d"></div>
+<div style="position:relative;height:100%;color:#f3f4f6;display:flex;flex-direction:column">
+<div style="padding:52px 18px 10px;font-size:24px;font-weight:700">Обзор</div>
+<div style="flex:1;padding:0 14px;display:flex;flex-direction:column;gap:10px"><div style="height:110px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)"></div><div style="height:150px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)"></div><div style="height:150px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)"></div></div>
+<div style="position:absolute;left:16px;right:16px;bottom:52px;height:58px;border-radius:999px;background:rgba(24,26,32,.68);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(34px) saturate(180%);box-shadow:0 16px 40px rgba(0,0,0,.5);display:flex;align-items:center;padding:0 6px;gap:4px">
+<div style="flex:1;height:44px;border-radius:999px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;gap:7px;font-size:12.5px;font-weight:600">◍ Обзор</div>
+<div style="width:44px;height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5)">≡</div>
+<div style="width:44px;height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5)">◫</div>
+<div style="width:44px;height:44px;border-radius:999px;background:linear-gradient(150deg,#4d7cff,#8a5cff);display:flex;align-items:center;justify-content:center;font-size:16px">✦</div>
+</div>
+<div style="position:absolute;left:0;right:0;bottom:22px;text-align:center;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.3)">Floating panel</div>
+</div>
+</x-import>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ 300 }}" height="{{ 650 }}" dark="{{ true }}" hint-size="300px,650px">
+<div style="position:absolute;inset:0;background:radial-gradient(110% 70% at 20% 10%, rgba(0,190,160,.2), transparent 60%),#08090d"></div>
+<div style="position:relative;height:100%;color:#f3f4f6;display:flex">
+<div style="width:64px;padding:52px 0 24px;background:rgba(16,17,22,.6);border-right:.5px solid rgba(255,255,255,.1);backdrop-filter:blur(30px);display:flex;flex-direction:column;align-items:center;gap:8px">
+<div style="width:44px;height:44px;border-radius:15px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:16px;color:#7fa2ff">◍</div>
+<div style="width:44px;height:44px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:16px;color:rgba(255,255,255,.4)">≡</div>
+<div style="width:44px;height:44px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:16px;color:rgba(255,255,255,.4)">◫</div>
+<div style="width:44px;height:44px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:16px;color:rgba(255,255,255,.4)">⚙</div>
+<div style="margin-top:auto;width:44px;height:44px;border-radius:999px;background:linear-gradient(150deg,#4d7cff,#8a5cff);display:flex;align-items:center;justify-content:center;font-size:16px">✦</div>
+</div>
+<div style="flex:1;padding:52px 14px 24px;display:flex;flex-direction:column;gap:10px">
+<div style="font-size:22px;font-weight:700;margin-bottom:4px">Обзор</div>
+<div style="height:110px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)"></div>
+<div style="height:150px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)"></div>
+<div style="height:130px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)"></div>
+<div style="margin-top:auto;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.3);text-align:center">Side rail · iPad и Mac</div>
+</div>
+</div>
+</x-import>
+</div>
+</div>
+
+<div class="dv-opt" id="1i"><div class="dv-olabel"><a class="dv-oid" href="#1i">1i</a>Desktop · macOS-окно, тот же язык стекла</div>
+<x-import component-from-global-scope="MacWindow" from="./macos-window.jsx" width="{{ 1060 }}" height="{{ 680 }}" title="CashFlow AI" hint-size="1060px,680px">
+<div style="position:relative;height:100%;background:radial-gradient(90% 70% at 10% 0%, rgba(47,107,255,.22), transparent 60%),radial-gradient(80% 60% at 95% 20%, rgba(140,90,255,.18), transparent 60%),#0a0b10;color:#f3f4f6;display:flex;font-family:-apple-system,system-ui,sans-serif">
+<div style="width:216px;padding:16px 12px;background:rgba(255,255,255,.04);border-right:.5px solid rgba(255,255,255,.09);backdrop-filter:blur(30px);display:flex;flex-direction:column;gap:4px">
+<div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.35);padding:4px 10px 8px">CashFlow AI</div>
+<div style="padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.12);font-size:13.5px;font-weight:600;display:flex;gap:9px"><span style="opacity:.8">◍</span>Обзор</div>
+<div style="padding:8px 10px;border-radius:10px;font-size:13.5px;color:rgba(255,255,255,.6);display:flex;gap:9px"><span style="opacity:.6">≡</span>Операции</div>
+<div style="padding:8px 10px;border-radius:10px;font-size:13.5px;color:rgba(255,255,255,.6);display:flex;gap:9px"><span style="opacity:.6">◑</span>Категории</div>
+<div style="padding:8px 10px;border-radius:10px;font-size:13.5px;color:rgba(255,255,255,.6);display:flex;gap:9px"><span style="opacity:.6">◇</span>Контрагенты</div>
+<div style="padding:8px 10px;border-radius:10px;font-size:13.5px;color:rgba(255,255,255,.6);display:flex;gap:9px"><span style="opacity:.6">◫</span>Счета</div>
+<div style="padding:8px 10px;border-radius:10px;font-size:13.5px;color:rgba(255,255,255,.6);display:flex;gap:9px"><span style="opacity:.6">⇪</span>Импорт</div>
+<div style="padding:8px 10px;border-radius:10px;font-size:13.5px;color:rgba(255,255,255,.6);display:flex;gap:9px"><span style="opacity:.6">⟳</span>Подключения</div>
+<div style="margin-top:auto;padding:10px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)">
+<div style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.35)">Sync</div>
+<div style="font-size:12.5px;margin-top:4px;color:rgba(255,255,255,.7)">Сбер · 09:14<br>Т-Инвест · 62%</div></div>
+</div>
+<div style="flex:1;padding:22px 26px;overflow:hidden;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:flex-end;justify-content:space-between">
+<div><div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.4)">Overview · сентябрь 2026</div>
+<div style="font-size:26px;font-weight:700;letter-spacing:-.4px;margin-top:3px">Обзор</div></div>
+<div style="display:flex;gap:8px;align-items:center">
+<div style="height:32px;padding:0 12px;border-radius:10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;font-size:12.5px;color:rgba(255,255,255,.75)">Все профили ▾</div>
+<div style="height:32px;padding:0 12px;border-radius:10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:8px;font-size:12.5px;color:rgba(255,255,255,.5)">✦ Спросить <span style="opacity:.6">⌘K</span></div></div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+<div style="padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px)"><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4)">Income</div><div style="font-size:22px;font-weight:680;margin-top:4px;color:oklch(.76 .15 152);font-variant-numeric:tabular-nums">+412 800</div></div>
+<div style="padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px)"><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4)">Expense</div><div style="font-size:22px;font-weight:680;margin-top:4px;color:oklch(.7 .18 22);font-variant-numeric:tabular-nums">−268 340</div></div>
+<div style="padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px)"><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4)">Net flow</div><div style="font-size:22px;font-weight:680;margin-top:4px;font-variant-numeric:tabular-nums">+144 460</div></div>
+<div style="padding:14px 16px;border-radius:18px;background:linear-gradient(130deg,rgba(47,107,255,.22),rgba(140,90,255,.14));border:1px solid rgba(130,160,255,.24);backdrop-filter:blur(30px)"><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.5)">Net worth</div><div style="font-size:22px;font-weight:680;margin-top:4px;font-variant-numeric:tabular-nums">3 184 920</div></div>
+</div>
+<div style="flex:1;display:grid;grid-template-columns:1.15fr 1fr;gap:14px;min-height:0">
+<div style="padding:16px 18px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px);display:flex;flex-direction:column">
+<div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:14.5px;font-weight:640">Куда уходят деньги</div><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.35)">By category</div></div>
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:11px">
+<div style="display:flex;align-items:center;gap:10px"><div style="width:26px;height:26px;border-radius:8px;background:rgba(76,175,80,.2);display:flex;align-items:center;justify-content:center;font-size:13px">🛒</div><div style="flex:1"><div style="display:flex;justify-content:space-between;font-size:13px"><span>Продукты</span><span style="font-weight:600;font-variant-numeric:tabular-nums">61 240 ₽</span></div><div style="height:4px;border-radius:2px;background:rgba(255,255,255,.09);margin-top:5px"><div style="height:100%;width:100%;background:oklch(.72 .14 150);border-radius:2px"></div></div></div></div>
+<div style="display:flex;align-items:center;gap:10px"><div style="width:26px;height:26px;border-radius:8px;background:rgba(255,152,0,.2);display:flex;align-items:center;justify-content:center;font-size:13px">🍽️</div><div style="flex:1"><div style="display:flex;justify-content:space-between;font-size:13px"><span>Кафе и рестораны</span><span style="font-weight:600;font-variant-numeric:tabular-nums">38 910 ₽</span></div><div style="height:4px;border-radius:2px;background:rgba(255,255,255,.09);margin-top:5px"><div style="height:100%;width:63%;background:oklch(.75 .15 70);border-radius:2px"></div></div></div></div>
+<div style="display:flex;align-items:center;gap:10px"><div style="width:26px;height:26px;border-radius:8px;background:rgba(33,150,243,.2);display:flex;align-items:center;justify-content:center;font-size:13px">🚌</div><div style="flex:1"><div style="display:flex;justify-content:space-between;font-size:13px"><span>Транспорт</span><span style="font-weight:600;font-variant-numeric:tabular-nums">21 480 ₽</span></div><div style="height:4px;border-radius:2px;background:rgba(255,255,255,.09);margin-top:5px"><div style="height:100%;width:35%;background:oklch(.7 .14 250);border-radius:2px"></div></div></div></div>
+<div style="display:flex;align-items:center;gap:10px"><div style="width:26px;height:26px;border-radius:8px;background:rgba(139,195,74,.2);display:flex;align-items:center;justify-content:center;font-size:13px">📦</div><div style="flex:1"><div style="display:flex;justify-content:space-between;font-size:13px"><span>Маркетплейсы</span><span style="font-weight:600;font-variant-numeric:tabular-nums">19 730 ₽</span></div><div style="height:4px;border-radius:2px;background:rgba(255,255,255,.09);margin-top:5px"><div style="height:100%;width:32%;background:oklch(.74 .14 130);border-radius:2px"></div></div></div></div>
+<div style="display:flex;align-items:center;gap:10px"><div style="width:26px;height:26px;border-radius:8px;background:rgba(96,125,139,.22);display:flex;align-items:center;justify-content:center;font-size:13px">🏠</div><div style="flex:1"><div style="display:flex;justify-content:space-between;font-size:13px"><span>Жильё и ЖКУ</span><span style="font-weight:600;font-variant-numeric:tabular-nums">18 900 ₽</span></div><div style="height:4px;border-radius:2px;background:rgba(255,255,255,.09);margin-top:5px"><div style="height:100%;width:31%;background:oklch(.68 .06 240);border-radius:2px"></div></div></div></div>
+</div>
+<div style="margin-top:auto;padding-top:14px;font-size:12.5px;color:#6f97ff">Открыть все категории →</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:14px;min-height:0">
+<div style="padding:16px 18px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(30px);flex:1;min-height:0;overflow:hidden">
+<div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:14.5px;font-weight:640">Кому уходят деньги</div><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.35)">Top 4</div></div>
+<div style="margin-top:8px">
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:.5px solid rgba(255,255,255,.08)"><div style="width:26px;height:26px;border-radius:999px;background:oklch(.6 .16 25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">П</div><div style="flex:1;font-size:13px">Магазин</div><div style="font-size:13px;font-weight:600;font-variant-numeric:tabular-nums">28 460 ₽</div></div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:.5px solid rgba(255,255,255,.08)"><div style="width:26px;height:26px;border-radius:999px;background:oklch(.55 .17 265);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">O</div><div style="flex:1;font-size:13px">OZON</div><div style="font-size:13px;font-weight:600;font-variant-numeric:tabular-nums">19 730 ₽</div></div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:.5px solid rgba(255,255,255,.08)"><div style="width:26px;height:26px;border-radius:999px;background:oklch(.72 .16 85);color:#1a1400;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">Я</div><div style="flex:1;font-size:13px">Яндекс Такси</div><div style="font-size:13px;font-weight:600;font-variant-numeric:tabular-nums">14 210 ₽</div></div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0"><div style="width:26px;height:26px;border-radius:999px;background:oklch(.6 .14 155);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">В</div><div style="flex:1;font-size:13px">ВкусВилл</div><div style="font-size:13px;font-weight:600;font-variant-numeric:tabular-nums">12 890 ₽</div></div>
+</div></div>
+<div style="padding:14px 16px;border-radius:20px;background:linear-gradient(130deg,rgba(47,107,255,.2),rgba(140,90,255,.12));border:1px solid rgba(130,160,255,.24);backdrop-filter:blur(30px)">
+<div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.5)">AI insight</div>
+<div style="font-size:13px;line-height:1.45;margin-top:6px">Доставка еды +41% к августу — 18 400 ₽. Два заказа в неделю вместо четырёх экономят ~8 900 ₽ в месяц.</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</x-import>
+</div>
+
+</div>
+<p class="dv-next">Дальше можно: «сделать <a class="dv-oid" href="#1a">1a</a> со светлым фоном как <a class="dv-oid" href="#1b">1b</a>» · «навигацию из <a class="dv-oid" href="#1h">1h</a> применить везде» · «детальнее проработать онбординг и вход»</p>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = { period: 'month' };
+  renderVals() {
+    const d = {
+      month:   { income: '412 800', expense: '268 340', saldo: '+144 460 ₽',   range: '01.09 — 28.09' },
+      quarter: { income: '1 214 500', expense: '806 210', saldo: '+408 290 ₽', range: '01.07 — 28.09' },
+      year:    { income: '4 986 200', expense: '3 271 480', saldo: '+1 714 720 ₽', range: 'окт 25 — сен 26' },
+    }[this.state.period];
+    const on = 'rgba(255,255,255,.92)', off = 'transparent';
+    const onFg = '#0b0d12', offFg = 'rgba(255,255,255,.55)';
+    const p = this.state.period;
+    return {
+      income: d.income, expense: d.expense, saldo: d.saldo, rangeLabel: d.range,
+      bgMonth: p === 'month' ? on : off, fgMonth: p === 'month' ? onFg : offFg,
+      bgQuarter: p === 'quarter' ? on : off, fgQuarter: p === 'quarter' ? onFg : offFg,
+      bgYear: p === 'year' ? on : off, fgYear: p === 'year' ? onFg : offFg,
+      setMonth: () => this.setState({ period: 'month' }),
+      setQuarter: () => this.setState({ period: 'quarter' }),
+      setYear: () => this.setState({ period: 'year' }),
+    };
+  }
+}
+</script>
+</body>
+</html>
