@@ -9,6 +9,13 @@ using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Разработка из IDE: .env репозитория даёт те же базу (docker, порт 55432), ключ шифрования и демо-пользователя, что у контейнера
+if (builder.Environment.IsDevelopment() && builder.Configuration.AddCashFlowDotEnv() is { } dotenv)
+{
+    builder.Configuration.AddEnvironmentVariables(); // переменные окружения по-прежнему главнее .env
+    Console.WriteLine($"Настройки разработки взяты из {dotenv}");
+}
+
 // Сервер CashFlow целиком (Identity, PostgreSQL, парсеры, коннекторы, планировщик, REST) — общий с настольным приложением
 builder.Services.AddCashFlowServer(builder.Configuration, withCookies: true);
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>(); // веб-вариант заглушки (RegisterConfirmation показывает ссылку)

@@ -32,11 +32,15 @@ docker compose up -d --build
 
 Тесты: `dotnet test tests/CashFlow.Domain.Tests` (парсеры и домен, без базы) и `dotnet test tests/CashFlow.Api.Tests` (сервер в памяти поверх PostgreSQL: нужен `docker compose up -d db`; на каждый прогон создаётся и удаляется своя база). В GitHub Actions то же самое выполняет `ci.yml`, а `secret-scan.yml` проверяет, что в репозиторий не попали реальные реквизиты и ключи — локально это делает `python tools/secret-scan.py` и pre-commit хук (`git config core.hooksPath .githooks`). Все примеры в тестах вымышленные; правила — `.claude/skills/no-sensitive-data/SKILL.md`.
 
-Требуется .NET 9 SDK и PostgreSQL (локально или `docker compose up db`).
+Требуется .NET 9 SDK, для приложения — воркод `maui-windows` (`dotnet workload restore`), и PostgreSQL из compose: `docker compose up -d db`.
+
+**Запуск в Rider / из терминала.** В режиме Development веб-хост сам читает `.env` из корня репозитория (пароль базы, `DB_PORT`, `ENCRYPTION_MASTER_KEY`, `DEMO_*`), поэтому `cp .env.example .env` с заполненными значениями достаточно: Rider → конфигурация `CashFlow.Web: http` → Run, откроется `http://localhost:5045`, база та же, что у контейнера, вход демо-пользователем по `/dev/login`. Приложение: конфигурация `CashFlow.Maui: Windows Machine` → Run; встроенный сервер тоже берёт `.env`. Контейнер и IDE одновременно с одной базой работают нормально (один ключ шифрования). Из терминала:
 
 ```bash
+docker compose up -d db
+dotnet run --project src/CashFlow.Web          # http://localhost:5045
+dotnet build src/CashFlow.Maui -f net9.0-windows10.0.19041.0 && src/CashFlow.Maui/bin/Debug/net9.0-windows10.0.19041.0/win10-x64/CashFlow.Maui.exe
 dotnet test
-cd src/CashFlow.Web && dotnet run     # appsettings.Development.json содержит dev-ключ шифрования
 ```
 
 Новая миграция: `cd src/CashFlow.Infrastructure && dotnet ef migrations add <Name> -o Persistence/Migrations`.
